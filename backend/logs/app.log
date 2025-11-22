@@ -1729,3 +1729,215 @@
 2025-11-22 22:06:49,262 - INFO -  * Debugger PIN: 654-602-787
 2025-11-22 22:07:06,307 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\teochew_g2p\\script\\pyPengIm.py', reloading
 2025-11-22 22:07:06,448 - INFO -  * Restarting with stat
+2025-11-22 23:24:27,813 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.64.1.104:5000
+2025-11-22 23:24:27,814 - INFO - [33mPress CTRL+C to quit[0m
+2025-11-22 23:24:27,815 - INFO -  * Restarting with stat
+2025-11-22 23:24:28,802 - WARNING -  * Debugger is active!
+2025-11-22 23:24:28,804 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:29:11,139 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.64.1.104:5000
+2025-11-22 23:29:11,139 - INFO - [33mPress CTRL+C to quit[0m
+2025-11-22 23:29:11,140 - INFO -  * Restarting with stat
+2025-11-22 23:29:12,067 - WARNING -  * Debugger is active!
+2025-11-22 23:29:12,069 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:29:19,663 - INFO - 127.0.0.1 - - [22/Nov/2025 23:29:19] "[33mGET / HTTP/1.1[0m" 404 -
+2025-11-22 23:29:19,824 - INFO - 127.0.0.1 - - [22/Nov/2025 23:29:19] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-11-22 23:32:41,839 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:32:41,962 - INFO -  * Restarting with stat
+2025-11-22 23:32:42,285 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:32:42,424 - INFO -  * Restarting with stat
+2025-11-22 23:51:00,573 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.64.1.104:5000
+2025-11-22 23:51:00,574 - INFO - [33mPress CTRL+C to quit[0m
+2025-11-22 23:51:00,575 - INFO -  * Restarting with stat
+2025-11-22 23:51:01,570 - WARNING -  * Debugger is active!
+2025-11-22 23:51:01,573 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:51:03,645 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:03] "OPTIONS /api/generate-text HTTP/1.1" 200 -
+2025-11-22 23:51:04,941 - INFO - Generated AI text: 今天天气不错，适合出去散步。
+2025-11-22 23:51:04,941 - INFO - Generated AI text: 今天天气不错，适合出去散步。
+2025-11-22 23:51:04,942 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:04] "POST /api/generate-text HTTP/1.1" 200 -
+2025-11-22 23:51:15,891 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:15] "OPTIONS /api/upload HTTP/1.1" 200 -
+2025-11-22 23:51:16,269 - INFO - Successfully uploaded recording: E7BBEFBE8D854DD7
+2025-11-22 23:51:16,270 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:16] "POST /api/upload HTTP/1.1" 200 -
+2025-11-22 23:51:23,785 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:23] "GET /admin HTTP/1.1" 200 -
+2025-11-22 23:51:23,878 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:23] "GET /static/css/admin.css HTTP/1.1" 200 -
+2025-11-22 23:51:24,033 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:24] "GET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1" 200 -
+2025-11-22 23:51:24,254 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:24] "GET /static/js/admin.js HTTP/1.1" 200 -
+2025-11-22 23:51:24,592 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:24] "GET /api/keys HTTP/1.1" 200 -
+2025-11-22 23:51:24,593 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:24] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:51:24,594 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:24] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-22 23:51:33,433 - ERROR - Delete recording error: unsupported operand type(s) for +: 'set' and 'str'
+2025-11-22 23:51:33,434 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:33] "[35m[1mDELETE /admin/api/recordings/E7BBEFBE8D854DD7 HTTP/1.1[0m" 500 -
+2025-11-22 23:51:43,951 - ERROR - Download recording error: unsupported operand type(s) for +: 'set' and 'str'
+2025-11-22 23:51:43,952 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:43] "[35m[1mGET /admin/api/download/E7BBEFBE8D854DD7?download=false HTTP/1.1[0m" 500 -
+2025-11-22 23:51:55,146 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:55] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:51:57,968 - INFO - Moved approved audio to: E:\PERSONAL\CANE\Code\TeoRecord-dev\backend\data/good\S001\F001\S001F001C002.webm
+2025-11-22 23:51:57,968 - INFO - pending → approved: Moved recording E7BBEFBE8D854DD7 to good/S001/F001/S001F001C002.webm
+2025-11-22 23:51:57,997 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:57] "PUT /api/recording/E7BBEFBE8D854DD7 HTTP/1.1" 200 -
+2025-11-22 23:51:58,232 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:58] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:51:59,324 - INFO - Moved rejected audio to: E:\PERSONAL\CANE\Code\TeoRecord-dev\backend\data/bad\S001\F001\S001F001C002.webm
+2025-11-22 23:51:59,324 - INFO - approved → rejected: Moved recording E7BBEFBE8D854DD7 to bad/S001/F001/S001F001C002.webm
+2025-11-22 23:51:59,338 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:59] "PUT /api/recording/E7BBEFBE8D854DD7 HTTP/1.1" 200 -
+2025-11-22 23:51:59,656 - INFO - 127.0.0.1 - - [22/Nov/2025 23:51:59] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:52:00,527 - INFO - Moved approved audio to: E:\PERSONAL\CANE\Code\TeoRecord-dev\backend\data/good\S001\F001\S001F001C002.webm
+2025-11-22 23:52:00,527 - INFO - rejected → approved: Moved recording E7BBEFBE8D854DD7 to good/S001/F001/S001F001C002.webm
+2025-11-22 23:52:00,544 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:00] "PUT /api/recording/E7BBEFBE8D854DD7 HTTP/1.1" 200 -
+2025-11-22 23:52:00,858 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:00] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:52:01,122 - INFO - Moved rejected audio to: E:\PERSONAL\CANE\Code\TeoRecord-dev\backend\data/bad\S001\F001\S001F001C002.webm
+2025-11-22 23:52:01,123 - INFO - approved → rejected: Moved recording E7BBEFBE8D854DD7 to bad/S001/F001/S001F001C002.webm
+2025-11-22 23:52:01,137 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:01] "PUT /api/recording/E7BBEFBE8D854DD7 HTTP/1.1" 200 -
+2025-11-22 23:52:01,280 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:01] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:52:01,785 - ERROR - Download recording error: unsupported operand type(s) for +: 'set' and 'str'
+2025-11-22 23:52:01,785 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:01] "[35m[1mGET /admin/api/download/E7BBEFBE8D854DD7?download=false HTTP/1.1[0m" 500 -
+2025-11-22 23:52:25,468 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:25] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:52:50,001 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:52:50,149 - INFO -  * Restarting with stat
+2025-11-22 23:52:51,429 - WARNING -  * Debugger is active!
+2025-11-22 23:52:51,431 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:52:55,473 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:55] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:52:56,503 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:56] "GET /admin HTTP/1.1" 200 -
+2025-11-22 23:52:56,876 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:56] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-22 23:52:56,925 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:56] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-22 23:52:57,190 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:57] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-22 23:52:57,260 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:57] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-22 23:52:57,261 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:57] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:52:57,261 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:57] "GET /api/keys HTTP/1.1" 200 -
+2025-11-22 23:52:59,377 - ERROR - Download recording error: unsupported operand type(s) for +: 'set' and 'str'
+2025-11-22 23:52:59,378 - INFO - 127.0.0.1 - - [22/Nov/2025 23:52:59] "[35m[1mGET /admin/api/download/E7BBEFBE8D854DD7?download=true HTTP/1.1[0m" 500 -
+2025-11-22 23:53:07,240 - ERROR - Download recording error: unsupported operand type(s) for +: 'set' and 'str'
+2025-11-22 23:53:07,241 - INFO - 127.0.0.1 - - [22/Nov/2025 23:53:07] "[35m[1mGET /admin/api/download/E7BBEFBE8D854DD7?download=false HTTP/1.1[0m" 500 -
+2025-11-22 23:53:12,335 - ERROR - Download recording error: unsupported operand type(s) for +: 'set' and 'str'
+2025-11-22 23:53:12,335 - INFO - 127.0.0.1 - - [22/Nov/2025 23:53:12] "[35m[1mGET /admin/api/download/E8038261BC4D44D2?download=false HTTP/1.1[0m" 500 -
+2025-11-22 23:54:55,889 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:54:56,028 - INFO -  * Restarting with stat
+2025-11-22 23:54:57,412 - WARNING -  * Debugger is active!
+2025-11-22 23:54:57,415 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:55:02,568 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:02] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:55:02,861 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:02] "GET /admin HTTP/1.1" 200 -
+2025-11-22 23:55:03,230 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:03] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-22 23:55:03,271 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:03] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-22 23:55:03,561 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:03] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:55:03,595 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:03] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-22 23:55:03,596 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:03] "GET /api/keys HTTP/1.1" 200 -
+2025-11-22 23:55:03,596 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:03] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-22 23:55:05,466 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:05] "[35m[1mGET /admin/api/download/E7BBEFBE8D854DD7?download=false HTTP/1.1[0m" 206 -
+2025-11-22 23:55:05,711 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:05] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-11-22 23:55:08,691 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:08] "GET /admin/api/download/E7BBEFBE8D854DD7?download=true HTTP/1.1" 200 -
+2025-11-22 23:55:15,423 - INFO - Deleting recording E7BBEFBE8D854DD7: S001F001C002.webm
+2025-11-22 23:55:15,424 - INFO - Deleted audio file: E:\PERSONAL\CANE\Code\TeoRecord-dev\backend\data/bad/S001/F001/S001F001C002.webm
+2025-11-22 23:55:15,440 - INFO - Successfully deleted recording E7BBEFBE8D854DD7
+2025-11-22 23:55:15,441 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:15] "DELETE /admin/api/recordings/E7BBEFBE8D854DD7 HTTP/1.1" 200 -
+2025-11-22 23:55:15,757 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:15] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:55:33,604 - INFO - 127.0.0.1 - - [22/Nov/2025 23:55:33] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:56:04,162 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:04] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:56:23,747 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:56:23,920 - INFO -  * Restarting with stat
+2025-11-22 23:56:25,570 - WARNING -  * Debugger is active!
+2025-11-22 23:56:25,573 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:56:27,248 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "GET /admin HTTP/1.1" 200 -
+2025-11-22 23:56:27,330 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-22 23:56:27,512 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-22 23:56:27,652 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-22 23:56:27,995 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "GET /api/keys HTTP/1.1" 200 -
+2025-11-22 23:56:27,996 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:56:27,997 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:27] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-22 23:56:30,870 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:30] "GET /admin/api/download/E8038261BC4D44D2?download=true HTTP/1.1" 200 -
+2025-11-22 23:56:40,063 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:40] "GET /admin/api/download/5EE7FA836AB64213?download=true HTTP/1.1" 200 -
+2025-11-22 23:56:41,037 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:41] "GET /admin/api/download/89B1799F40774751?download=true HTTP/1.1" 200 -
+2025-11-22 23:56:58,462 - INFO - 127.0.0.1 - - [22/Nov/2025 23:56:58] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:57:28,149 - INFO - 127.0.0.1 - - [22/Nov/2025 23:57:28] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:57:58,467 - INFO - 127.0.0.1 - - [22/Nov/2025 23:57:58] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:58:11,975 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:58:12,111 - INFO -  * Restarting with stat
+2025-11-22 23:58:13,782 - WARNING -  * Debugger is active!
+2025-11-22 23:58:13,785 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:58:13,801 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:13] "GET /admin HTTP/1.1" 200 -
+2025-11-22 23:58:13,914 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:13] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-22 23:58:13,921 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:13] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-22 23:58:14,248 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:14] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-22 23:58:14,263 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:14] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-22 23:58:14,264 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:14] "GET /api/keys HTTP/1.1" 200 -
+2025-11-22 23:58:14,264 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:14] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:58:16,296 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:16] "GET /admin/api/download/E8038261BC4D44D2?download=true HTTP/1.1" 200 -
+2025-11-22 23:58:21,525 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:21] "GET /admin/api/download/5EE7FA836AB64213?download=true HTTP/1.1" 200 -
+2025-11-22 23:58:44,254 - INFO - 127.0.0.1 - - [22/Nov/2025 23:58:44] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:59:14,238 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:14] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:59:39,147 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:59:39,281 - INFO -  * Restarting with stat
+2025-11-22 23:59:40,621 - WARNING -  * Debugger is active!
+2025-11-22 23:59:40,624 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:59:44,482 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:44] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:59:46,657 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-22 23:59:46,870 - INFO -  * Restarting with stat
+2025-11-22 23:59:48,334 - WARNING -  * Debugger is active!
+2025-11-22 23:59:48,337 - INFO -  * Debugger PIN: 654-602-787
+2025-11-22 23:59:48,353 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "GET /admin HTTP/1.1" 200 -
+2025-11-22 23:59:48,466 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-22 23:59:48,473 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-22 23:59:48,783 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-22 23:59:48,807 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "GET /api/stats HTTP/1.1" 200 -
+2025-11-22 23:59:48,809 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-22 23:59:48,808 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:48] "GET /api/keys HTTP/1.1" 200 -
+2025-11-22 23:59:50,703 - INFO - 127.0.0.1 - - [22/Nov/2025 23:59:50] "GET /admin/api/download/E8038261BC4D44D2?download=true HTTP/1.1" 200 -
+2025-11-23 00:00:13,454 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-23 00:00:13,582 - INFO -  * Restarting with stat
+2025-11-23 00:00:15,200 - WARNING -  * Debugger is active!
+2025-11-23 00:00:15,204 - INFO -  * Debugger PIN: 654-602-787
+2025-11-23 00:00:18,793 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:18] "GET /admin HTTP/1.1" 200 -
+2025-11-23 00:00:18,888 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:18] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-23 00:00:19,056 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:19] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-23 00:00:19,131 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:19] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-23 00:00:19,213 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:19] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:00:19,457 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:19] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-23 00:00:19,458 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:19] "GET /api/keys HTTP/1.1" 200 -
+2025-11-23 00:00:21,457 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:21] "GET /admin/api/download/E8038261BC4D44D2?download=true HTTP/1.1" 200 -
+2025-11-23 00:00:49,469 - INFO - 127.0.0.1 - - [23/Nov/2025 00:00:49] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:01:11,429 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-23 00:01:11,651 - INFO -  * Restarting with stat
+2025-11-23 00:01:13,039 - WARNING -  * Debugger is active!
+2025-11-23 00:01:13,042 - INFO -  * Debugger PIN: 654-602-787
+2025-11-23 00:01:13,058 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "GET /admin HTTP/1.1" 200 -
+2025-11-23 00:01:13,168 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-23 00:01:13,174 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-23 00:01:13,483 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-23 00:01:13,507 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "GET /api/keys HTTP/1.1" 200 -
+2025-11-23 00:01:13,508 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-23 00:01:13,509 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:13] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:01:19,086 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-23 00:01:19,217 - INFO -  * Restarting with stat
+2025-11-23 00:01:20,441 - WARNING -  * Debugger is active!
+2025-11-23 00:01:20,444 - INFO -  * Debugger PIN: 654-602-787
+2025-11-23 00:01:33,013 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "GET /admin HTTP/1.1" 200 -
+2025-11-23 00:01:33,113 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "[36mGET /static/css/admin.css HTTP/1.1[0m" 304 -
+2025-11-23 00:01:33,274 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "[36mGET /static/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf HTTP/1.1[0m" 304 -
+2025-11-23 00:01:33,429 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "[36mGET /static/js/admin.js HTTP/1.1[0m" 304 -
+2025-11-23 00:01:33,763 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "GET /api/keys HTTP/1.1" 200 -
+2025-11-23 00:01:33,764 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "GET /api/recordings?page=1&per_page=20 HTTP/1.1" 200 -
+2025-11-23 00:01:33,764 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:33] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:01:35,778 - INFO - 127.0.0.1 - - [23/Nov/2025 00:01:35] "GET /admin/api/download/E8038261BC4D44D2?download=true HTTP/1.1" 200 -
+2025-11-23 00:02:04,457 - INFO - 127.0.0.1 - - [23/Nov/2025 00:02:04] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:02:34,156 - INFO - 127.0.0.1 - - [23/Nov/2025 00:02:34] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:02:54,846 - INFO -  * Detected change in 'E:\\PERSONAL\\CANE\\Code\\TeoRecord-dev\\backend\\app\\app.py', reloading
+2025-11-23 00:02:54,973 - INFO -  * Restarting with stat
+2025-11-23 00:02:56,479 - WARNING -  * Debugger is active!
+2025-11-23 00:02:56,481 - INFO -  * Debugger PIN: 654-602-787
+2025-11-23 00:03:04,482 - INFO - 127.0.0.1 - - [23/Nov/2025 00:03:04] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:03:34,152 - INFO - 127.0.0.1 - - [23/Nov/2025 00:03:34] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:04:04,464 - INFO - 127.0.0.1 - - [23/Nov/2025 00:04:04] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:04:34,159 - INFO - 127.0.0.1 - - [23/Nov/2025 00:04:34] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:05:04,458 - INFO - 127.0.0.1 - - [23/Nov/2025 00:05:04] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:06:05,463 - INFO - 127.0.0.1 - - [23/Nov/2025 00:06:05] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:07:06,466 - INFO - 127.0.0.1 - - [23/Nov/2025 00:07:06] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:08:07,465 - INFO - 127.0.0.1 - - [23/Nov/2025 00:08:07] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:09:08,466 - INFO - 127.0.0.1 - - [23/Nov/2025 00:09:08] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:10:09,465 - INFO - 127.0.0.1 - - [23/Nov/2025 00:10:09] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:11:10,468 - INFO - 127.0.0.1 - - [23/Nov/2025 00:11:10] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:12:11,466 - INFO - 127.0.0.1 - - [23/Nov/2025 00:12:11] "GET /api/stats HTTP/1.1" 200 -
+2025-11-23 00:13:12,465 - INFO - 127.0.0.1 - - [23/Nov/2025 00:13:12] "GET /api/stats HTTP/1.1" 200 -
