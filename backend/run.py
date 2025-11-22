@@ -7,16 +7,17 @@ import os
 import sys
 from pathlib import Path
 
-# 设置工作目录
-os.chdir(Path(__file__).parent)
+# 获取backend根目录
+BACKEND_ROOT = Path(__file__).parent
 
-# 添加当前目录到Python路径
-sys.path.insert(0, str(Path(__file__).parent))
+# 设置工作目录为backend根目录
+os.chdir(BACKEND_ROOT)
+
+# 添加app目录到Python路径
+sys.path.insert(0, str(BACKEND_ROOT / 'app'))
 
 if __name__ == '__main__':
     # 导入并运行Flask应用
-    import sys
-    sys.path.insert(0, 'app')
     from app import app
 
     # 启动配置
@@ -25,7 +26,9 @@ if __name__ == '__main__':
     debug = os.environ.get('DEBUG', 'True').lower() == 'true'
 
     print(f"启动后端服务...")
+    print(f"Backend根目录: {BACKEND_ROOT}")
     print(f"服务地址: http://localhost:{port}")
     print(f"管理界面: http://localhost:{port}/admin")
+    print(f"数据库: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
     app.run(host=host, port=port, debug=debug)

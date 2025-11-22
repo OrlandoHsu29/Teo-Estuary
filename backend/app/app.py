@@ -15,28 +15,31 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from functools import wraps
 from ai_generator import create_text_generator
-from teochew_g2p.script.pyPengIm import pyPengIm 
+from teochew_g2p.script.pyPengIm import pyPengIm
+
+# 获取后端根目录
+BACKEND_ROOT = Path(__file__).parent.parent
 
 # 初始化潮汕话转换器
 teochew_converter = pyPengIm()
 
 
-# 配置日志 - 使用相对路径（从app目录启动）
+# 配置日志 - 使用相对于backend根目录的路径
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('../logs/app.log', encoding='utf-8'),
+        logging.FileHandler(str(BACKEND_ROOT / 'logs' / 'app.log'), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 
 logger = logging.getLogger(__name__)
 
-# 创建Flask应用 - 使用相对路径（从app目录启动）
+# 创建Flask应用 - 使用相对于backend根目录的路径
 app = Flask(__name__,
-    template_folder='../templates',
-    static_folder='../static'  # 启用静态文件服务
+    template_folder=str(BACKEND_ROOT / 'templates'),
+    static_folder=str(BACKEND_ROOT / 'static')  # 启用静态文件服务
 )
 
 # 启用CORS支持 - 调试模式允许所有来源
@@ -48,18 +51,18 @@ CORS(app, resources={
     }
 })
 
-# 配置 - 使用相对路径
+# 配置 - 使用相对于backend根目录的路径
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
-# 数据库路径：从app目录需要回退两层到backend，然后进入db
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///../../db/dialect_recorder.db')
+# 数据库路径：使用绝对路径
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{BACKEND_ROOT / "db" / "dialect_recorder.db"}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# 上传目录：相对于app目录指向backend/data
-app.config['DATA_FOLDER'] = '../data'
+# 上传目录：相对于backend根目录指向data目录
+app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# 确保必要的目录存在 - 使用相对路径（从app目录启动）
-os.makedirs('../logs', exist_ok=True)
-os.makedirs('../db', exist_ok=True)
+# 确保必要的目录存在
+os.makedirs(BACKEND_ROOT / 'logs', exist_ok=True)
+os.makedirs(BACKEND_ROOT / 'db', exist_ok=True)
 os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
 os.makedirs(f'{app.config['DATA_FOLDER']}/uploads', exist_ok=True)
 os.makedirs(f'{app.config['DATA_FOLDER']}/good', exist_ok=True)
@@ -440,7 +443,7 @@ def api_upload(key_obj):
         actual_content = teochew_converter.to_oral(text,auto_split=True).replace(' ', '').replace('#', '')
 
 
-        # 在数据库中存储相对于backend根目录的路径
+        # 在数据库中存储相对于data目录的路径
         recording = Recording(
             id=recording_id,
             file_path=os.path.join('uploads', safe_filename).replace('\\', '/'),
@@ -670,7 +673,7 @@ def api_update_recording(recording_id):
 
                 # 获取当前文件信息
                 current_filename = os.path.basename(recording.file_path)
-                # 获取用于访问的文件路径
+                # 将相对与data的路径转换为绝对路径
                 current_path = f'{app.config['DATA_FOLDER']}/' + recording.file_path
 
                 # 检查源文件是否存在
@@ -688,12 +691,12 @@ def api_update_recording(recording_id):
                 target_path = move_audio_file(source_path, audio_name, new_status)
 
                 if target_path:
-                    # 存储相对于backend根目录的路径
+                    # 存储相对于data目录的路径
                     base_dir = 'good' if new_status == 'approved' else 'bad'
                     s_part = audio_name[:4]  # S001
                     f_part = audio_name[4:8]  # F001
                     recording.status = new_status
-                    # 构建相对于backend/data目录的路径: good/S001/F001/S001F001C001.webm
+                    # 构建相对于bdata根目录的路径: good/S001/F001/S001F001C001.webm
                     relative_path = os.path.join(base_dir, s_part, f_part, new_filename).replace('\\', '/')
                     recording.file_path = relative_path
 
@@ -723,8 +726,12 @@ def api_delete_recording(recording_id):
     try:
         recording = Recording.query.get_or_404(recording_id)
 
-        file_path = f'{app.config['DATA_FOLDER']}/' + recording.file_path
-        filename = os.path.basename(file_path)
+        # 将相对路径转换为绝对路径
+        if recording.file_path:
+            file_path = app.config['DATA_FOLDER'] + '/' + recording.file_path if not os.path.isabs(recording.file_path) else recording.file_path
+        else:
+            file_path = None
+        filename = os.path.basename(file_path) if file_path else None
 
         logger.info(f"Deleting recording {recording_id}: {filename}")
 
@@ -758,18 +765,22 @@ def admin_download_recording(recording_id):
     try:
         recording = Recording.query.get_or_404(recording_id)
 
-        file_path = f'{app.config['DATA_FOLDER']}/' + recording.file_path
+        # 将相对路径转换为绝对路径
+        if recording.file_path:
+            file_path = app.config['DATA_FOLDER'] + '/' + recording.file_path 
+        else:
+            file_path = None
 
-        directory = os.path.dirname(file_path)
-        filename = os.path.basename(file_path)
-
-        if not directory or not filename:
+        if file_path and os.path.exists(file_path):
+            directory = os.path.dirname(file_path)
+            filename = os.path.basename(file_path)
+        else:
             return jsonify({'error': '文件不存在'}), 404
 
         is_download = request.args.get('download', 'true').lower() == 'true'
 
         if is_download:
-            download_name = f"{recording.id}_{filename}"
+            download_name = f"{recording.id}.webm"
             return send_from_directory(directory, filename, download_name=download_name, as_attachment=True)
         else:
             return send_from_directory(directory, filename, as_attachment=False)
