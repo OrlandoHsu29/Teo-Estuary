@@ -11,3 +11,4 @@ data/*
 uploads/*
 instance/*
 logs/app.log
+backend/.idea
