@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方言录音机 - 方言数据收集</title>
+    <link rel="preload" href="../fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf" as="font" type="font/otf" crossorigin>
+    <link rel="stylesheet" href="./css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="recorder-metro">
+            <!-- 录音机外壳 -->
+            <div class="recorder-body">
+                <!-- 录音机屏幕 -->
+                <div class="recorder-screen">
+                    <div class="screen-content">
+                        <div class="status-indicator">
+                            <span class="status-dot" id="statusDot"></span>
+                            <span class="status-text" id="statusText">准备就绪</span>
+                        </div>
+
+                        <div class="text-display" id="textDisplay">
+                            点击【刷新】按钮获取句子后开始录音跟读
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+
+                        <div class="timer" id="timer">00:00</div>
+                    </div>
+                </div>
+
+                <!-- 录音机控制面板 -->
+                <div class="control-panel">
+                    <!-- 主控制按钮 -->
+                    <div class="main-controls">
+                        <button class="control-btn btn-get-text" id="btnGetText" title="获取新句子">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 4v6h6"></path>
+                                <path d="M23 20v-6h-6"></path>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                        </button>
+
+                        <button class="control-btn btn-record" id="btnRecord" title="开始录音">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </button>
+
+                        <button class="control-btn btn-stop" id="btnStop" title="停止录音" disabled>
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            </svg>
+                        </button>
+
+                        <button class="control-btn btn-play" id="btnPlay" title="播放录音" disabled>
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        </button>
+
+                        <button class="control-btn btn-upload" id="btnUpload" title="上传录音" disabled>
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- 音量指示器 -->
+                    <div class="volume-meter">
+                        <div class="volume-bars">
+                            <div class="volume-bar" data-level="1"></div>
+                            <div class="volume-bar" data-level="2"></div>
+                            <div class="volume-bar" data-level="3"></div>
+                            <div class="volume-bar" data-level="4"></div>
+                            <div class="volume-bar" data-level="5"></div>
+                        </div>
+                        <div class="volume-label">音量</div>
+                    </div>
+                </div>
+
+                <!-- 录音机装饰细节 -->
+                <div class="recorder-details">
+                    <div class="speaker-grille">
+                        <div class="grille-lines"></div>
+                    </div>
+                    <div class="recorder-brand">TEO RECORDER</div>
+                    <div class="recorder-model">Olndio-2025</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设备说明书 -->
+        <div class="manual-container" id="manualContainer">
+            <div class="manual-controls">
+                <!-- 折叠按钮 -->
+                <button class="manual-toggle" id="manualToggle" onclick="toggleManual()">
+                    <svg class="manual-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                    <span>使用说明</span>
+                </button>
+
+                <!-- 密钥配置按钮 -->
+                <button class="key-config-btn" id="keyConfigBtn" onclick="openKeyConfig()" title="配置API密钥">
+                    <svg class="key-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <!-- 钥匙头（圆圈） -->
+                        <circle cx="8" cy="8" r="5"></circle>
+                        <!-- 钥匙杆（旋转180度的搜索线） -->
+                        <line x1="13" y1="13" x2="20" y2="20"></line>
+                        <!-- 钥匙齿（在直线一侧的垂直短线） -->
+                        <line x1="15" y1="15" x2="15" y2="18"></line>
+                        <line x1="18" y1="18" x2="18" y2="21"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 说明书内容 -->
+            <div class="manual-content" id="manualContent">
+                <div class="manual-paper">
+                    <div class="manual-header">
+                        <div class="manual-title">TEO RECORDER</div>
+                        <div class="manual-subtitle">快速使用指南</div>
+                    </div>
+
+                    <div class="manual-steps">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">点击获取新句子按钮，获取AI生成的练习文本</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">点击红色录音按钮开始录音</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-text">用潮汕话朗读屏幕上显示的文本内容</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-text">点击停止按钮结束录音</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">5</div>
+                            <div class="step-text">播放检查录音质量，确认无误后上传</div>
+                        </div>
+                    </div>
+
+                    <div class="manual-footer">
+                        <div class="manual-note">按空格键可快速开始/停止录音</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  
+    <!-- 密钥配置弹窗 -->
+    <div class="key-config-overlay" id="keyConfigOverlay">
+        <div class="key-config-modal">
+            <div class="key-config-header">
+                <h3>API 密钥配置</h3>
+                <button class="close-btn" onclick="closeKeyConfig()">×</button>
+            </div>
+            <div class="key-config-content">
+                <div class="form-group">
+                    <label for="apiKey">请输入 API 密钥:</label>
+                    <input type="text" id="apiKey" placeholder="输入您的API密钥" />
+                    <small class="form-help">API 密钥用于验证您的访问权限，请联系管理员获取</small>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-cancel" onclick="closeKeyConfig()">取消</button>
+                    <button class="btn-clear" onclick="clearApiKey()">清空</button>
+                    <button class="btn-confirm" onclick="saveApiKey()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="./js/recorder.js"></script>
+
+    <script>
+        // 调试信息 - API_BASE_URL已在recorder.js中定义
+        console.log('页面加载完成，检查API配置...');
+        console.log('API_BASE_URL:', typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '未定义');
+
+        // 说明书折叠功能
+        function toggleManual() {
+            const content = document.getElementById('manualContent');
+            const toggle = document.getElementById('manualToggle');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                toggle.querySelector('span').textContent = '使用说明';
+            } else {
+                content.classList.add('expanded');
+                toggle.querySelector('span').textContent = '收起说明';
+            }
+        }
+
+        // 密钥配置功能
+        function openKeyConfig() {
+            document.getElementById('keyConfigOverlay').style.display = 'flex';
+            const savedKey = localStorage.getItem('apiKey');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+        }
+
+        function closeKeyConfig() {
+            document.getElementById('keyConfigOverlay').style.display = 'none';
+        }
+
+        function clearApiKey() {
+            if (confirm('确定要清空API密钥吗？清空后需要重新配置才能使用录音功能。')) {
+                // 清空localStorage中的API密钥
+                localStorage.removeItem('apiKey');
+
+                // 清空输入框
+                document.getElementById('apiKey').value = '';
+
+                // 关闭配置窗口
+                closeKeyConfig();
+
+                // 如果有recorder实例，更新状态为未配置状态
+                if (window.recorder) {
+                    window.recorder.setPoweredOffState();   
+                    updateKeyButtonState()
+                    window.recorder.updateStatus('需要先配置API密钥才能使用', 'error');
+                    window.recorder.showToast('API密钥已清空，请重新配置', 'info');
+                }
+            }
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('请输入API密钥');
+                return;
+            }
+
+            closeKeyConfig();
+
+            // 设置验证中状态
+            if (window.recorder) {
+                window.recorder.setApiKeyVerifyingState();
+            }
+
+            // 先验证密钥，验证通过后再保存
+            testApiKey(apiKey, true);
+        }
+
+        function testApiKey(apiKey, shouldSave = false) {
+            // 使用全局API_BASE_URL，如果不存在则使用默认值
+            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:5000';
+            fetch(`${apiUrl}/api/generate-text`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': apiKey
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 验证成功，保存密钥到localStorage
+                    if (shouldSave) {
+                        localStorage.setItem('apiKey', apiKey);
+                    }
+
+                    updateKeyButtonState();
+                } else {
+                    alert('API密钥验证失败: ' + data.error);
+                    // 验证失败，确保不保存密钥
+                    if (shouldSave) {
+                        localStorage.removeItem('apiKey');
+                    }
+                    updateKeyButtonState();
+                }
+            })
+            .catch(error => {
+                console.error('API密钥验证错误:', error);
+                alert('API密钥验证失败，请检查网络连接');
+                // 验证失败，确保不保存密钥
+                if (shouldSave) {
+                    localStorage.removeItem('apiKey');
+                }
+                updateKeyButtonState();
+            });
+        }
+
+
+        // 更新密钥按钮状态
+        function updateKeyButtonState() {
+            const keyBtn = document.getElementById('keyConfigBtn');
+            const savedKey = localStorage.getItem('apiKey');
+
+            if (savedKey) {
+                keyBtn.classList.add('configured');
+            } else {
+                keyBtn.classList.remove('configured');
+            }
+
+            // 更新录音机状态
+            if (window.recorder) {
+                window.recorder.checkApiKeyStatus();
+            }
+        }
+
+        // 检查是否需要配置密钥
+        function checkApiKeyConfig() {
+            const savedKey = localStorage.getItem('apiKey');
+            if (!savedKey) {
+                openKeyConfig();
+            }
+        }
+
+        // 页面加载时检查密钥配置
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化密钥按钮状态
+            updateKeyButtonState();
+
+            // 延迟显示密钥配置，让用户先看到界面
+            setTimeout(checkApiKeyConfig, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+[project]
+name = "teo-recorder-frontend"
+version = "1.0.0"
+description = "潮汕话录音机前端界面"
+authors = ["OrlandoHsu <2858117894@qq.com>"]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tasks]
+start = "python -m http.server 8080 --directory src"
+dev = "python -m http.server 8080 --directory src"
+serve = "python -m http.server 8080 --directory src"
+
+[dependencies]
+python = ">=3.11"

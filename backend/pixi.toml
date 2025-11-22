@@ -1,0 +1,25 @@
+[project]
+name = "teo-recorder-backend"
+version = "1.0.0"
+description = "潮汕话录音机后端服务"
+authors = ["OrlandoHsu <2858117894@qq.com>"]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tasks]
+start = "cd app && python app.py"
+start-dev = "cd app && python app_relative.py"
+dev = "cd app && python app.py"
+
+[dependencies]
+python = ">=3.11"
+flask = ">=3.1.2"
+flask-sqlalchemy = ">=3.1.1"
+flask-cors = ">=5.0.0"
+requests = ">=2.32.5"
+werkzeug = ">=3.1.3"
+jieba = ">=0.42.1,<0.43"
+pyyaml = ">=6.0.3,<7"
+
+[pypi-dependencies]
+cn2an = ">=0.5.23, <0.6"

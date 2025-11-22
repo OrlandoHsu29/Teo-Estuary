@@ -1,0 +1,13 @@
+# pixi environments
+frontend/.pixi/*
+backend/.pixi/*
+!.pixi/config.toml
+/.claude
+/.idea
+/.dockerignore
+/__pycache__
+data/*
+data/*
+uploads/*
+instance/*
+logs/app.log

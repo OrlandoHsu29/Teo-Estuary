@@ -1,0 +1,16 @@
+{
+  "name": "teo-recorder-frontend",
+  "version": "1.0.0",
+  "description": "潮汕话录音机前端",
+  "main": "src/index.html",
+  "scripts": {
+    "dev": "python -m http.server 8080 --directory src",
+    "build": 'echo "No build process needed for static files"',
+    "serve": "python -m http.server 8080 --directory src"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": ["潮汕话", "录音", "数据收集"],
+  "author": "",
+  "license": ""
+}

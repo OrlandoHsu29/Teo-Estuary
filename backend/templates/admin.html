@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录音管理后台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-actions">
+                <a href="/admin/logout" class="logout-btn" onclick="event.preventDefault(); if(confirm('确定要退出登录吗？')) { window.location.href = this.href; }">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                    </svg>
+                </a>
+            </div>
+            <h1>录音管理后台</h1>
+            <p>· 方言数据收集管理系统 ·</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <!-- 统计卡片将通过JavaScript动态加载 -->
+        </div>
+
+        <!-- API密钥管理区域 -->
+        <div class="api-keys-section">
+            <div class="section-header">
+                <h2>API 密钥管理</h2>
+                <button class="btn btn-primary" onclick="showCreateKeyModal()">创建新密钥</button>
+            </div>
+            <div class="keys-grid" id="keysGrid">
+                <div class="loading">正在加载密钥数据...</div>
+            </div>
+        </div>
+
+        <!-- 统一的管理内容容器 -->
+        <div class="admin-container">
+            <!-- 控制栏 -->
+            <div class="controls">
+                <div class="filter-group">
+                    <select id="statusFilter">
+                        <option value="">所有状态</option>
+                        <option value="pending">待审核</option>
+                        <option value="approved">已通过</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                    <button class="btn" onclick="loadRecordings()">刷新</button>
+                </div>
+                <div class="filter-group">
+                    <span id="totalCount" style="color: #888899;">总计: 0 条</span>
+                </div>
+            </div>
+
+            <!-- 分隔线 -->
+            <div class="admin-divider"></div>
+
+            <!-- 录音列表 -->
+            <div class="recordings-grid" id="recordingsGrid">
+                <div class="loading">正在加载录音数据...</div>
+            </div>
+
+            <!-- 分隔线 -->
+            <div class="admin-divider"></div>
+
+            <!-- 分页控件 -->
+            <div class="pagination" id="pagination">
+                <!-- 分页控件将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建密钥弹窗 -->
+    <div class="modal-overlay" id="createKeyModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>创建API密钥</h3>
+                <button class="close-btn" onclick="closeCreateKeyModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="keyName">密钥名称:</label>
+                    <input type="text" id="keyName" placeholder="输入密钥名称">
+                </div>
+                <div class="form-group">
+                    <label for="keyDescription">描述:</label>
+                    <textarea id="keyDescription" placeholder="输入密钥描述（可选）"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="maxRequests">每日最大请求次数:</label>
+                    <input type="number" id="maxRequests" value="1000" min="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" onclick="closeCreateKeyModal()">取消</button>
+                <button class="btn btn-primary" onclick="createKey()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
