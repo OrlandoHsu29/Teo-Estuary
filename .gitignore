@@ -5,10 +5,11 @@ backend/.pixi/*
 /.claude
 /.idea
 /.dockerignore
-/__pycache__
+backend/app/__pycache__/*
 data/*
 data/*
 uploads/*
 instance/*
-logs/app.log
 backend/.idea
+backend/db/dialect_recorder.db
+backend/logs/app.log

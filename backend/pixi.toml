@@ -7,9 +7,7 @@ channels = ["conda-forge"]
 platforms = ["win-64"]
 
 [tasks]
-start = "cd app && python app.py"
-start-dev = "cd app && python app_relative.py"
-dev = "cd app && python app.py"
+start = "python run.py"
 
 [dependencies]
 python = ">=3.11"
