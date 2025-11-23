@@ -30,7 +30,7 @@ COPY ../run.py .
 COPY ../.env.example .env
 
 # 创建必要的目录
-RUN mkdir -p /app/logs /app/db
+RUN mkdir -p /logs /db
 
 # 暴露端口
 EXPOSE 5000
