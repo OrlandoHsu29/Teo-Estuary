@@ -18,7 +18,7 @@ from ai_generator import create_text_generator
 from teochew_g2p.script.pyPengIm import pyPengIm
 
 # 获取后端根目录
-BACKEND_ROOT = Path(__file__).parent.parent
+BACKEND_ROOT = Path(__file__).parent
 
 # 初始化潮汕话转换器
 teochew_converter = pyPengIm()
