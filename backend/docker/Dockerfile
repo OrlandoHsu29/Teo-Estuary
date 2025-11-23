@@ -15,14 +15,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制pixi配置文件
 COPY ../pixi.toml .
 COPY ../pixi.lock .
 
-# 安装pip和pixi
-RUN pip install --upgrade pip && \
+# 安装pip和pixi，使用国内镜像源加速
+RUN pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install pixi
 
 # 先迁移数据库，然后安装依赖
