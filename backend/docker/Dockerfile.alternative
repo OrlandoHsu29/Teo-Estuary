@@ -15,19 +15,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制pixi配置文件
-COPY ../pixi.toml .
-COPY ../pixi.lock .
-
-# 安装pip和pixi
+# 复制requirements.txt并安装Python依赖
+COPY ../requirements.txt .
 RUN pip install --upgrade pip && \
-    pip install pixi
-
-# 先迁移数据库，然后安装依赖
-RUN pixi migrate && \
-    pixi install
+    pip install -r requirements.txt
 
 # 复制应用代码
 COPY ../app ./app
@@ -45,4 +39,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # 启动命令
-CMD ["pixi", "run", "python", "run.py"]
+CMD ["python", "run.py"]
