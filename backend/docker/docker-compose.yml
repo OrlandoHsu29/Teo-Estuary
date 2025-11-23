@@ -27,11 +27,13 @@ services:
 
     volumes:
       # 持久化数据库
-      - ./data/db:/app/db
+      - ../db:/app/db
       # 持久化日志
-      - ./data/logs:/app/logs
-      # 挂载app目录以便开发时热重载（可选）
-      - ../app:/app/app:ro
+      - ../logs:/app/logs
+      # 持久化数据目录
+      - ../data:/app/data
+      # 挂载app目录（可写，以便创建必要的文件）
+      - ../app:/app/app
 
     restart: unless-stopped
 

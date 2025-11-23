@@ -63,6 +63,7 @@ docker-compose down -v
 
 - 数据库文件: `./data/db/dialect_recorder.db`
 - 日志文件: `./data/logs/`
+- 音频和数据文件: `./data/uploads/`, `./data/good/`, `./data/bad/`
 
 ## 开发环境配置
 
