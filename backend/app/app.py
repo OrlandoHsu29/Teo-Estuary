@@ -64,9 +64,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 os.makedirs(BACKEND_ROOT / 'logs', exist_ok=True)
 os.makedirs(BACKEND_ROOT / 'db', exist_ok=True)
 os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
-os.makedirs(f'{app.config['DATA_FOLDER']}/uploads', exist_ok=True)
-os.makedirs(f'{app.config['DATA_FOLDER']}/good', exist_ok=True)
-os.makedirs(f'{app.config['DATA_FOLDER']}/bad', exist_ok=True)
+os.makedirs(f"{app.config['DATA_FOLDER']}/uploads", exist_ok=True)
+os.makedirs(f"{app.config['DATA_FOLDER']}/good", exist_ok=True)
+os.makedirs(f"{app.config['DATA_FOLDER']}/bad", exist_ok=True)
 
 # 硅基流动API配置
 SILICONFLOW_API_KEY = os.environ.get('SILICONFLOW_API_KEY', 'sk-dqfrbwdryedhuzxwtgdzfffxjstlkkjgenatmuwmembcdjhb')
