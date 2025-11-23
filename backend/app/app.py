@@ -64,9 +64,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 os.makedirs(BACKEND_ROOT / 'logs', exist_ok=True)
 os.makedirs(BACKEND_ROOT / 'db', exist_ok=True)
 os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
-os.makedirs(f'{app.config['DATA_FOLDER']}/uploads', exist_ok=True)
-os.makedirs(f'{app.config['DATA_FOLDER']}/good', exist_ok=True)
-os.makedirs(f'{app.config['DATA_FOLDER']}/bad', exist_ok=True)
+os.makedirs(f'{app.config["DATA_FOLDER"]}/uploads', exist_ok=True)
+os.makedirs(f'{app.config["DATA_FOLDER"]}/good', exist_ok=True)
+os.makedirs(f'{app.config["DATA_FOLDER"]}/bad', exist_ok=True)
 
 # 硅基流动API配置
 SILICONFLOW_API_KEY = os.environ.get('SILICONFLOW_API_KEY', 'sk-dqfrbwdryedhuzxwtgdzfffxjstlkkjgenatmuwmembcdjhb')
@@ -234,9 +234,9 @@ def move_audio_file(source_path, audio_name, status):
     """
     try:
         if status == 'approved':
-            base_dir = f'{app.config['DATA_FOLDER']}/good'
+            base_dir = f'{app.config["DATA_FOLDER"]}/good'
         elif status == 'rejected':
-            base_dir = f'{app.config['DATA_FOLDER']}/bad'
+            base_dir = f'{app.config["DATA_FOLDER"]}/bad'
         else:
             logger.error(f"Unknown status: {status}")
             return None
@@ -674,7 +674,7 @@ def api_update_recording(recording_id):
                 # 获取当前文件信息
                 current_filename = os.path.basename(recording.file_path)
                 # 将相对与data的路径转换为绝对路径
-                current_path = f'{app.config['DATA_FOLDER']}/' + recording.file_path
+                current_path = f'{app.config["DATA_FOLDER"]}/' + recording.file_path
 
                 # 检查源文件是否存在
                 if not os.path.exists(current_path):
