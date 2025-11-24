@@ -58,7 +58,7 @@ Thumbs.db
 
 # Development data
 logs/
-db/*.db
+instance/*.db
 *.sqlite
 *.sqlite3
 

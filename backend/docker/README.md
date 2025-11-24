@@ -61,8 +61,8 @@ docker-compose down -v
 
 ## 数据持久化
 
-- 数据库文件: `./data/db/dialect_recorder.db`
-- 日志文件: `./data/logs/`
+- 数据库文件: `./instance/dialect_recorder.db` (Flask标准实例目录)
+- 日志文件: `./logs/`
 - 音频和数据文件: `./data/uploads/`, `./data/good/`, `./data/bad/`
 
 ## 开发环境配置
@@ -111,8 +111,8 @@ docker-compose build --no-cache
 
 ```bash
 # 创建数据目录并设置权限
-mkdir -p data/db data/logs
-chmod 755 data/db data/logs
+mkdir -p instance logs data/uploads data/good data/bad
+chmod 755 instance logs data
 ```
 
 ### 3. 端口冲突

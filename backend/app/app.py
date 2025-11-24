@@ -18,7 +18,7 @@ from ai_generator import create_text_generator
 from teochew_g2p.script.pyPengIm import pyPengIm
 
 # 获取后端根目录
-BACKEND_ROOT = Path(__file__).parent
+BACKEND_ROOT = Path(__file__).parent.parent
 
 # 初始化潮汕话转换器
 teochew_converter = pyPengIm()
@@ -53,18 +53,18 @@ CORS(app, resources={
 
 # 配置 - 使用相对于backend根目录的路径
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
-# 数据库路径：使用绝对路径
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{BACKEND_ROOT / "db" / "dialect_recorder.db"}')
+# 数据库路径：使用instance目录
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///dialect_recorder.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# 设置instance_path为可写目录
-app.instance_path = str(BACKEND_ROOT / 'db')
+# 设置instance_path为instance目录
+app.instance_path = str(BACKEND_ROOT / 'instance')
 # 上传目录：相对于backend根目录指向data目录
 app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # 确保必要的目录存在
 os.makedirs(BACKEND_ROOT / 'logs', exist_ok=True)
-os.makedirs(BACKEND_ROOT / 'db', exist_ok=True)
+os.makedirs(BACKEND_ROOT / 'instance', exist_ok=True)  # Flask实例目录，存放数据库文件
 os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
 os.makedirs(f'{app.config["DATA_FOLDER"]}/uploads', exist_ok=True)
 os.makedirs(f'{app.config["DATA_FOLDER"]}/good', exist_ok=True)
