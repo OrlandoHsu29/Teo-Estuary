@@ -390,6 +390,24 @@ def api_test():
         'timestamp': datetime.utcnow().isoformat()
     })
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Docker健康检查端点"""
+    try:
+        # 简单的数据库连接检查
+        with db.engine.connect() as conn:
+            conn.execute(db.text('SELECT 1'))
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 503
+
 @app.route('/api/generate-text', methods=['POST'])
 @api_key_required
 def api_generate_text(key_obj):
