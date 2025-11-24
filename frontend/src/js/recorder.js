@@ -1,5 +1,5 @@
 // API配置 - 可以根据需要修改
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://your-domain.com';
 
 // 调试信息
 console.log('API_BASE_URL:', API_BASE_URL);
