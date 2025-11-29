@@ -269,7 +269,7 @@
         function testApiKey(apiKey, shouldSave = false) {
             // 使用全局API_BASE_URL，如果不存在则使用默认值
             const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:5000';
-            fetch(`${apiUrl}/api/generate-text`, {
+            fetch(`${apiUrl}/api/apikey-verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
