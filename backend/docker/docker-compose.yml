@@ -12,7 +12,7 @@ services:
     volumes:
       # 挂载整个backend目录，保持目录结构对齐
       - ..:/app
-      
+
     working_dir: /app
 
     environment:
@@ -32,6 +32,10 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-your-admin-password}
 
+      # Flask-Limiter 配置
+      - RATELIMIT_STORAGE_URL=${RATELIMIT_STORAGE_URL:-memory://}
+      - RATELIMIT_DEFAULT=${RATELIMIT_DEFAULT:-1000 per day, 100 per hour}
+
 
 
     restart: unless-stopped
@@ -45,6 +49,37 @@ services:
 
     networks:
       - teorecord-network
+    depends_on:
+      - redis
+
+  # Redis服务用于Flask-Limiter存储
+  redis:
+    image: redis:7-alpine
+    container_name: teorecord-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - teorecord-network
+    command: redis-server --appendonly yes
+
+  # 可选：添加数据库服务（如果需要替换SQLite）
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: teorecord-postgres
+  #   environment:
+  #     POSTGRES_DB: dialect_recorder
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - teorecord-network
+  #   restart: unless-stopped
 
   # 可选：添加数据库服务（如果需要替换SQLite）
   # postgres:
@@ -67,4 +102,5 @@ networks:
     driver: bridge
 
 volumes:
+  redis_data:     # Redis数据持久化
   postgres_data:  # 如果使用PostgreSQL的话

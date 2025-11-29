@@ -53,18 +53,29 @@ CORS(app, resources={
     }
 })
 
-# 初始化 Flask-Limiter - 使用内存存储和自定义IP获取函数
+# Flask-Limiter 配置 - 支持环境变量配置
+rate_limit_storage = os.environ.get('RATELIMIT_STORAGE_URL', 'memory://')
+rate_limit_default = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 100 per hour')
+
+# 解析默认限制配置
+default_limits = []
+for limit in rate_limit_default.split(','):
+    limit = limit.strip()
+    if limit:
+        default_limits.append(limit)
+
+# 初始化 Flask-Limiter - 使用环境变量配置存储和限制
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    storage_uri="memory://",
-    default_limits=[
-        "1000 per day",    # 默认每天1000次请求
-        "100 per hour"     # 默认每小时100次请求
-    ],
+    storage_uri=rate_limit_storage,
+    default_limits=default_limits,
     headers_enabled=True,  # 在响应头中包含速率限制信息
     swallow_errors=False   # 开发环境下显示错误信息
 )
+
+logger.info(f"Flask-Limiter initialized with storage: {rate_limit_storage}")
+logger.info(f"Default limits: {default_limits}")
 
 # 配置 - 使用相对于backend根目录的路径
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')

@@ -1,140 +1,252 @@
-# TeoRecord Backend Docker 部署指南
+# TeoRecord Docker 部署指南
 
-这个目录包含了TeoRecord后端的Docker配置文件，用于容器化部署。
+## 概述
 
-## 文件说明
-
-- `Dockerfile` - 定义了后端应用的Docker镜像
-- `docker-compose.yml` - Docker Compose配置文件，用于定义和运行多容器应用
-- `.env.example` - 环境变量示例文件
-- `README.md` - 本说明文档
+本项目使用Docker Compose进行部署，包含以下服务：
+- **teorecord-backend**: Flask应用服务
+- **redis**: Redis缓存服务（用于Flask-Limiter速率限制存储）
 
 ## 快速开始
 
-### 1. 准备环境变量
+### 1. 环境准备
 
+确保已安装：
+- Docker
+- Docker Compose
+
+### 2. 配置环境变量
+
+复制环境变量配置文件：
 ```bash
-# 复制环境变量示例文件
+cd backend
 cp .env.example .env
-
-# 编辑.env文件，填入你的配置
-nano .env
 ```
 
-### 2. 启动服务
+编辑 `.env` 文件，填入实际配置值：
+```bash
+# 必填项
+SECRET_KEY=your-strong-secret-key-here
+SILICONFLOW_API_KEY=your-actual-siliconflow-api-key
+ADMIN_PASSWORD=your-secure-admin-password
+
+# 可选项（使用默认值）
+RATELIMIT_STORAGE_URL=redis://redis:6379  # 使用Redis存储速率限制
+RATELIMIT_DEFAULT=1000 per day, 100 per hour
+```
+
+### 3. 启动服务
 
 ```bash
-# 使用docker-compose构建并启动服务
+cd docker
 docker-compose up -d
-
-# 或者使用新版docker compose
-docker compose up -d
 ```
 
-### 3. 查看服务状态
+### 4. 验证部署
 
+访问健康检查端点：
 ```bash
-# 查看容器状态
+curl http://localhost:5001/health
+```
+
+预期响应：
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000000"
+}
+```
+
+## 服务详情
+
+### Backend服务 (teorecord-backend)
+
+- **端口**: 5001:5000 (主机:容器)
+- **健康检查**: 每30秒检查一次
+- **挂载卷**: 整个backend目录，便于开发调试
+- **依赖**: redis服务
+
+### Redis服务 (redis)
+
+- **端口**: 6379:6379
+- **数据持久化**: 使用 `redis_data` 卷
+- **配置**: 开启AOF持久化
+
+## 速率限制配置
+
+### 默认配置
+
+- **全局限制**: 每天1000次，每小时100次请求
+- **上传接口**: 每天100次，每小时30次
+- **文本生成接口**: 每天200次，每小时60次
+- **API密钥验证**: 每天200次请求
+
+### 存储后端
+
+- **开发环境**: `memory://` (内存存储)
+- **生产环境**: `redis://redis:6379` (Redis存储)
+
+### 自定义配置
+
+通过环境变量调整：
+
+```env
+# 更改默认全局限制
+RATELIMIT_DEFAULT=2000 per day, 200 per hour
+
+# 更改存储后端
+RATELIMIT_STORAGE_URL=redis://redis:6379  # Redis存储
+# 或
+RATELIMIT_STORAGE_URL=memory://            # 内存存储
+```
+
+## 生产环境建议
+
+### 1. 安全配置
+
+```env
+# 使用强密钥
+SECRET_KEY=$(openssl rand -hex 32)
+
+# 设置强管理员密码
+ADMIN_PASSWORD=your-complex-password-here
+
+# 关闭调试模式
+DEBUG=False
+```
+
+### 2. 性能优化
+
+- **使用Redis存储**: 相比内存存储，Redis支持多实例共享和持久化
+- **监控资源使用**: 监控CPU、内存和Redis连接数
+- **日志轮转**: 配置日志轮转避免磁盘空间不足
+
+### 3. 监控
+
+检查服务状态：
+```bash
+# 查看所有服务状态
 docker-compose ps
 
-# 查看日志
-docker-compose logs -f
+# 查看后端服务日志
+docker-compose logs teorecord-backend
+
+# 查看Redis服务日志
+docker-compose logs redis
 ```
 
-### 4. 停止服务
+### 4. 备份
+
+备份重要数据：
+```bash
+# 备份数据库文件
+docker cp teorecord-backend:/app/instance/dialect_recorder.db ./backup/
+
+# 备份Redis数据
+docker exec teorecord-redis redis-cli BGSAVE
+docker cp teorecord-redis:/data ./redis-backup/
+```
+
+## 故障排除
+
+### 常见问题
+
+1. **端口冲突**
+   ```bash
+   # 检查端口占用
+   netstat -tulpn | grep 5001
+   # 或修改docker-compose.yml中的端口映射
+   ```
+
+2. **Redis连接失败**
+   ```bash
+   # 检查Redis服务状态
+   docker-compose exec redis redis-cli ping
+   ```
+
+3. **依赖安装失败**
+   ```bash
+   # 重新构建镜像
+   docker-compose build --no-cache
+   ```
+
+### 日志查看
 
 ```bash
-# 停止服务
-docker-compose down
+# 实时查看所有服务日志
+docker-compose logs -f
 
-# 停止并删除数据卷（会删除数据库）
-docker-compose down -v
+# 查看特定服务日志
+docker-compose logs -f teorecord-backend
+
+# 查看最近的日志
+docker-compose logs --tail=100 teorecord-backend
+```
+
+## 开发环境
+
+### 热重载
+
+由于挂载了整个backend目录，代码修改会自动重载Flask应用（在DEBUG=True时）。
+
+### 调试
+
+```bash
+# 进入容器调试
+docker-compose exec teorecord-backend bash
+
+# 查看应用日志
+docker-compose exec teorecord-backend tail -f logs/app.log
+```
+
+## 更新部署
+
+```bash
+# 拉取最新代码
+git pull
+
+# 重新构建并启动
+docker-compose build
+docker-compose up -d
+
+# 验证更新
+curl http://localhost:5001/health
 ```
 
 ## 服务访问
 
 启动成功后，可以通过以下地址访问：
 
-- 后端API: http://localhost:5000
-- 管理界面: http://localhost:5000/admin
-- 健康检查: http://localhost:5000/health
+- **后端API**: http://localhost:5001
+- **管理界面**: http://localhost:5001/admin
+- **健康检查**: http://localhost:5001/health
+- **API测试**: http://localhost:5001/api/test
 
 ## 数据持久化
 
-- 数据库文件: `./instance/dialect_recorder.db` (Flask标准实例目录)
-- 日志文件: `./logs/`
-- 音频和数据文件: `./data/uploads/`, `./data/good/`, `./data/bad/`
+- **数据库文件**: `./instance/dialect_recorder.db`
+- **日志文件**: `./logs/app.log`
+- **音频文件**: `./data/uploads/`, `./data/good/`, `./data/bad/`
+- **Redis数据**: Docker卷 `redis_data`
 
-## 开发环境配置
+## 环境变量参考
 
-### 开发模式
+| 变量名 | 描述 | 默认值 | 必填 |
+|--------|------|--------|------|
+| `SECRET_KEY` | Flask密钥 | - | ✅ |
+| `SILICONFLOW_API_KEY` | 硅基流动API密钥 | - | ✅ |
+| `ADMIN_USERNAME` | 管理员用户名 | admin | ❌ |
+| `ADMIN_PASSWORD` | 管理员密码 | - | ✅ |
+| `DATABASE_URL` | 数据库URL | sqlite:///dialect_recorder.db | ❌ |
+| `RATELIMIT_STORAGE_URL` | 速率限制存储 | memory:// | ❌ |
+| `RATELIMIT_DEFAULT` | 默认速率限制 | 1000 per day, 100 per hour | ❌ |
+| `DEBUG` | 调试模式 | False | ❌ |
+| `HOST` | 监听地址 | 0.0.0.0 | ❌ |
+| `PORT` | 监听端口 | 5000 | ❌ |
 
-如果想启用开发模式的热重载功能，可以修改`docker-compose.yml`中的volumes配置：
+## 支持
 
-```yaml
-volumes:
-  # 移除:ro限制，允许热重载
-  - ../app:/app/app
-```
-
-并在环境变量中设置：
-
-```yaml
-environment:
-  - DEBUG=True
-```
-
-### 自定义端口
-
-如果需要修改端口，可以在`docker-compose.yml`中修改：
-
-```yaml
-ports:
-  - "8080:5000"  # 将本地8080端口映射到容器5000端口
-```
-
-## 故障排除
-
-### 1. 容器启动失败
-
-```bash
-# 查看详细日志
-docker-compose logs teorecord-backend
-
-# 重新构建镜像
-docker-compose build --no-cache
-```
-
-### 2. 权限问题
-
-如果遇到数据目录权限问题，可以：
-
-```bash
-# 创建数据目录并设置权限
-mkdir -p instance logs data/uploads data/good data/bad
-chmod 755 instance logs data
-```
-
-### 3. 端口冲突
-
-如果5000端口已被占用，修改`docker-compose.yml`中的端口映射。
-
-## 生产环境建议
-
-1. **使用强密码**: 修改`.env`文件中的`SECRET_KEY`和管理员密码
-2. **HTTPS**: 在生产环境中建议使用HTTPS
-3. **数据库**: 考虑使用PostgreSQL替代SQLite以获得更好的性能
-4. **资源限制**: 根据需要设置CPU和内存限制
-5. **日志管理**: 配置日志轮转和监控
-
-## 环境变量说明
-
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `SECRET_KEY` | Flask密钥，生产环境必须修改 | your-secret-key-change-in-production |
-| `DEBUG` | 是否启用调试模式 | False |
-| `HOST` | 监听地址 | 0.0.0.0 |
-| `PORT` | 监听端口 | 5000 |
-| `SILICONFLOW_API_KEY` | 硅基流动API密钥 | 空 |
-| `ADMIN_USERNAME` | 管理员用户名 | admin |
-| `ADMIN_PASSWORD` | 管理员密码 | your-admin-password |
+如有问题，请：
+1. 检查日志文件
+2. 验证环境变量配置
+3. 确认Docker服务状态
+4. 查看本文档的故障排除部分
