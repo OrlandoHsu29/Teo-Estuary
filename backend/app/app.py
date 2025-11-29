@@ -10,6 +10,8 @@ from pathlib import Path
 from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for, make_response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
@@ -51,6 +53,19 @@ CORS(app, resources={
     }
 })
 
+# 初始化 Flask-Limiter - 使用内存存储和自定义IP获取函数
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    storage_uri="memory://",
+    default_limits=[
+        "1000 per day",    # 默认每天1000次请求
+        "100 per hour"     # 默认每小时100次请求
+    ],
+    headers_enabled=True,  # 在响应头中包含速率限制信息
+    swallow_errors=False   # 开发环境下显示错误信息
+)
+
 # 配置 - 使用相对于backend根目录的路径
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 # 数据库路径：使用instance目录
@@ -81,13 +96,8 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'your-admin-password')
 # 初始化数据库
 db = SQLAlchemy(app)
 
-# 防止恶意上传的配置
-RATE_LIMIT = {
-    'max_uploads_per_hour': 30,  # 每小时最多上传30个文件
-    'max_uploads_per_day': 100,  # 每天最多上传100个文件
-    'cooldown_minutes': 0.1,       # 上传冷却时间（分钟）
-    'max_text_length': 500       # 最大文本长度
-}
+# 文本验证配置
+MAX_TEXT_LENGTH = 500  # 最大文本长度
 
 # 数据库模型
 class Recording(db.Model):
@@ -118,16 +128,6 @@ class Recording(db.Model):
             'status': self.status
         }
 
-class UploadRate(db.Model):
-    __tablename__ = 'upload_rates'
-
-    id = db.Column(db.Integer, primary_key=True)
-    ip_address = db.Column(db.String(45), nullable=False)
-    upload_time = db.Column(db.DateTime, default=datetime.utcnow)
-
-    __table_args__ = (
-        db.Index('idx_ip_time', 'ip_address', 'upload_time'),
-    )
 
 class APIKey(db.Model):
     __tablename__ = 'api_keys'
@@ -288,8 +288,9 @@ def api_key_required(f):
         return f(key_obj, *args, **kwargs)
     return decorated_function
 
+
 def get_client_ip():
-    """获取客户端真实IP"""
+    """获取客户端真实IP（仅用于日志记录）"""
     if request.headers.getlist("X-Forwarded-For"):
         ip = request.headers.getlist("X-Forwarded-For")[0]
     elif request.headers.get("X-Real-IP"):
@@ -297,58 +298,6 @@ def get_client_ip():
     else:
         ip = request.remote_addr
     return ip
-
-def rate_limit_decorator(f):
-    """速率限制装饰器"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        client_ip = get_client_ip()
-        current_time = datetime.utcnow()
-
-        last_upload = UploadRate.query.filter_by(ip_address=client_ip)\
-            .order_by(UploadRate.upload_time.desc())\
-            .first()
-
-        if last_upload:
-            time_diff = current_time - last_upload.upload_time
-            if time_diff.total_seconds() < RATE_LIMIT['cooldown_minutes'] * 60:
-                logger.warning(f"Rate limit exceeded for IP: {client_ip}")
-                return jsonify({
-                    'error': f'请等待 {RATE_LIMIT["cooldown_minutes"]} 分钟后再试'
-                }), 429
-
-        hour_ago = current_time - timedelta(hours=1)
-        hourly_count = UploadRate.query.filter(
-            UploadRate.ip_address == client_ip,
-            UploadRate.upload_time >= hour_ago
-        ).count()
-
-        if hourly_count >= RATE_LIMIT['max_uploads_per_hour']:
-            logger.warning(f"Hourly rate limit exceeded for IP: {client_ip}")
-            return jsonify({
-                'error': f'每小时最多上传 {RATE_LIMIT["max_uploads_per_hour"]} 个文件'
-            }), 429
-
-        day_ago = current_time - timedelta(days=1)
-        daily_count = UploadRate.query.filter(
-            UploadRate.ip_address == client_ip,
-            UploadRate.upload_time >= day_ago
-        ).count()
-
-        if daily_count >= RATE_LIMIT['max_uploads_per_day']:
-            logger.warning(f"Daily rate limit exceeded for IP: {client_ip}")
-            return jsonify({
-                'error': f'每天最多上传 {RATE_LIMIT["max_uploads_per_day"]} 个文件'
-            }), 429
-
-        return f(*args, **kwargs)
-    return decorated_function
-
-def record_upload(client_ip):
-    """记录上传行为"""
-    upload = UploadRate(ip_address=client_ip)
-    db.session.add(upload)
-    db.session.commit()
 
 def admin_required(f):
     """管理员权限验证装饰器"""
@@ -371,8 +320,8 @@ def generate_ai_text():
             logger.error("AI text generation returned None")
             return None
 
-        if len(text) > RATE_LIMIT['max_text_length']:
-            text = text[:RATE_LIMIT['max_text_length']]
+        if len(text) > MAX_TEXT_LENGTH:
+            text = text[:MAX_TEXT_LENGTH]
 
         logger.info(f"Generated AI text: {text}")
         return text
@@ -407,9 +356,21 @@ def health_check():
             'error': str(e),
             'timestamp': datetime.utcnow().isoformat()
         }), 503
+    
+@app.route('/api/apikey-verify', methods=['POST'])
+@limiter.limit("50 per hour")  # 每小时最多50次验证请求
+def api_key_verify():
+    """验证apikey的接口"""
+    key_obj, error = verify_api_key(request)
+    if error:
+        return jsonify({'success': False, 'error': error['error']}), 401
+    
+    return jsonify({'success': True})
 
 @app.route('/api/generate-text', methods=['POST'])
 @api_key_required
+@limiter.limit("500 per hour")  # 每小时最多500次文本生成
+@limiter.limit("1000 per day")   # 每天最多1000次文本生成
 def api_generate_text(key_obj):
     """生成新的练习文本"""
     try:
@@ -433,7 +394,8 @@ def api_generate_text(key_obj):
 
 @app.route('/api/upload', methods=['POST'])
 @api_key_required
-@rate_limit_decorator
+@limiter.limit("300 per hour")  # 每小时最多300次上传
+@limiter.limit("750 per day")   # 每天最多750次上传
 def api_upload(key_obj):
     """上传录音文件"""
     try:
@@ -448,8 +410,8 @@ def api_upload(key_obj):
         if not text:
             return jsonify({'error': '没有文本内容'}), 400
 
-        if len(text) > RATE_LIMIT['max_text_length']:
-            return jsonify({'error': f'文本长度不能超过 {RATE_LIMIT["max_text_length"]} 字符'}), 400
+        if len(text) > MAX_TEXT_LENGTH:
+            return jsonify({'error': f'文本长度不能超过 {MAX_TEXT_LENGTH} 字符'}), 400
 
         recording_id = generate_id()
         file_extension = Path(file.filename).suffix or '.webm'
@@ -476,8 +438,6 @@ def api_upload(key_obj):
 
         db.session.add(recording)
         db.session.commit()
-
-        record_upload(get_client_ip())
 
         logger.info(f"Successfully uploaded recording: {recording_id}")
 
@@ -855,23 +815,10 @@ def internal_error(e):
     logger.error(f"Internal server error: {e}")
     return jsonify({'error': '服务器内部错误'}), 500
 
-def cleanup_old_records():
-    """清理过期的速率限制记录"""
-    try:
-        week_ago = datetime.utcnow() - timedelta(days=7)
-        UploadRate.query.filter(UploadRate.upload_time < week_ago).delete()
-        db.session.commit()
-        logger.info("Cleaned up old rate limit records")
-    except Exception as e:
-        logger.error(f"Cleanup error: {e}")
-        db.session.rollback()
 
 def create_app():
     """创建Flask应用实例"""
     return app
 
 if __name__ == '__main__':
-    with app.app_context():
-        cleanup_old_records()
-
     app.run(host='0.0.0.0', port=5000, debug=True)
