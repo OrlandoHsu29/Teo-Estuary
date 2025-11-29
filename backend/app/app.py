@@ -370,7 +370,7 @@ def health_check():
     
 @app.route('/api/apikey-verify', methods=['POST'])
 @limiter.limit("50 per hour")  # 每小时最多50次验证请求
-def api_key_verify():
+def apikey_verify():
     """验证apikey的接口"""
     key_obj, error = verify_api_key(request)
     if error:

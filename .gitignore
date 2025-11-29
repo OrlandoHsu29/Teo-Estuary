@@ -13,3 +13,4 @@ instance/*
 backend/.idea
 backend/db/dialect_recorder.db
 backend/logs/app.log
+backend/docker/.env

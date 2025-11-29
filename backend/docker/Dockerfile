@@ -27,7 +27,6 @@ RUN pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && \
 # 复制应用代码
 COPY ../app ./app
 COPY ../run.py .
-COPY ../.env.example .env
 
 # 创建必要的目录
 RUN mkdir -p logs instance
