@@ -18,7 +18,7 @@
 
 复制环境变量配置文件：
 ```bash
-cd backend
+cd backend/docker
 cp .env.example .env
 ```
 
@@ -37,7 +37,7 @@ RATELIMIT_DEFAULT=1000 per day, 100 per hour
 ### 3. 启动服务
 
 ```bash
-cd docker
+# 直接在docker目录下运行（.env文件会自动加载）
 docker-compose up -d
 ```
 
