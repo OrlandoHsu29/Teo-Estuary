@@ -351,6 +351,7 @@ def api_test():
     })
 
 @app.route('/health', methods=['GET'])
+@limiter.exempt  # 健康检查不受速率限制
 def health_check():
     """Docker健康检查端点"""
     try:
