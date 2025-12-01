@@ -27,7 +27,6 @@ instance/
 
 # 用户上传的文件 (包含用户数据，应该保密)
 backend/data/
-backend/uploads/
 *.webm
 *.mp3
 *.wav
@@ -47,3 +46,4 @@ __pycache__/
 
 # 操作系统文件
 Thumbs.db
+backend/data/bad/S001/F001/S001F001C001.webm
