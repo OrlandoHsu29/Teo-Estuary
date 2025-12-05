@@ -1138,6 +1138,137 @@ body {
     }
 }
 
+/* 底部信息样式 */
+.footer-info {
+    width: 100%;
+    max-width: 500px;
+    margin: 15px auto 0;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.footer-line {
+    text-align: center;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.footer-line:hover {
+    opacity: 1;
+}
+
+
+.dev-text {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(26, 26, 46, 0.6);
+    border: 1px solid #333344;
+    border-radius: 8px;
+    box-shadow:
+        inset 1px 1px 3px rgba(255, 255, 255, 0.05),
+        inset -1px -1px 3px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+
+    font-family: 'Press Start 2P', 'Noto Sans SC', monospace;
+    font-size: 10px;
+    color: #5566aa;
+    letter-spacing: 0.5px;
+}
+
+.dev-text:hover {
+    background: rgba(26, 26, 46, 0.8);
+    border-color: #4466ff;
+    box-shadow:
+        0 0 15px rgba(68, 102, 255, 0.2),
+        inset 1px 1px 3px rgba(255, 255, 255, 0.1),
+        inset -1px -1px 3px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+    color: #6688ff;
+}
+
+/* 分隔线样式 */
+.footer-divider {
+    width: 600px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(102, 119, 136, 0.3),
+        transparent
+    );
+    margin: 8px 0 2px 0;
+}
+
+/* 备案链接样式 */
+.icp-link {
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11px;
+    color: #667788;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.icp-link:hover {
+    color: #8899bb;
+}
+
+.icp-separator {
+    color: #667788;
+    font-size: 12px;
+    margin: 0 8px;
+}
+
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .footer-info {
+        margin-top: 12px;
+        padding: 6px;
+    }
+
+    .icp-text {
+        font-size: 9px;
+    }
+
+    .dev-text {
+        font-size: 9px;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-info {
+        margin-top: 10px;
+        padding: 5px;
+    }
+
+    .icp-text {
+        font-size: 8px;
+    }
+
+    .dev-text {
+        font-size: 8px;
+        padding: 5px 10px;
+    }
+}
+
+/* 深色模式优化 */
+@media (prefers-color-scheme: dark) {
+    .icp-footer::before {
+        background: linear-gradient(90deg,
+            transparent,
+            rgba(0, 255, 255, 0.2),
+            transparent
+        );
+    }
+}
+
 /* 减少动画效果（针对用户的动画偏好设置） */
 @media (prefers-reduced-motion: reduce) {
     *,
