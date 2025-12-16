@@ -1,1 +1,182 @@
-# App package
+"""应用初始化模块"""
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import os
+from pathlib import Path
+
+# 获取后端根目录
+BACKEND_ROOT = Path(__file__).parent.parent
+
+# 初始化数据库
+db = SQLAlchemy()
+
+# 初始化潮汕话转换器
+from app.teochew_g2p.script.pyPengIm import pyPengIm
+teochew_converter = pyPengIm()
+
+# 配置日志
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(str(BACKEND_ROOT / 'logs' / 'app.log'), encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+
+def create_app():
+    """应用工厂函数"""
+    # 创建Flask应用
+    app = Flask(__name__,
+        template_folder=str(BACKEND_ROOT / 'templates'),
+        static_folder=str(BACKEND_ROOT / 'static')
+    )
+
+    # 配置
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///dialect_recorder.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+    # 硅基流动API配置
+    app.config['SILICONFLOW_API_KEY'] = os.environ.get('SILICONFLOW_API_KEY', 'sk-dqfrbwdryedhuzxwtgdzfffxjstlkkjgenatmuwmembcdjhb')
+    app.config['SILICONFLOW_BASE_URL'] = 'https://api.siliconflow.cn/v1'
+
+    # 管理员配置
+    app.config['ADMIN_USERNAME'] = os.environ.get('ADMIN_USERNAME', 'admin')
+    app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'your-admin-password')
+
+    # 文本验证配置
+    app.config['MAX_TEXT_LENGTH'] = 500
+
+    # 设置instance_path为instance目录
+    app.instance_path = str(BACKEND_ROOT / 'instance')
+
+    # 确保必要的目录存在
+    os.makedirs(BACKEND_ROOT / 'logs', exist_ok=True)
+    os.makedirs(BACKEND_ROOT / 'instance', exist_ok=True)
+    os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
+    os.makedirs(f'{app.config["DATA_FOLDER"]}/uploads', exist_ok=True)
+    os.makedirs(f'{app.config["DATA_FOLDER"]}/good', exist_ok=True)
+    os.makedirs(f'{app.config["DATA_FOLDER"]}/bad', exist_ok=True)
+
+    # 初始化扩展
+    db.init_app(app)
+
+    # 启用CORS支持
+    CORS(app, resources={
+        r"/*": {
+            "origins": "*",
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": "*"
+        }
+    })
+
+    # Flask-Limiter 配置
+    from app.utils.rate_limiter import limiter
+
+    rate_limit_storage = os.environ.get('RATELIMIT_STORAGE_URL', 'memory://')
+    rate_limit_default = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 100 per hour')
+
+    # 解析默认限制配置
+    default_limits = []
+    for limit in rate_limit_default.split(','):
+        limit = limit.strip()
+        if limit:
+            default_limits.append(limit)
+
+    limiter.init_app(app)
+    limiter.storage_uri = rate_limit_storage
+    limiter.default_limits = default_limits
+
+    logger.info(f"Flask-Limiter initialized with storage: {rate_limit_storage}")
+    logger.info(f"Default limits: {default_limits}")
+
+    # 注册蓝图
+    from app.api import auth_bp, recordings_bp, keys_bp, text_bp
+    from app.admin.routes import admin_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(recordings_bp)
+    app.register_blueprint(keys_bp)
+    app.register_blueprint(text_bp)
+    app.register_blueprint(admin_bp)
+
+    # 注册错误处理器
+    register_error_handlers(app)
+
+    # 注册基础路由
+    register_base_routes(app, limiter)
+
+    # 创建数据库表
+    with app.app_context():
+        db.create_all()
+
+        # 初始化AI文本生成器
+        from app.ai_generator import create_text_generator
+        app.text_generator = create_text_generator(api_key=app.config['SILICONFLOW_API_KEY'])
+
+        # 添加潮汕话转换器到应用上下文
+        app.teochew_converter = teochew_converter
+
+    return app
+
+
+def register_error_handlers(app):
+    """注册错误处理器"""
+    @app.errorhandler(413)
+    def too_large(e):
+        """文件过大错误处理"""
+        return jsonify({'error': '文件太大，请选择小于16MB的文件'}), 413
+
+    @app.errorhandler(404)
+    def not_found(e):
+        """404错误处理"""
+        return jsonify({'error': '页面不存在'}), 404
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        """500错误处理"""
+        logger.error(f"Internal server error: {e}")
+        return jsonify({'error': '服务器内部错误'}), 500
+
+
+def register_base_routes(app, limiter):
+    """注册基础路由"""
+    @app.route('/api/test', methods=['GET'])
+    def api_test():
+        """测试API端点"""
+        from datetime import datetime
+        return jsonify({
+            'success': True,
+            'message': '后端API正常工作',
+            'timestamp': datetime.now().isoformat()
+        })
+
+    @app.route('/health', methods=['GET'])
+    @limiter.exempt  # 健康检查不受速率限制
+    def health_check():
+        """Docker健康检查端点"""
+        from datetime import datetime
+        try:
+            # 简单的数据库连接检查
+            with db.engine.connect() as conn:
+                conn.execute(db.text('SELECT 1'))
+            return jsonify({
+                'status': 'healthy',
+                'timestamp': datetime.now().isoformat()
+            }), 200
+        except Exception as e:
+            return jsonify({
+                'status': 'unhealthy',
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            }), 503
