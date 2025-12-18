@@ -6,9 +6,9 @@
 """
 
 from typing import List, Dict, Optional, Tuple
-from models import TranslationDict
-from dao import TranslationDictDAO, ChangeLog
-from jieba_sync_service import JiebaSyncService
+from app.teo_g2p.models import TranslationDict
+from app.teo_g2p.dao import TranslationDictDAO, ChangeLog
+from app.teo_g2p.jieba_sync_service import JiebaSyncService
 
 # 创建全局实例
 _change_logger = ChangeLog()
@@ -102,7 +102,7 @@ def get_translation(mandarin_text: str, variant: int = None) -> Optional[Transla
 
 def search_translations(keyword: str = "", limit: int = 100) -> List[TranslationDict]:
     """
-    搜索翻译条目
+    搜索翻译条目，支持普通话和潮语双向搜索
 
     Args:
         keyword: 搜索关键词 (可选)

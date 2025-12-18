@@ -12,8 +12,8 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
-from models import TranslationDict
-from database import get_db
+from app.teo_g2p.models import TranslationDict
+from app.teo_g2p.database import get_db
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -442,12 +442,84 @@ class TranslationDictDAO:
         finally:
             db.close()
 
-    def list_translations(self, mandarin_text: str = None, limit: int = 100) -> List[TranslationDict]:
+    def get_translation_by_id(self, entry_id: int) -> Optional[TranslationDict]:
         """
-        列出翻译条目
+        根据ID获取翻译条目
 
         Args:
-            mandarin_text: 普通话词语过滤
+            entry_id: 词条ID
+
+        Returns:
+            翻译条目或None
+        """
+        db = next(get_db())
+
+        try:
+            return db.query(TranslationDict).filter(TranslationDict.id == entry_id).first()
+        except Exception as e:
+            logger.error(f"根据ID获取翻译条目失败: {e}")
+            return None
+        finally:
+            db.close()
+
+    def update_translation_status(self, entry_id: int, is_active: bool, user: str = "system", reason: str = "") -> bool:
+        """
+        更新翻译条目的状态
+
+        Args:
+            entry_id: 词条ID
+            is_active: 是否激活
+            user: 操作用户
+            reason: 修改原因
+
+        Returns:
+            是否更新成功
+        """
+        db = next(get_db())
+
+        try:
+            translation = db.query(TranslationDict).filter(TranslationDict.id == entry_id).first()
+            if not translation:
+                logger.warning(f"未找到要更新的翻译条目: {entry_id}")
+                return False
+
+            old_data = {
+                "is_active": translation.is_active
+            }
+
+            translation.is_active = 1 if is_active else 0
+
+            new_data = {
+                "is_active": translation.is_active
+            }
+
+            self.change_logger.log_change(
+                operation="status_update",
+                mandarin_text=translation.mandarin_text,
+                teochew_text=translation.teochew_text,
+                variant=translation.variant,
+                old_data=old_data,
+                new_data=new_data,
+                user=user,
+                reason=reason
+            )
+
+            db.commit()
+            return True
+
+        except Exception as e:
+            db.rollback()
+            logger.error(f"更新翻译条目状态失败: {e}")
+            return False
+        finally:
+            db.close()
+
+    def list_translations(self, keyword: str = None, limit: int = 100) -> List[TranslationDict]:
+        """
+        列出翻译条目，支持普通话和潮语双向搜索
+
+        Args:
+            keyword: 搜索关键词，支持普通话或潮语 (可选)
             limit: 返回数量限制
 
         Returns:
@@ -458,10 +530,14 @@ class TranslationDictDAO:
         try:
             query = db.query(TranslationDict).filter(TranslationDict.is_active == 1)
 
-            if mandarin_text:
-                query = query.filter(TranslationDict.mandarin_text.like(f'%{mandarin_text}%'))
+            if keyword:
+                # 支持普通话和潮语双向搜索
+                query = query.filter(
+                    (TranslationDict.mandarin_text.like(f'%{keyword}%')) |
+                    (TranslationDict.teochew_text.like(f'%{keyword}%'))
+                )
 
-            return query.order_by(desc(TranslationDict.priority)).limit(limit).all()
+            return query.order_by(TranslationDict.word_length, desc(TranslationDict.priority)).limit(limit).all()
 
         except Exception as e:
             logger.error(f"列出翻译条目失败: {e}")

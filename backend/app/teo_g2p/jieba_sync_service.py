@@ -12,9 +12,9 @@ from typing import List, Dict, Set, Tuple
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from models import TranslationDict
-from database import get_db
-from dao import ChangeLog
+from app.teo_g2p.models import TranslationDict
+from app.teo_g2p.database import get_db
+from app.teo_g2p.dao import ChangeLog
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)

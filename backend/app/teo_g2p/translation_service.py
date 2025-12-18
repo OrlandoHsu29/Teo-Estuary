@@ -4,9 +4,9 @@ import hashlib
 import os
 from typing import List, Dict, Tuple, Optional
 from sqlalchemy import and_, desc, func
-from models import TranslationDict
-from database import get_db
-from cache_manager import cache_manager
+from app.teo_g2p.models import TranslationDict
+from app.teo_g2p.database import get_db
+from app.teo_g2p.cache_manager import cache_manager
 
 class TranslationService:
     """

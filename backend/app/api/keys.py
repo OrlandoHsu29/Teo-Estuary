@@ -112,7 +112,30 @@ def api_delete_key(key_id):
         return jsonify({'error': '删除密钥失败'}), 500
 
 
-@keys_bp.route('/api/keys/<int:key_id>/reset', methods=['POST'])
+@keys_bp.route('/api/keys/<int:key_id>/toggle', methods=['POST'])
+def api_toggle_key_status(key_id):
+    """切换API密钥状态"""
+    try:
+        from app.models import APIKey
+
+        key = APIKey.query.get_or_404(key_id)
+        key.is_active = not key.is_active
+        db.session.commit()
+
+        status_text = "启用" if key.is_active else "禁用"
+        return jsonify({
+            'success': True,
+            'message': f'密钥已{status_text}',
+            'key': key.to_dict()
+        })
+
+    except Exception as e:
+        logger.error(f"Toggle key status error: {e}")
+        db.session.rollback()
+        return jsonify({'error': '切换密钥状态失败'}), 500
+
+
+@keys_bp.route('/api/keys/<int:key_id>/reset-usage', methods=['POST'])
 def api_reset_key_usage(key_id):
     """重置API密钥使用次数"""
     try:
