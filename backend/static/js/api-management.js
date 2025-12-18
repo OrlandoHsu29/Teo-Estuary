@@ -167,9 +167,97 @@ async function resetKeyUsage(id) {
     }
 }
 
-// 编辑API密钥
+// 显示编辑密钥模态框
 async function editKey(id) {
-    showToast('编辑功能开发中...', 'warning');
+    try {
+        // 先获取当前密钥信息
+        const response = await fetch(`/api/keys`);
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast('获取密钥信息失败', 'error');
+            return;
+        }
+
+        // 找到要编辑的密钥
+        const key = data.keys.find(k => k.id === id);
+        if (!key) {
+            showToast('未找到指定的密钥', 'error');
+            return;
+        }
+
+        // 填充表单数据
+        document.getElementById('editKeyId').value = key.id;
+        document.getElementById('editKeyName').value = key.name || '';
+        document.getElementById('editKeyDescription').value = key.description || '';
+        document.getElementById('editMaxRequests').value = key.max_requests || 1000;
+        document.getElementById('editKeyActive').checked = key.is_active;
+
+        // 显示模态框
+        document.getElementById('editKeyModal').style.display = 'block';
+
+    } catch (error) {
+        console.error('获取密钥信息失败:', error);
+        showToast('获取密钥信息失败', 'error');
+    }
+}
+
+// 关闭编辑密钥模态框
+function closeEditKeyModal() {
+    document.getElementById('editKeyModal').style.display = 'none';
+    // 清空表单
+    document.getElementById('editKeyId').value = '';
+    document.getElementById('editKeyName').value = '';
+    document.getElementById('editKeyDescription').value = '';
+    document.getElementById('editMaxRequests').value = '1000';
+    document.getElementById('editKeyActive').checked = true;
+}
+
+// 更新API密钥
+async function updateKey() {
+    const id = document.getElementById('editKeyId').value;
+    const name = document.getElementById('editKeyName').value.trim();
+    const description = document.getElementById('editKeyDescription').value.trim();
+    const maxRequests = document.getElementById('editMaxRequests').value;
+    const isActive = document.getElementById('editKeyActive').checked;
+
+    if (!name) {
+        showToast('请输入密钥名称', 'warning');
+        return;
+    }
+
+    if (!id) {
+        showToast('密钥ID无效', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/keys/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description,
+                max_requests: parseInt(maxRequests),
+                is_active: isActive
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('更新成功', 'success');
+            closeEditKeyModal();
+            loadApiKeys();
+        } else {
+            showToast(data.error || '更新失败', 'error');
+        }
+    } catch (error) {
+        console.error('更新API密钥失败:', error);
+        showToast('更新失败', 'error');
+    }
 }
 
 // 切换API密钥状态
@@ -215,3 +303,27 @@ async function deleteKey(id) {
         }
     }
 }
+
+// 模态框事件监听
+document.addEventListener('DOMContentLoaded', function() {
+    // ESC键关闭模态框
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCreateKeyModal();
+            closeEditKeyModal();
+        }
+    });
+
+    // 点击模态框外部关闭
+    document.getElementById('createKeyModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCreateKeyModal();
+        }
+    });
+
+    document.getElementById('editKeyModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeEditKeyModal();
+        }
+    });
+});

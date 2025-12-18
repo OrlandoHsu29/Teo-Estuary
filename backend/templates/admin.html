@@ -459,6 +459,44 @@
         </div>
     </div>
 
+    <!-- 编辑密钥弹窗 -->
+    <div class="modal" id="editKeyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑API密钥</h3>
+                <button class="close-btn" onclick="closeEditKeyModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editKeyId">
+                <div class="form-group">
+                    <label for="editKeyName">密钥名称:</label>
+                    <input type="text" id="editKeyName" placeholder="输入密钥名称">
+                </div>
+                <div class="form-group">
+                    <label for="editKeyDescription">描述:</label>
+                    <textarea id="editKeyDescription" placeholder="输入密钥描述（可选）"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editMaxRequests">每日最大请求次数:</label>
+                    <input type="number" id="editMaxRequests" value="1000" min="1">
+                </div>
+                <div class="form-group">
+                    <div class="dict-toggle-group">
+                        <label class="dict-toggle-label" for="editKeyActive">
+                            <span class="dict-toggle-text">启用此密钥</span>
+                            <input type="checkbox" id="editKeyActive" checked>
+                            <div class="dict-toggle-slider"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary-btn" onclick="closeEditKeyModal()">取消</button>
+                <button class="primary-btn" onclick="updateKey()">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 字典管理模态框 -->
     <div class="modal" id="dictModal">
         <div class="modal-content dict-modal-content">

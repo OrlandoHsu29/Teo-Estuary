@@ -1459,6 +1459,7 @@ body {
 }
 
 .modal-header {
+    background: linear-gradient(135deg, #2a4858, #1e3a5f);
     padding: 1.5rem 2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
@@ -3206,10 +3207,10 @@ s
     background: linear-gradient(90deg, #49ff4f, #45a049);
     opacity: 0.95;
     transform: scaleX(1);
-    transition: opacity 0.12s cubic-bezier(0.25, 0.1, 0.25, 1),   /* 展开时快速透明度 */
-                transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),   /* 展开时快速变换 */
-                box-shadow 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),  /* 展开时快速光影 */
-                filter 0.18s ease-out;
+    transition: opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),     /* 展开时透明度 */
+                transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),     /* 展开时变换 - 放慢 */
+                box-shadow 0.25s cubic-bezier(0.25, 0.1, 0.25, 1),   /* 展开时光影 */
+                filter 0.25s ease-out;
     box-shadow:
         0 0 15px rgba(76, 175, 80, 1),        /* 核心强发光 */
         0 0 35px rgba(76, 175, 80, 0.9),        /* 中强发光 */
@@ -3225,10 +3226,10 @@ s
     background: linear-gradient(90deg, #F44336, #d32f2f);
     opacity: 0.95;
     transform: scaleX(1);
-    transition: opacity 0.12s cubic-bezier(0.25, 0.1, 0.25, 1),   /* 展开时快速透明度 */
-                transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),   /* 展开时快速变换 */
-                box-shadow 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),  /* 展开时快速光影 */
-                filter 0.18s ease-out;
+    transition: opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),     /* 展开时透明度 */
+                transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),     /* 展开时变换 - 放慢 */
+                box-shadow 0.25s cubic-bezier(0.25, 0.1, 0.25, 1),   /* 展开时光影 */
+                filter 0.25s ease-out;
     box-shadow:
         0 0 15px rgba(244, 67, 54, 1),        /* 核心强发光 */
         0 0 35px rgba(244, 67, 54, 0.9),        /* 中强发光 */
@@ -3940,7 +3941,6 @@ mark {
 }
 
 .dict-modal-content .modal-header {
-    background: linear-gradient(135deg, #2a4858, #1e3a5f);
     padding: 20px 24px;
     display: flex;
     justify-content: space-between;
@@ -4036,6 +4036,7 @@ mark {
 }
 
 .dict-toggle-slider {
+    margin-top: 15px;
     width: 50px;
     height: 26px;
     background: linear-gradient(145deg, #1a1a2e, #0f0f22);
@@ -4079,6 +4080,7 @@ mark {
 }
 
 .dict-toggle-text {
+
     color: var(--text-primary);
     font-size: 0.9rem;
     font-weight: 500;
