@@ -10,3 +10,8 @@ admin_bp = Blueprint('admin', __name__)
 def dashboard():
     """管理界面"""
     return render_template('admin.html')
+
+@admin_bp.route('/admin/login')
+def login():
+    """管理员登录界面"""
+    return render_template('admin_login.html')
