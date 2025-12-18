@@ -1,0 +1,148 @@
+// UI导航和控制模块
+
+// 初始化导航功能
+function initializeNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.dataset.section;
+            switchSection(section);
+        });
+    });
+}
+
+// 初始化状态筛选按钮
+function initializeStatusFilters() {
+    // 设置默认激活状态
+    const pendingBtn = document.querySelector('[data-status="pending"]');
+    if (pendingBtn) {
+        pendingBtn.classList.add('active');
+    }
+}
+
+
+// 切换功能区域
+function switchSection(sectionName) {
+    // 更新导航状态
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+
+    // 隐藏所有内容区域
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+
+    // 显示对应内容区域
+    document.getElementById(`${sectionName}-section`).classList.add('active');
+
+    currentSection = sectionName;
+
+    // 如果切换到审核界面，确保视图状态正确
+    if (sectionName === 'review') {
+        const deviceView = document.getElementById('deviceView');
+        const listView = document.getElementById('listView');
+        const toggleBtn = document.querySelector('.toggle-view-btn');
+
+        if (currentView === 'list') {
+            // 如果当前是列表视图，但切换到了审核界面，需要重置为设备视图
+            deviceView.style.display = 'block';
+            listView.style.display = 'none';
+            if (toggleBtn) {
+                toggleBtn.innerHTML = `
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100-4h2a1 1 0 100-2 2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H6z"/>
+                    </svg>
+                    列表视图
+                `;
+            }
+            currentView = 'device';
+        }
+    }
+
+    // 加载对应数据
+    switch(sectionName) {
+        case 'review':
+            loadRecordings();
+            break;
+        case 'apikeys':
+            loadApiKeys();
+            break;
+        case 'dictionary':
+            // 字典管理暂时只显示前端
+            break;
+    }
+}
+
+// 刷新所有数据
+function refreshAllData() {
+    // 显示刷新动画
+    const refreshBtn = document.querySelector('.refresh-btn-title');
+    if (refreshBtn) {
+        refreshBtn.classList.add('spinning');
+    }
+
+    // 重新加载所有数据
+    Promise.all([
+        loadRecordings(),
+        loadStats(), // 现在这个函数只更新数字，不会重新渲染
+        loadApiKeys()
+    ]).then(() => {
+        // 刷新完成后移除动画
+        setTimeout(() => {
+            if (refreshBtn) {
+                refreshBtn.classList.remove('spinning');
+            }
+        }, 500);
+    }).catch(error => {
+        console.error('刷新数据失败:', error);
+        // 即使出错也要移除动画
+        setTimeout(() => {
+            if (refreshBtn) {
+                refreshBtn.classList.remove('spinning');
+            }
+        }, 500);
+    });
+}
+
+// 添加旋转动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+
+// 状态筛选功能
+function filterByStatus(status) {
+    console.log('切换状态筛选到:', status); // 调试信息
+
+    // 更新当前筛选状态
+    currentStatusFilter = status;
+
+    // 更新按钮状态
+    const filterButtons = document.querySelectorAll('.status-filter-btn');
+    filterButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.status === status) {
+            btn.classList.add('active');
+        }
+    });
+
+    // 同步更新列表视图的筛选器下拉菜单
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+        statusFilter.value = status;
+    }
+
+    // 重置页码并重新加载录音数据
+    currentPage = 1;
+    loadRecordings(status);
+}
+

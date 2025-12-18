@@ -1,0 +1,493 @@
+// 审核操作模块
+
+// 编辑转换文本
+let isEditing = false;
+let originalContent = '';
+
+function enableTextEdit() {
+    if (isEditing) return;
+
+    const textElement = document.getElementById('convertedText');
+    const editElement = document.getElementById('convertedTextEdit');
+    const editActions = document.getElementById('editActions');
+    const originalTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:first-child');
+    const textColumn = textElement.closest('.text-column');
+
+    isEditing = true;
+    originalContent = textElement.textContent;
+
+    editElement.value = originalContent;
+    textElement.style.display = 'none';
+    editElement.style.display = 'block';
+    editActions.style.display = 'flex';
+
+    // 隐藏原始文本为编辑预留更多空间
+    if (originalTextDisplay) {
+        originalTextDisplay.style.display = 'none';
+    }
+
+    // 添加编辑状态类
+    if (textColumn) {
+        textColumn.classList.add('editing');
+    }
+
+    editElement.focus();
+}
+
+function saveTextEdit() {
+    if (recordingsData.length === 0) return;
+
+    const editElement = document.getElementById('convertedTextEdit');
+    const newContent = editElement.value.trim();
+
+    if (newContent && newContent !== originalContent) {
+        // 更新本地数据
+        recordingsData[currentRecordIndex].actual_content = newContent;
+        document.getElementById('convertedText').textContent = newContent;
+
+        // 保存到后端
+        updateRecordingContent(recordingsData[currentRecordIndex].id, newContent);
+    }
+
+    cancelTextEdit(); // cancelTextEdit会移除编辑状态类
+}
+
+function cancelTextEdit() {
+    const textElement = document.getElementById('convertedText');
+    const editElement = document.getElementById('convertedTextEdit');
+    const editActions = document.getElementById('editActions');
+    const originalTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:first-child');
+    const textColumn = textElement.closest('.text-column');
+
+    isEditing = false;
+
+    textElement.style.display = 'block';
+    editElement.style.display = 'none';
+    editActions.style.display = 'none';
+
+    // 恢复原始文本显示
+    if (originalTextDisplay) {
+        originalTextDisplay.style.display = 'block';
+    }
+
+    // 移除编辑状态类
+    if (textColumn) {
+        textColumn.classList.remove('editing');
+    }
+}
+
+// 更新记录内容
+async function updateRecordingContent(id, actualContent) {
+    try {
+        const response = await fetch(`/api/recording/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ actual_content: actualContent })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('保存成功', 'success');
+        } else {
+            showToast(data.error || '保存失败', 'error');
+        }
+    } catch (error) {
+        console.error('保存失败:', error);
+        showToast('保存失败', 'error');
+    }
+}
+
+// 更新记录状态
+async function updateRecordingStatus(id, status) {
+    try {
+        const response = await fetch(`/api/recording/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: status })
+        });
+
+        // 检查响应是否为HTML（错误页面）
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('API返回HTML而非JSON:', text.substring(0, 200));
+            showToast('服务器错误，请检查API配置', 'error');
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 显示审核操作动画反馈
+            showProgressAnimation(status);
+
+            // 审核成功时不显示Toast，保持界面清洁
+            // showToast(status === 'approved' ? '审核通过成功' : '拒绝成功', 'success');
+
+            // 更新本地数据
+            const recording = recordingsData.find(r => r.id == id);
+            if (recording) {
+                recording.status = status;
+                // 移到下一条记录
+                if (currentRecordIndex < recordingsData.length - 1) {
+                    currentRecordIndex++;
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                } else if (recordingsData.length > 1) {
+                    // 最后一条记录，回到前一条
+                    currentRecordIndex = Math.max(0, currentRecordIndex - 1);
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                } else {
+                    // 没有更多记录，重新加载
+                    loadRecordings();
+                }
+            }
+            // 更新统计
+            loadStats();
+        } else {
+            showToast(data.error || '操作失败', 'error');
+        }
+    } catch (error) {
+        console.error('操作失败:', error);
+        showToast('操作失败: ' + error.message, 'error');
+    }
+}
+
+// 审核通过
+async function approveCurrent() {
+    if (recordingsData.length === 0) return;
+
+    const record = recordingsData[currentRecordIndex];
+
+    // 检查是否有实际内容
+    if (!record.actual_content && !record.original_text) {
+        showToast('请先填写音频实际内容后再进行审核', 'error');
+        return;
+    }
+
+    // 更新内容（如果需要）然后更新状态
+    try {
+        const actualContent = record.actual_content || record.original_text;
+
+        const response = await fetch(`/api/recording/${record.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'approved',
+                actual_content: actualContent
+            })
+        });
+
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('API返回HTML而非JSON:', text.substring(0, 200));
+            showToast('服务器错误，请检查API配置', 'error');
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 显示绿色通过动画
+            showProgressAnimation('approved');
+
+            // 从本地数据中移除已审核的记录，使用正确的逻辑
+            recordingsData.splice(currentRecordIndex, 1);
+
+            // 更新当前索引
+            if (recordingsData.length === 0) {
+                // 没有更多记录，重新加载
+                loadRecordings();
+            } else if (currentRecordIndex >= recordingsData.length) {
+                // 当前索引超出范围，回到最后一条
+                currentRecordIndex = recordingsData.length - 1;
+                displayCurrentRecord();
+                updateNavigationButtons();
+            } else {
+                // 显示当前索引的记录
+                displayCurrentRecord();
+                updateNavigationButtons();
+            }
+
+            // 更新统计
+            loadStats();
+        } else {
+            showToast(data.error || '审核失败', 'error');
+        }
+    } catch (error) {
+        console.error('审核失败:', error);
+        showToast('审核失败: ' + error.message, 'error');
+    }
+}
+
+// 审核拒绝
+async function rejectCurrent() {
+    if (recordingsData.length === 0) return;
+
+    const record = recordingsData[currentRecordIndex];
+
+    // 检查是否有实际内容
+    if (!record.actual_content && !record.original_text) {
+        showToast('请先填写音频实际内容后再进行审核', 'error');
+        return;
+    }
+
+    try {
+        const actualContent = record.actual_content || record.original_text;
+
+        const response = await fetch(`/api/recording/${record.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'rejected',
+                actual_content: actualContent
+            })
+        });
+
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('API返回HTML而非JSON:', text.substring(0, 200));
+            showToast('服务器错误，请检查API配置', 'error');
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 显示红色拒绝动画
+            showProgressAnimation('rejected');
+
+            // 从本地数据中移除已审核的记录，使用正确的逻辑
+            recordingsData.splice(currentRecordIndex, 1);
+
+            // 更新当前索引
+            if (recordingsData.length === 0) {
+                // 没有更多记录，重新加载
+                loadRecordings();
+            } else if (currentRecordIndex >= recordingsData.length) {
+                // 当前索引超出范围，回到最后一条
+                currentRecordIndex = recordingsData.length - 1;
+                displayCurrentRecord();
+                updateNavigationButtons();
+            } else {
+                // 显示当前索引的记录
+                displayCurrentRecord();
+                updateNavigationButtons();
+            }
+
+            // 更新统计
+            loadStats();
+        } else {
+            showToast(data.error || '拒绝失败', 'error');
+        }
+    } catch (error) {
+        console.error('拒绝失败:', error);
+        showToast('拒绝失败: ' + error.message, 'error');
+    }
+}
+
+// 从列表审核
+async function approveFromList(id, isCurrent) {
+    // 显示审核成功动画
+    showProgressAnimation('approved');
+    await updateRecordingStatus(id, 'approved');
+    if (isCurrent && currentView === 'device') {
+        recordingsData.splice(currentRecordIndex, 1);
+        if (recordingsData.length === 0) {
+            loadRecordings();
+        } else if (currentRecordIndex >= recordingsData.length) {
+            currentRecordIndex = recordingsData.length - 1;
+            displayCurrentRecord();
+        } else {
+            displayCurrentRecord();
+        }
+        updateNavigationButtons();
+    }
+    loadListView();
+    loadStats();
+}
+
+async function rejectFromList(id, isCurrent) {
+    // 拒绝成功动画
+    showProgressAnimation('rejected');
+    await updateRecordingStatus(id, 'rejected');
+    if (isCurrent && currentView === 'device') {
+        recordingsData.splice(currentRecordIndex, 1);
+        if (recordingsData.length === 0) {
+            loadRecordings();
+        } else if (currentRecordIndex >= recordingsData.length) {
+            currentRecordIndex = recordingsData.length - 1;
+            displayCurrentRecord();
+        } else {
+            displayCurrentRecord();
+        }
+        updateNavigationButtons();
+    }
+    loadListView();
+    loadStats();
+}
+
+async function deleteFromList(id, isCurrent) {
+    if (!confirm('确定要删除这个记录吗？')) return;
+
+    try {
+        const response = await fetch(`/admin/api/recordings/${id}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('删除成功', 'success');
+            if (isCurrent && currentView === 'device') {
+                recordingsData.splice(currentRecordIndex, 1);
+                if (recordingsData.length === 0) {
+                    loadRecordings();
+                } else if (currentRecordIndex >= recordingsData.length) {
+                    currentRecordIndex = recordingsData.length - 1;
+                    displayCurrentRecord();
+                } else {
+                    displayCurrentRecord();
+                }
+                updateNavigationButtons();
+            }
+            loadListView();
+            loadStats();
+        } else {
+            showToast(data.error || '删除失败', 'error');
+        }
+    } catch (error) {
+        console.error('删除失败:', error);
+        showToast('删除失败', 'error');
+    }
+}
+
+// 显示审核操作动画反馈
+function showProgressAnimation(status) {
+    const reviewAnimationOverlay = document.getElementById('reviewAnimationOverlay');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    if (!reviewAnimationOverlay) return;
+
+    // 停止当前音频播放并重置播放时间
+    if (audioPlayer && !audioPlayer.paused) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0; // 重置播放时间
+        // 重置播放图标
+        const playIcon = document.getElementById('playIcon');
+        if (playIcon) {
+            playIcon.className = 'fas fa-play';
+        }
+    }
+
+    // 清除之前的状态类
+    reviewAnimationOverlay.classList.remove('approved', 'rejected');
+
+    // 短暂延迟后开始动画
+    setTimeout(() => {
+        // 添加对应的状态类，触发CSS动画
+        reviewAnimationOverlay.classList.add(status);
+
+        // 保持充分展示时间后再开始收起
+        setTimeout(() => {
+            // 直接移除状态类，触发收起动画
+            reviewAnimationOverlay.classList.remove(status);
+        }, status === 'approved' ? 600 : 650); // 适中的保持时间
+    }, 20);
+}
+
+// 更新控制按钮状态
+function updateControlButtonsByStatus() {
+    const hasData = recordingsData.length > 0;
+    const currentRecording = hasData ? recordingsData[currentRecordIndex] : null;
+
+    if (!hasData || !currentRecording) {
+        updateControlButtons(); // 没有数据时使用原有逻辑
+        return;
+    }
+
+    const approveBtn = document.querySelector('.approve-btn');
+    const rejectBtn = document.querySelector('.reject-btn');
+    const downloadBtn = document.querySelector('.download-btn');
+    const deleteBtn = document.querySelector('.discard-btn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const editBtn = document.querySelector('.edit-btn');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+
+    // 根据状态禁用相应的审核按钮
+    const isApproved = currentRecording.status === 'approved';
+    const isRejected = currentRecording.status === 'rejected';
+    const isPending = currentRecording.status === 'pending';
+
+    // 审核按钮逻辑
+    if (approveBtn) {
+        approveBtn.disabled = isApproved; // 已通过的记录不能再通过
+        // 更新按钮视觉状态
+        if (isApproved) {
+            approveBtn.classList.add('disabled-by-status');
+        } else {
+            approveBtn.classList.remove('disabled-by-status');
+        }
+    }
+
+    if (rejectBtn) {
+        rejectBtn.disabled = isRejected; // 已拒绝的记录不能再拒绝
+        // 更新按钮视觉状态
+        if (isRejected) {
+            rejectBtn.classList.add('disabled-by-status');
+        } else {
+            rejectBtn.classList.remove('disabled-by-status');
+        }
+    }
+
+    // 判空禁用
+    if (editBtn) editBtn.disabled = !hasData || !currentRecording;
+    if (deleteBtn) deleteBtn.disabled = !hasData || !currentRecording;
+
+    null_status = !hasData || !currentRecording || !currentRecording.file_path;
+
+    if (downloadBtn) downloadBtn.disabled = null_status;
+    if (playPauseBtn) playPauseBtn.disabled = null_status;
+    if (volumeSlider) volumeSlider.disabled = null_status;
+
+
+
+}
+
+// 更新控制按钮状态
+function updateControlButtons() {
+    const hasData = recordingsData.length > 0;
+    const currentRecording = hasData ? recordingsData[currentRecordIndex] : null;
+
+    // 启用/禁用各种控制按钮
+    const approveBtn = document.querySelector('.approve-btn');
+    const rejectBtn = document.querySelector('.reject-btn');
+    const downloadBtn = document.querySelector('.download-btn');
+    const deleteBtn = document.querySelector('.discard-btn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const editBtn = document.querySelector('.edit-btn');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+    if (approveBtn) approveBtn.disabled = !hasData || !currentRecording;
+    if (rejectBtn) rejectBtn.disabled = !hasData || !currentRecording;
+    if (downloadBtn) downloadBtn.disabled = !hasData || !currentRecording;
+    if (deleteBtn) deleteBtn.disabled = !hasData || !currentRecording;
+    if (playPauseBtn) playPauseBtn.disabled = !hasData || !currentRecording;
+    if (editBtn) editBtn.disabled = !hasData || !currentRecording;
+    if (volumeSlider) volumeSlider.disabled = !hasData || !currentRecording;
+}

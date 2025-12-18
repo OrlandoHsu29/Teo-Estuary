@@ -3,78 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>录音管理后台</title>
+    <title>潮语记录管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-actions">
+    <div class="main-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="logo-text">潮语记录管理系统</div>
+                    <div class="logo-subtitle">Teo recorder manager</div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <ul>
+                    <li class="nav-item active" data-section="review">
+                        <a href="#" class="nav-link">
+                            <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100-4h2a1 1 0 100-2 2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H6z"/>
+                            </svg>
+                            <span>音频数据审核</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="apikeys">
+                        <a href="#" class="nav-link">
+                            <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z"/>
+                            </svg>
+                            <span>API密钥管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="dictionary">
+                        <a href="#" class="nav-link">
+                            <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+                            </svg>
+                            <span>潮语字典管理</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
                 <a href="/admin/logout" class="logout-btn" onclick="event.preventDefault(); if(confirm('确定要退出登录吗？')) { window.location.href = this.href; }">
                     <svg fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
                     </svg>
+                    <span>退出登录</span>
                 </a>
             </div>
-            <h1>录音管理后台</h1>
-            <p>· 方言数据收集管理系统 ·</p>
-        </div>
+        </aside>
 
-        <div class="stats-grid" id="statsGrid">
-            <!-- 统计卡片将通过JavaScript动态加载 -->
-        </div>
-
-        <!-- API密钥管理区域 -->
-        <div class="api-keys-section">
-            <div class="section-header">
-                <h2>API 密钥管理</h2>
-                <button class="btn btn-primary" onclick="showCreateKeyModal()">创建新密钥</button>
-            </div>
-            <div class="keys-grid" id="keysGrid">
-                <div class="loading">正在加载密钥数据...</div>
-            </div>
-        </div>
-
-        <!-- 统一的管理内容容器 -->
-        <div class="admin-container">
-            <!-- 控制栏 -->
-            <div class="controls">
-                <div class="filter-group">
-                    <select id="statusFilter">
-                        <option value="">所有状态</option>
-                        <option value="pending">待审核</option>
-                        <option value="approved">已通过</option>
-                        <option value="rejected">已拒绝</option>
-                    </select>
-                    <button class="btn" onclick="loadRecordings()">刷新</button>
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 审核界面 -->
+            <section class="content-section active" id="review-section">
+                <div class="section-header">
+                    <div class="header-left">
+                        <h1>音频数据审核</h1>
+                        <button class="refresh-btn-title" onclick="refreshAllData()" title="刷新数据">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"/>
+                            </svg>
+                        </button>
+                        <button class="toggle-view-btn subtle" onclick="toggleView()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100-4h2a1 1 0 100-2 2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H6z"/>
+                            </svg>
+                            <span>列表视图</span>
+                        </button>
+                    </div>
+                    <div class="stats" id="statsGrid">
+                        <!-- 统计卡片将通过JavaScript动态加载 -->
+                    </div>
                 </div>
-                <div class="filter-group">
-                    <span id="totalCount" style="color: #888899;">总计: 0 条</span>
+
+                <!-- 设备视图 -->
+                <div class="review-container" id="deviceView">
+                    <!-- 左侧状态筛选按钮 - 竖直布局 -->
+                    <div class="status-filter-sidebar">
+                        <div class="filter-panel">
+                            <button class="status-filter-btn active" data-status="pending" onclick="filterByStatus('pending')">
+                                <i class="fas fa-clock"></i>
+                                <span>待审核</span>
+                            </button>
+                            <button class="status-filter-btn" data-status="approved" onclick="filterByStatus('approved')">
+                                <i class="fas fa-check-circle"></i>
+                                <span>已通过</span>
+                            </button>
+                            <button class="status-filter-btn" data-status="rejected" onclick="filterByStatus('rejected')">
+                                <i class="fas fa-times-circle"></i>
+                                <span>已拒绝</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <svg fill="currentColor" viewBox="0 0 24 24" width="64" height="64">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <h3>暂无待审核记录</h3>
+                        <p>当前没有需要审核的录音记录</p>
+                    </div>
+
+                    <div class="review-device" id="reviewDevice" style="display: none;">
+                        <div class="device-screen">
+                            <div class="review-content" id="reviewContent">
+                                <button class="nav-btn" id="prevBtn" onclick="navigateRecord(-1)" disabled>
+                                    <svg fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+                                    </svg>
+                                </button>
+
+                                <div class="review-main">
+                                    <div class="review-header">
+                                        <h2 id="reviewTitle">正在加载...</h2>
+                                        <span class="review-counter">
+                                            <span id="currentIndex">0</span> / <span id="totalRecords">0</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="review-item">
+                                        <div class="content-row">
+                                            <!-- 左侧：文本内容 -->
+                                            <div class="text-column">
+                                                <div class="text-display compact">
+                                                    <label>原始文本</label>
+                                                    <div class="original-text">
+                                                        <p id="originalText">-</p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-display compact">
+                                                    <label>转换文本 <span class="edit-hint" onclick="enableTextEdit()">(编辑)</span></label>
+                                                    <div class="converted-text">
+                                                        <p id="convertedText" onclick="enableTextEdit()">-</p>
+                                                        <textarea id="convertedTextEdit" style="display: none;"></textarea>
+                                                        <div class="edit-actions" id="editActions" style="display: none;">
+                                                            <button class="save-btn action-btn" onclick="saveTextEdit()">保存</button>
+                                                            <button class="cancel-btn action-btn" onclick="cancelTextEdit()">取消</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 右侧：元信息 -->
+                                            <div class="media-column">
+                                                <div class="meta-info compact">
+                                                    <div class="meta-item">
+                                                        <span class="meta-label">IP:</span>
+                                                        <span class="meta-value" id="ipAddress">-</span>
+                                                    </div>
+                                                    <div class="meta-item">
+                                                        <span class="meta-label">时间:</span>
+                                                        <span class="meta-value" id="uploadTime">-</span>
+                                                    </div>
+                                                    <div class="meta-item">
+                                                        <span class="meta-label">大小:</span>
+                                                        <span class="meta-value" id="fileSize">-</span>
+                                                    </div>
+                                                    <div class="meta-item" title="" id="userAgent">
+                                                        <span class="meta-label">浏览器:</span>
+                                                        <span class="meta-value">-</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="nav-btn" id="nextBtn" onclick="navigateRecord(1)" disabled>
+                                    <svg fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- 屏幕底部整行进度条 -->
+                            <div class="screen-bottom-progress" id="screenProgress">
+                                <div class="thin-progress-track">
+                                    <div class="thin-progress-fill" id="progressFillScreen"></div>
+                                    <!-- 审核动画层 -->
+                                    <div class="review-animation-overlay" id="reviewAnimationOverlay"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 集成控制台区域 - 设备下半部分 -->
+                        <div class="device-console">
+                            <!-- 控制按钮 -->
+                            <div class="console-controls">
+                                <div class="control-left">
+                                    <button class="control-btn download-btn icon-only" onclick="downloadCurrentRecording()" disabled title="下载">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="control-btn discard-btn icon-only" onclick="deleteCurrentRecording()" disabled title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <div class="control-center">
+                                    <button class="control-btn reject-btn" onclick="rejectCurrent()" disabled>
+                                        <i class="fas fa-times"></i>
+                                        <span>拒绝</span>
+                                    </button>
+                                    <button class="control-btn approve-btn" onclick="approveCurrent()" disabled>
+                                        <i class="fas fa-check"></i>
+                                        <span>通过</span>
+                                    </button>
+                                </div>
+
+                                <div class="control-right">
+                                    <div class="audio-controls-right">
+                                        <button class="control-btn play-pause-btn-small" id="playPauseBtn" onclick="toggleAudio()" disabled>
+                                            <i class="fas fa-play" id="playIcon"></i>
+                                        </button>
+                                        <div class="volume-control-small">
+                                            <i class="fas fa-volume-up"></i>
+                                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <audio id="audioPlayer" style="display: none;"></audio>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- 分隔线 -->
-            <div class="admin-divider"></div>
+                <!-- 列表视图 -->
+                <div class="list-view-container" id="listView" style="display: none;">
+                    <div class="filter-controls">
+                        <select id="statusFilter">
+                            <option value="">所有状态</option>
+                            <option value="pending">待审核</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已拒绝</option>
+                        </select>
+                        <div class="search-container">
+                            <input type="text" id="searchInput" placeholder="搜索ID或原始文本..." class="search-input">
+                            <button id="clearSearchBtn" class="clear-search-btn" title="清空搜索">×</button>
+                        </div>
+                    </div>
 
-            <!-- 录音列表 -->
-            <div class="recordings-grid" id="recordingsGrid">
-                <div class="loading">正在加载录音数据...</div>
-            </div>
+                    <div class="recordings-list" id="recordingsList">
+                        <div class="loading">正在加载...</div>
+                    </div>
 
-            <!-- 分隔线 -->
-            <div class="admin-divider"></div>
+                    <div class="pagination" id="listPagination">
+                        <!-- 分页控件将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </section>
 
-            <!-- 分页控件 -->
-            <div class="pagination" id="pagination">
-                <!-- 分页控件将通过JavaScript动态生成 -->
-            </div>
-        </div>
+            <!-- API密钥管理界面 -->
+            <section class="content-section" id="apikeys-section">
+                <div class="section-header">
+                    <h1>API密钥管理</h1>
+                </div>
+
+                <div class="keys-grid" id="keysGrid">
+                    <div class="loading">正在加载密钥数据...</div>
+                </div>
+            </section>
+
+            <!-- 潮语字典管理界面 -->
+            <section class="content-section" id="dictionary-section">
+                <div class="section-header">
+                    <div class="header-left">
+                        <h1>潮语字典管理</h1>
+                        <button class="refresh-btn-title" onclick="refreshDictionaryData()" title="刷新数据">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <!-- 字典查询设备 -->
+                <div class="dict-review-device">
+                    <!-- 设备屏幕 -->
+                    <div class="dict-device-screen">
+                        <div class="dict-device-header">
+                            <div class="dict-device-info">
+                                <span class="device-name">潮语字典查询</span>
+                                <span class="device-status">● 在线</span>
+                            </div>
+                        </div>
+
+                        <!-- 搜索控制区域 -->
+                        <div class="dict-search-area">
+                            <div class="dict-search-control">
+                                <div class="dict-search-input-group">
+                                    <svg class="dict-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
+                                    <input type="text" id="dictSearchInput" placeholder="输入普通话或潮汕话词汇进行查询..." class="dict-device-search-input">
+                                    <button class="dict-device-search-btn" onclick="searchDictionary()">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button class="dict-add-entry-btn" onclick="showAddDictModal()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    新增词条
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 词条显示屏幕 -->
+                        <div class="dict-word-display">
+                            <div class="dict-empty-word" id="dictEmptyWord">
+                                <div class="dict-empty-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </div>
+                                <div class="dict-empty-text">
+                                    <h3>请输入查询关键词</h3>
+                                    <p>支持普通话和潮汕话词汇查询</p>
+                                </div>
+                            </div>
+
+                            <div class="dict-word-content" id="dictWordContent" style="display: none;">
+                                <!-- 导航控制 -->
+                                <div class="dict-navigation">
+                                    <button class="dict-nav-btn" id="dictPrevBtn" onclick="navigateDictEntry(-1)" disabled>
+                                        <svg fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+                                        </svg>
+                                    </button>
+
+                                    <div class="dict-counter">
+                                        <span id="dictCurrentIndex">0</span> / <span id="dictTotalResults">0</span>
+                                    </div>
+
+                                    <button class="dict-nav-btn" id="dictNextBtn" onclick="navigateDictEntry(1)" disabled>
+                                        <svg fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- 词条内容 -->
+                                <div class="dict-entry-info">
+                                    <div class="dict-words-section">
+                                        <div class="dict-word-pair">
+                                            <div class="dict-word-item">
+                                                <label class="dict-word-label">普通话词条</label>
+                                                <div class="dict-word-value" id="displayMandarin">-</div>
+                                            </div>
+                                            <div class="dict-word-item">
+                                                <label class="dict-word-label">潮汕话对应</label>
+                                                <div class="dict-word-value" id="displayTeochew">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="dict-metadata">
+                                        <div class="dict-meta-item">
+                                            <label>变体编号</label>
+                                            <span id="displayVariant">-</span>
+                                        </div>
+                                        <div class="dict-meta-item">
+                                            <label>优先级</label>
+                                            <span id="displayPriority">-</span>
+                                        </div>
+                                        <div class="dict-meta-item">
+                                            <label>状态</label>
+                                            <span id="displayStatus">-</span>
+                                        </div>
+                                        <div class="dict-meta-item">
+                                            <label>词条ID</label>
+                                            <span id="displayId">-</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 操作按钮 -->
+                                    <div class="dict-actions">
+                                        <button class="dict-edit-btn" onclick="editCurrentDictEntry()">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                            编辑
+                                        </button>
+                                        <button class="dict-delete-btn" onclick="deleteCurrentDictEntry()">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            删除
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 进度指示器 -->
+                        <div class="dict-progress-bar">
+                            <div class="dict-progress-track">
+                                <div class="dict-progress-fill" id="dictProgressFill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 设备控制台 -->
+                    <div class="dict-device-console">
+                        <div class="dict-info-panel">
+                            <div class="dict-info-item">
+                                <span class="dict-info-label">搜索结果</span>
+                                <span class="dict-info-value" id="dictResultCount">0 条词条</span>
+                            </div>
+                            <div class="dict-info-item">
+                                <span class="dict-info-label">当前显示</span>
+                                <span class="dict-info-value" id="dictCurrentDisplay">未查询</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <!-- 创建密钥弹窗 -->
-    <div class="modal-overlay" id="createKeyModal" style="display: none;">
-        <div class="modal">
+    <div class="modal" id="createKeyModal">
+        <div class="modal-content">
             <div class="modal-header">
                 <h3>创建API密钥</h3>
                 <button class="close-btn" onclick="closeCreateKeyModal()">×</button>
@@ -94,12 +453,90 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-cancel" onclick="closeCreateKeyModal()">取消</button>
-                <button class="btn btn-primary" onclick="createKey()">创建</button>
+                <button class="secondary-btn" onclick="closeCreateKeyModal()">取消</button>
+                <button class="primary-btn" onclick="createKey()">创建</button>
             </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <!-- 字典管理模态框 -->
+    <div class="modal" id="dictModal">
+        <div class="modal-content dict-modal-content">
+            <div class="modal-header">
+                <h3 id="dictModalTitle">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <span id="dictModalTitleText">添加词条</span>
+                </h3>
+                <button class="close-btn" onclick="closeDictModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="dictId">
+
+                <div class="dict-form-row">
+                    <div class="dict-form-group">
+                        <label for="dictMandarin">普通话词条:</label>
+                        <input type="text" id="dictMandarin" placeholder="输入普通话词汇" class="dict-form-input">
+                    </div>
+                    <div class="dict-form-group">
+                        <label for="dictTeochew">潮汕话对应:</label>
+                        <input type="text" id="dictTeochew" placeholder="输入潮语词汇" class="dict-form-input">
+                    </div>
+                </div>
+
+                <div class="dict-form-row">
+                    <div class="dict-form-group">
+                        <label for="dictVariant">变体编号:</label>
+                        <input type="number" id="dictVariant" placeholder="默认为1" min="1" value="1" class="dict-form-input">
+                    </div>
+                    <div class="dict-form-group">
+                        <label for="dictPriority">优先级:</label>
+                        <input type="number" id="dictPriority" placeholder="数值越大优先级越高" min="0" step="0.1" value="1.0" class="dict-form-input">
+                    </div>
+                </div>
+
+                <div class="dict-form-group">
+                    <label for="dictActive">词条状态:</label>
+                    <div class="dict-toggle-group">
+                        <label class="dict-toggle-label">
+                            <input type="checkbox" id="dictActive" checked>
+                            <span class="dict-toggle-slider"></span>
+                            <span class="dict-toggle-text">启用</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="dict-secondary-btn" onclick="closeDictModal()">取消</button>
+                <button class="dict-primary-btn" onclick="saveDictEntry()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div class="toast" id="toast">
+        <div class="toast-icon" id="toastIcon"></div>
+        <div class="toast-message" id="toastMessage"></div>
+    </div>
+
+    <!-- 引入所有JavaScript模块 -->
+    <script src="{{ url_for('static', filename='js/global-vars.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/audio-player.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/recording-management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/list-view.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/api-management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/review-operations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dictionary-management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ui-navigation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/keyboard-shortcuts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

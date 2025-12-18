@@ -1,5 +1,7 @@
 // API配置 - 可以根据需要修改
-const API_BASE_URL = 'https://your-domain.com';
+// const API_BASE_URL = 'https://your-domain.com';
+const API_BASE_URL = 'http://127.0.0.1:5000';
+
 
 // 调试信息
 console.log('API_BASE_URL:', API_BASE_URL);
