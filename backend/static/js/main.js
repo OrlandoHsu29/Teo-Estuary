@@ -23,18 +23,18 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('初始化统计数据...');
     initializeStats(); // 初始化统计数据（只执行一次）
 
-    console.log('检查当前视图状态...');
-    // 检查实际的DOM状态，而不是依赖变量
+    console.log('初始化视图状态...');
+    // 默认使用详细视图
+    currentView = 'device';
+    console.log('设置为详细视图');
 
-    if (deviceView && listView) {
-        // 如果列表视图是可见的，说明当前是列表视图
-        if (listView.style.display !== 'none' && deviceView.style.display === 'none') {
-            currentView = 'list';
-            console.log('检测到列表视图，设置currentView为list');
-        } else {
-            currentView = 'device';
-            console.log('检测到设备视图，设置currentView为device');
-        }
+    // 确保列表视图隐藏（HTML中已经设置了详细视图显示）
+    if (listView) listView.style.display = 'none';
+
+    // 隐藏空状态，因为reviewDevice现在默认显示
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) {
+        emptyState.style.display = 'none';
     }
 
     console.log('加载录音数据...');
@@ -94,20 +94,43 @@ function downloadCurrentRecording() {
 
     const recording = recordingsData[currentRecordIndex];
 
-    // 构造下载URL
-    const downloadUrl = `/api/audio/${recording.id}`;
-    const filename = `recording_${recording.id}.wav`;
+    // 检查是否有文件路径
+    if (!recording.file_path) {
+        showToast('该记录没有音频文件', 'error');
+        return;
+    }
+
+    // 构造下载URL - 使用正确的后端路径
+    const downloadUrl = `/admin/api/download/${recording.id}`;
+    const filename = `recording_${recording.id}.webm`;
 
     // 创建下载链接
     const a = document.createElement('a');
     a.href = downloadUrl;
     a.download = filename;
     document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(downloadUrl);
-    document.body.removeChild(a);
 
-    showToast(`开始下载: ${filename}`, 'info');
+    // 使用fetch检查文件是否存在
+    fetch(downloadUrl, { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                // 文件存在，执行下载
+                a.click();
+                document.body.removeChild(a);
+
+                // 延迟显示成功消息
+                setTimeout(() => {
+                    showToast(`下载成功: ${filename}`, 'success');
+                }, 200);
+            } else {
+                document.body.removeChild(a);
+                showToast('文件不存在或无法访问', 'error');
+            }
+        })
+        .catch(error => {
+            document.body.removeChild(a);
+            showToast('下载失败，请检查网络连接', 'error');
+        });
 }
 
 function deleteCurrentRecording() {

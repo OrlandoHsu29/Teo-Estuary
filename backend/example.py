@@ -12,7 +12,7 @@ if sys.platform == 'win32':
     import codecs
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
 
-from translation_service import translation_service
+from app.teo_g2p.translation_service import translation_service
 
 def basic_example():
     """基本翻译示例"""
@@ -45,10 +45,6 @@ def variants_example():
 def custom_translation_example():
     """自定义翻译示例"""
     print("=== 自定义翻译 ===")
-
-    # 添加新的翻译
-    translation_service.add_translation("编程", "拍程序")
-    translation_service.add_translation("程序员", "拍程序个")
 
     # 测试自定义翻译
     text = "我是程序员"
@@ -86,6 +82,11 @@ def long_text_example():
     print(f"译文: {result}")
     print()
 
+def get_unsynced_logs():
+    from app.teo_g2p.jieba_sync_service import JiebaSyncService
+    jiebaSyncService = JiebaSyncService()
+    print(f"logs:{jiebaSyncService.change_logger.get_unsynced_changes()}") 
+
 # 主函数
 def main():
     """运行所有示例"""
@@ -96,6 +97,7 @@ def main():
     custom_translation_example()
     batch_translate_example()
     long_text_example()
+    get_unsynced_logs()
 
 if __name__ == "__main__":
     main()

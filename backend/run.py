@@ -11,4 +11,5 @@ from app import create_app, db, logger
 app = create_app()
 
 if __name__ == '__main__':
+    print("后台管理系统: http://localhost:5000/admin")
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -11,6 +11,7 @@ from app import db
 from app.utils.combined_decorators import api_key_required_with_rate_limit
 from app.utils.decorators import admin_required, get_client_ip
 from app.utils.helpers import generate_id, get_next_audio_name, move_audio_file
+from app.teo_g2p.translation_service import translation_service
 
 recordings_bp = Blueprint('recordings', __name__)
 logger = logging.getLogger(__name__)
@@ -47,7 +48,8 @@ def api_upload(key_obj):
         file.save(file_path)
 
         # 翻译普通话参考文本
-        actual_content = current_app.teochew_converter.to_oral(text, auto_split=True).replace(' ', '').replace('#', '')
+        actual_content = translation_service.translate_to_oral(text, auto_split=True)
+        # actual_content = current_app.teochew_converter.to_oral(text, auto_split=True)
 
         from app.models import Recording
 

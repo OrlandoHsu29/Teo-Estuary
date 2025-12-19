@@ -18,8 +18,14 @@ function toggleView() {
             详细视图
         `;
 
-        // 获取当前激活的状态筛选按钮，并同步到列表视图的筛选器
+        // 保存当前详细视图的激活状态
         const activeStatusBtn = document.querySelector('.status-filter-btn.active');
+        if (activeStatusBtn) {
+            deviceViewActiveStatus = activeStatusBtn.getAttribute('data-status') || 'pending';
+            console.log('保存详细视图激活状态:', deviceViewActiveStatus);
+        }
+
+        // 获取当前激活的状态筛选按钮，并同步到列表视图的筛选器
         const statusFilter = document.getElementById('statusFilter');
 
         if (activeStatusBtn && statusFilter) {
@@ -42,6 +48,47 @@ function toggleView() {
             </svg>
             列表视图
         `;
+
+        // 同步列表视图的筛选状态到详细视图
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            const filterValue = statusFilter.value;
+
+            // 如果列表视图不是"所有状态"（即有具体状态），则同步状态
+            if (filterValue && filterValue !== '') {
+                currentStatusFilter = filterValue;
+
+                // 更新详细视图的状态筛选按钮
+                const filterButtons = document.querySelectorAll('.status-filter-btn');
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.status === currentStatusFilter) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                // 加载对应状态的数据
+                loadRecordings(currentStatusFilter);
+            } else {
+                // 如果列表视图是"所有状态"，则恢复详细视图之前保存的状态
+                console.log('列表视图为所有状态，恢复详细视图之前的状态:', deviceViewActiveStatus);
+
+                // 恢复激活按钮样式
+                const filterButtons = document.querySelectorAll('.status-filter-btn');
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.status === deviceViewActiveStatus) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                // 更新当前状态变量
+                currentStatusFilter = deviceViewActiveStatus;
+
+                // 不重新加载数据，因为数据应该还在内存中
+            }
+        }
+
         currentView = 'device';
     }
 }
@@ -102,7 +149,7 @@ function renderListView(recordings, total, current, pages) {
         <div class="list-item">
             <div class="list-item-header">
                 <div class="id-section">
-                    <span class="list-item-id clickable" onclick="jumpToDeviceView('${record.id}')" title="点击跳转到详细视图">记录 #${highlightText(record.id.toString())}</span>
+                    <span class="list-item-id clickable" onclick="jumpTodeviceView('${record.id}')" title="点击跳转到详细视图">记录 #${highlightText(record.id.toString())}</span>
                 </div>
                 <span class="list-item-status ${record.status}">${getStatusText(record.status)}</span>
             </div>
@@ -215,7 +262,7 @@ function goToPage(page) {
 }
 
 // 从列表跳转到详细视图
-async function jumpToDeviceView(recordId) {
+async function jumpTodeviceView(recordId) {
     try {
         // 首先查找目标记录的状态
         const listResponse = await fetch(`/api/recordings?per_page=1000`);

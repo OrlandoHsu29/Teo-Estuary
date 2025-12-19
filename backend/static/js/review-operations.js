@@ -7,6 +7,12 @@ let originalContent = '';
 function enableTextEdit() {
     if (isEditing) return;
 
+    // 检查是否有记录数据
+    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
+        showToast('没有可编辑的记录', 'warning');
+        return;
+    }
+
     const textElement = document.getElementById('convertedText');
     const editElement = document.getElementById('convertedTextEdit');
     const editActions = document.getElementById('editActions');

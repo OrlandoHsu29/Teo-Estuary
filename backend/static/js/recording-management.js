@@ -1,5 +1,68 @@
 // 录音数据管理
 
+// 初始化reviewDevice的默认显示状态
+function initializeReviewDeviceDisplay() {
+    // 更新标题显示加载信息
+    const reviewTitleElement = document.getElementById('reviewTitle');
+    if (reviewTitleElement) {
+        reviewTitleElement.textContent = '正在初始化...';
+    }
+
+    // 更新计数器
+    const currentIndexElement = document.getElementById('currentIndex');
+    const totalRecordsElement = document.getElementById('totalRecords');
+    if (currentIndexElement) currentIndexElement.textContent = '0';
+    if (totalRecordsElement) totalRecordsElement.textContent = '0';
+
+    // 设置默认文本内容
+    const originalTextElement = document.getElementById('originalText');
+    const convertedTextElement = document.getElementById('convertedText');
+    if (originalTextElement) originalTextElement.textContent = '加载中...';
+    if (convertedTextElement) convertedTextElement.textContent = '加载中...';
+
+    // 设置默认元信息
+    const ipAddressElement = document.getElementById('ipAddress');
+    const uploadTimeElement = document.getElementById('uploadTime');
+    const fileSizeElement = document.getElementById('fileSize');
+    const userAgentElement = document.getElementById('userAgent');
+
+    if (ipAddressElement) ipAddressElement.textContent = '-';
+    if (uploadTimeElement) uploadTimeElement.textContent = '-';
+    if (fileSizeElement) fileSizeElement.textContent = '-';
+    if (userAgentElement) {
+        const userAgentValue = userAgentElement.querySelector('.meta-value');
+        if (userAgentValue) {
+            userAgentValue.textContent = '-';
+        }
+        userAgentElement.title = '-';
+    }
+
+    // 禁用所有控制按钮
+    updateControlButtonsByStatus();
+}
+
+// 显示数据加载动画
+function showDataLoading(message = '正在加载数据...', subtitle = '请稍候') {
+    const overlay = document.getElementById('dataLoadingOverlay');
+    if (overlay) {
+        const loadingText = overlay.querySelector('.loading-text');
+        const loadingSubtitle = overlay.querySelector('.loading-subtitle');
+
+        if (loadingText) loadingText.textContent = message;
+        if (loadingSubtitle) loadingSubtitle.textContent = subtitle;
+
+        overlay.classList.add('active');
+    }
+}
+
+// 隐藏数据加载动画
+function hideDataLoading() {
+    const overlay = document.getElementById('dataLoadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
 // 加载录音数据
 async function loadRecordings(status = null) {
     try {
@@ -8,53 +71,64 @@ async function loadRecordings(status = null) {
 
         console.log('正在加载录音数据，状态:', filterStatus); // 调试信息
 
+        // 显示加载动画
+        showDataLoading('正在加载录音数据...', `状态: ${getStatusText(filterStatus)}`);
+
         // API期望字符串状态，不需要映射
         const response = await fetch(`/api/recordings?status=${filterStatus}&page=${currentPage}&per_page=50`);
         const data = await response.json();
 
         console.log('API响应:', data); // 调试信息
 
+        // 隐藏加载动画
+        hideDataLoading();
+
         if (data.success) {
             recordingsData = data.recordings || [];
             totalPages = data.pages || 1;
 
-            // 只有在设备视图激活时才显示设备视图
-            if (currentView === 'device') {
-                // 隐藏独立的空状态
-                document.getElementById('emptyState').style.display = 'none';
-                const deviceView = document.getElementById('deviceView');
-                const reviewDevice = document.getElementById('reviewDevice');
-                if (deviceView) deviceView.style.display = 'block';
-                if (reviewDevice) reviewDevice.style.display = 'block';
-            }
+            // 确保详细视图显示
+            const deviceView = document.getElementById('deviceView');
+            const reviewDevice = document.getElementById('reviewDevice');
+            const emptyState = document.getElementById('emptyState');
+
+            if (deviceView) deviceView.style.display = 'block';
+            if (reviewDevice) reviewDevice.style.display = 'block';
+            if (emptyState) emptyState.style.display = 'none';
 
             if (recordingsData.length === 0) {
-                // 只有在设备视图时才显示空记录状态
-                if (currentView === 'device') {
-                    displayEmptyRecordState();
-                }
+                displayEmptyRecordState();
             } else {
-                // 只有在设备视图时才显示当前记录
-                if (currentView === 'device') {
-                    currentRecordIndex = 0;
-                    displayCurrentRecord();
-                }
+                currentRecordIndex = 0;
+                displayCurrentRecord();
             }
 
-            // 只有在设备视图时才更新导航按钮和计数器
-            if (currentView === 'device') {
-                updateNavigationButtons();
-                updateReviewCounter();
-            }
+            updateNavigationButtons();
+            updateReviewCounter();
         }
     } catch (error) {
         console.error('加载录音数据失败:', error);
+        hideDataLoading(); // 确保在错误时也隐藏加载动画
         showToast('加载数据失败', 'error');
     }
 }
 
+// 获取状态文本
+function getStatusText(status) {
+    const statusMap = {
+        'pending': '待审核',
+        'approved': '已通过',
+        'rejected': '已拒绝',
+        'all': '全部'
+    };
+    return statusMap[status] || status;
+}
+
 // 显示空记录状态
 function displayEmptyRecordState() {
+    // 确保加载动画被隐藏
+    hideDataLoading();
+
     // 更新标题显示无记录信息
     const reviewTitleElement = document.getElementById('reviewTitle');
     if (reviewTitleElement) {
@@ -113,6 +187,9 @@ function displayEmptyRecordState() {
 // 显示当前记录
 function displayCurrentRecord() {
     if (recordingsData.length === 0) return;
+
+    // 确保加载动画被隐藏
+    hideDataLoading();
 
     const record = recordingsData[currentRecordIndex];
 

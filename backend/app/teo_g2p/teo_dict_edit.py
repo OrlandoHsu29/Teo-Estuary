@@ -40,17 +40,20 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
         reason=reason
     )
 
-def update_translation(mandarin_text: str, teochew_text: str = None,
-                      variant: int = None, priority: float = None,
+def update_translation(mandarin_text: str = None, entry_id: int = None,
+                      teochew_text: str = None, variant: int = None,
+                      priority: float = None, is_active: bool = None,
                       user: str = "system", reason: str = "") -> bool:
     """
-    更新翻译条目
+    更新翻译条目（支持更新内容和状态）
 
     Args:
-        mandarin_text: 普通话词语
+        mandarin_text: 普通话词语（可选）
+        entry_id: 词条ID（可选，优先级高于mandarin_text）
         teochew_text: 新的潮州话翻译 (可选)
         variant: 新的变体编号 (可选)
         priority: 新的优先级 (可选)
+        is_active: 新的状态 (可选)
         user: 操作用户 (默认"system")
         reason: 更新原因 (可选)
 
@@ -59,12 +62,30 @@ def update_translation(mandarin_text: str, teochew_text: str = None,
     """
     return _dao.update_translation(
         mandarin_text=mandarin_text,
+        entry_id=entry_id,
         teochew_text=teochew_text,
         variant=variant,
         priority=priority,
+        is_active=is_active,
         user=user,
         reason=reason
     )
+
+def update_translation_status(entry_id: int, is_active: bool,
+                            user: str = "system", reason: str = "") -> bool:
+    """
+    更新翻译条目的状态（向后兼容函数）
+
+    Args:
+        entry_id: 词条ID
+        is_active: 是否激活
+        user: 操作用户 (默认"system")
+        reason: 更新原因 (可选)
+
+    Returns:
+        bool: 是否更新成功
+    """
+    return _dao.update_translation_status(entry_id, is_active, user, reason)
 
 def delete_translation(mandarin_text: str, variant: int = None,
                       user: str = "system", reason: str = "") -> bool:
@@ -100,18 +121,19 @@ def get_translation(mandarin_text: str, variant: int = None) -> Optional[Transla
     """
     return _dao.get_translation(mandarin_text, variant)
 
-def search_translations(keyword: str = "", limit: int = 100) -> List[TranslationDict]:
+def search_translations(keyword: str = "", limit: int = 100, include_inactive: bool = True) -> List[TranslationDict]:
     """
-    搜索翻译条目，支持普通话和潮语双向搜索
+    搜索翻译条目，只支持普通话搜索
 
     Args:
         keyword: 搜索关键词 (可选)
         limit: 返回数量限制 (默认100)
+        include_inactive: 是否包含已禁用的词条 (默认为True，因为主要用于管理界面)
 
     Returns:
         List[TranslationDict]: 翻译条目列表
     """
-    return _dao.list_translations(keyword, limit)
+    return _dao.list_translations(keyword, limit, include_inactive)
 
 def get_translation_variants(mandarin_text: str) -> List[Tuple[int, str]]:
     """

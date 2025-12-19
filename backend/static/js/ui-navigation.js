@@ -48,7 +48,7 @@ function switchSection(sectionName) {
         const toggleBtn = document.querySelector('.toggle-view-btn');
 
         if (currentView === 'list') {
-            // 如果当前是列表视图，但切换到了审核界面，需要重置为设备视图
+            // 如果当前是列表视图，但切换到了审核界面，需要重置为详细视图
             deviceView.style.display = 'block';
             listView.style.display = 'none';
             if (toggleBtn) {
@@ -86,12 +86,19 @@ function refreshAllData() {
         refreshBtn.classList.add('spinning');
     }
 
-    // 重新加载所有数据
-    Promise.all([
-        loadRecordings(),
-        loadStats(), // 现在这个函数只更新数字，不会重新渲染
-        loadApiKeys()
-    ]).then(() => {
+    // 根据当前视图加载数据
+    const loadDataPromises = [];
+
+    if (currentView === 'list') {
+        loadDataPromises.push(loadListView());
+    } else {
+        loadDataPromises.push(loadRecordings());
+    }
+
+    loadDataPromises.push(loadStats()); // 现在这个函数只更新数字，不会重新渲染
+    loadDataPromises.push(loadApiKeys());
+
+    Promise.all(loadDataPromises).then(() => {
         // 刷新完成后移除动画
         setTimeout(() => {
             if (refreshBtn) {

@@ -245,8 +245,13 @@ class JiebaSyncService:
 
         for change in unsynced_changes:
             operation = change['operation']
-            mandarin_text = change['mandarin_text']
+            identifier = change.get('identifier', {})
+            mandarin_text = identifier.get('mandarin_text')
             timestamp = change['timestamp']
+
+            if not mandarin_text:
+                logger.warning(f"跳过无效的日志记录: {change}")
+                continue
 
             word = mandarin_text
             freq = "100000"  # 默认词频

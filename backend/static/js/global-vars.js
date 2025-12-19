@@ -13,3 +13,6 @@ let currentView = 'device'; // 'device' or 'list'
 
 // 搜索计时器
 let listSearchTimer = null;
+
+// 详细视图状态保存
+let deviceViewActiveStatus = 'pending'; // 保存详细视图当前的激活状态

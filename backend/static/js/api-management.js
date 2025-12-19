@@ -191,7 +191,6 @@ async function editKey(id) {
         document.getElementById('editKeyName').value = key.name || '';
         document.getElementById('editKeyDescription').value = key.description || '';
         document.getElementById('editMaxRequests').value = key.max_requests || 1000;
-        document.getElementById('editKeyActive').checked = key.is_active;
 
         // 显示模态框
         document.getElementById('editKeyModal').style.display = 'block';
@@ -210,7 +209,6 @@ function closeEditKeyModal() {
     document.getElementById('editKeyName').value = '';
     document.getElementById('editKeyDescription').value = '';
     document.getElementById('editMaxRequests').value = '1000';
-    document.getElementById('editKeyActive').checked = true;
 }
 
 // 更新API密钥
@@ -219,7 +217,6 @@ async function updateKey() {
     const name = document.getElementById('editKeyName').value.trim();
     const description = document.getElementById('editKeyDescription').value.trim();
     const maxRequests = document.getElementById('editMaxRequests').value;
-    const isActive = document.getElementById('editKeyActive').checked;
 
     if (!name) {
         showToast('请输入密钥名称', 'warning');
@@ -240,8 +237,7 @@ async function updateKey() {
             body: JSON.stringify({
                 name: name,
                 description: description,
-                max_requests: parseInt(maxRequests),
-                is_active: isActive
+                max_requests: parseInt(maxRequests)
             })
         });
 

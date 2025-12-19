@@ -8,27 +8,12 @@ async function initializeStats() {
 
         if (data.success) {
             const stats = data.stats;
-            const statsGrid = document.getElementById('statsGrid');
-            statsGrid.innerHTML = `
-                <div class="stats-container">
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-pending">${stats.pending || 0}</span>
-                        <div class="stat-label">待审核</div>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-approved">${stats.approved || 0}</span>
-                        <div class="stat-label">已通过</div>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-rejected">${stats.rejected || 0}</span>
-                        <div class="stat-label">已拒绝</div>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="stat-total">${stats.total || 0}</span>
-                        <div class="stat-label">总计</div>
-                    </div>
-                </div>
-            `;
+
+            // 只更新数字，因为HTML中已经有了默认结构
+            updateStatNumber('stat-pending', stats.pending || 0);
+            updateStatNumber('stat-approved', stats.approved || 0);
+            updateStatNumber('stat-rejected', stats.rejected || 0);
+            updateStatNumber('stat-total', stats.total || 0);
         }
     } catch (error) {
         console.error('初始化统计数据失败:', error);

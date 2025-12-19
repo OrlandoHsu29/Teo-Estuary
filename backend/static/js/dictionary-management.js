@@ -60,6 +60,15 @@ function clearDictionaryDisplay() {
     document.getElementById('dictProgressFill').style.width = '0%';
     document.getElementById('dictResultCount').textContent = '0 条词条';
     document.getElementById('dictCurrentDisplay').textContent = '未查询';
+
+    // 重置变体状态指示器
+    const statusElement = document.getElementById('dictEntryVariantStatus');
+    const statusTextElement = document.getElementById('dictEntryVariantStatusText');
+    if (statusElement && statusTextElement) {
+        statusElement.classList.remove('has-variant', 'no-variant');
+        statusTextElement.textContent = '-';
+    }
+
     dictionaryResults = [];
     currentDictEntry = null;
     currentDictIndex = 0;
@@ -229,6 +238,9 @@ function displayDictEntry(entry) {
     document.getElementById('displayStatus').style.color = entry.is_active ? '#00ff88' : '#ff4757';
     document.getElementById('displayId').textContent = entry.id.toString();
 
+    // 更新变体状态指示器（基于整个搜索结果）
+    updateVariantStatusForEntry(entry, dictionaryResults);
+
     updateDictionaryInfo();
 }
 
@@ -309,6 +321,12 @@ async function deleteCurrentDictEntry() {
             } else {
                 showNoResults();
             }
+
+            // 刷新同步日志和状态
+            setTimeout(() => {
+                loadUnsyncedLogs();
+                updateSyncStatus();
+            }, 1000);
         } else {
             showToast(data.error || '删除失败', 'error');
         }
@@ -388,6 +406,12 @@ async function saveDictEntry() {
                 // 如果是添加操作，重新搜索显示
                 searchDictionary();
             }
+
+            // 刷新同步日志和状态
+            setTimeout(() => {
+                loadUnsyncedLogs();
+                updateSyncStatus();
+            }, 1000);
         } else {
             showToast(data.error || '保存失败', 'error');
         }
@@ -412,6 +436,327 @@ function refreshDictionaryData() {
         }
     } else {
         showToast('请先输入搜索关键词', 'info');
+    }
+}
+
+// 更新变体状态指示器
+function updateVariantStatus(variant) {
+    const statusElement = document.getElementById('dictEntryVariantStatus');
+    const statusTextElement = document.getElementById('dictEntryVariantStatusText');
+
+    if (!statusElement || !statusTextElement) return;
+
+    // 移除所有状态类
+    statusElement.classList.remove('has-variant', 'no-variant');
+
+    if (variant && variant > 1) {
+        // 有变体（变体编号大于1）
+        statusElement.classList.add('has-variant');
+        statusTextElement.textContent = '有变体';
+    } else {
+        // 无变体（变体编号为1或空）
+        statusElement.classList.add('no-variant');
+        statusTextElement.textContent = '无变体';
+    }
+}
+
+// 更新变体状态指示器（基于当前词条和整个搜索结果）
+function updateVariantStatusForEntry(currentEntry, allResults) {
+    const statusElement = document.getElementById('dictEntryVariantStatus');
+    const statusTextElement = document.getElementById('dictEntryVariantStatusText');
+
+    if (!statusElement || !statusTextElement || !currentEntry) return;
+
+    // 移除所有状态类
+    statusElement.classList.remove('has-variant', 'no-variant');
+
+    const currentMandarin = currentEntry.mandarin_text;
+
+    // 检查当前词条是否有其他变体
+    const hasVariants = allResults.some(result =>
+        result.mandarin_text === currentMandarin &&
+        result.variant !== currentEntry.variant
+    );
+
+    // 或者当前词条本身变体编号不为1
+    const isVariantItself = currentEntry.variant > 1;
+
+    if (hasVariants || isVariantItself) {
+        // 有变体
+        statusElement.classList.add('has-variant');
+        statusTextElement.textContent = '有变体';
+    } else {
+        // 无变体
+        statusElement.classList.add('no-variant');
+        statusTextElement.textContent = '唯一';
+    }
+}
+
+// 加载未同步日志
+async function loadUnsyncedLogs() {
+    try {
+        const response = await fetch('/api/dictionary/unsynced-logs');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Sync logs response:', data); // 调试日志
+
+        const logContent = document.getElementById('syncLogContent');
+
+        if (!data.success || data.logs.length === 0) {
+            let message = '暂无未同步日志';
+            if (data.message) {
+                message = data.message; // 显示错误消息而不是默认消息
+            }
+
+            logContent.innerHTML = `
+                <div class="sync-empty-logs">
+                    <div class="sync-empty-icon">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <p>${message}</p>
+                </div>
+            `;
+            return;
+        }
+
+        // 显示日志内容（按时间倒序排列，最新的在上面）
+        let logsHtml = '';
+        const sortedLogs = data.logs.sort((a, b) => {
+            const timeA = new Date(a.timestamp).getTime();
+            const timeB = new Date(b.timestamp).getTime();
+            return timeB - timeA; // 降序排列
+        });
+
+        sortedLogs.forEach(log => {
+            const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString() : '未知时间';
+            const identifier = log.identifier || {};
+            const changes = log.changes || {};
+            const operation = log.operation || 'unknown';
+
+            let operationText = operation;
+            let operationColor = 'sync-log-operation';
+
+            if (operation === 'add') {
+                operationText = '添加';
+                operationColor = 'sync-log-operation sync-log-add';
+            } else if (operation === 'update') {
+                operationText = '更新';
+                operationColor = 'sync-log-operation sync-log-update';
+            } else if (operation === 'delete') {
+                operationText = '删除';
+                operationColor = 'sync-log-operation sync-log-delete';
+            }
+
+            // 格式化日志详情
+            let detailsHtml = '';
+
+            if (operation === 'add' || operation === 'delete') {
+                // 添加和删除操作显示："普通话"（变体） - "潮汕话"
+                const mandarin = identifier.mandarin_text || changes.new?.mandarin_text || changes.old?.mandarin_text || '未知词条';
+                const teochew = identifier.teochew_text || changes.new?.teochew_text || changes.old?.teochew_text || '未知潮汕话';
+                const variant = identifier.variant || changes.new?.variant || changes.old?.variant || 1;
+
+                const operationText = operation === 'add' ? '添加' : '删除';
+                detailsHtml = `${operationText}：「普」"${mandarin}"${variant > 1 ? `(变体${variant})` : ''}  · 「潮」"${teochew}"`;
+            } else if (operation === 'update') {
+                // 修改操作显示：“old_data”->“new_data”（相同数据不显示）
+                const oldData = changes.old || {};
+                const newData = changes.new || {};
+
+                const changesArray = [];
+
+                // 检查每个字段的变化
+                if (oldData.mandarin_text !== newData.mandarin_text) {
+                    changesArray.push(`「普通话」 "${oldData.mandarin_text || '空'}" → "${newData.mandarin_text || '空'}`);
+                }
+
+                if (oldData.teochew_text !== newData.teochew_text) {
+                    changesArray.push(`「潮汕话」 "${oldData.teochew_text || '空'}" → "${newData.teochew_text || '空'}"`);
+                }
+
+                if (oldData.variant !== newData.variant) {
+                    changesArray.push(`「变体」 ${oldData.variant || 1} → ${newData.variant || 1}`);
+                }
+
+                if (oldData.priority !== newData.priority) {
+                    changesArray.push(`「优先级」 ${oldData.priority || 1.0} → ${newData.priority || 1.0}`);
+                }
+
+                // 状态判断，处理数字和布尔值的转换
+                const oldStatus = oldData.is_active;
+                const newStatus = newData.is_active;
+
+                // 将状态转换为布尔值进行比较（处理0/1, true/false, "true"/"false"等情况）
+                const normalizeStatus = (status) => {
+                    if (status === true || status === 1 || status === "1" || status === "true") {
+                        return true;
+                    }
+                    if (status === false || status === 0 || status === "0" || status === "false") {
+                        return false;
+                    }
+                    return null; // 其他值
+                };
+
+                const normalizedOld = normalizeStatus(oldStatus);
+                const normalizedNew = normalizeStatus(newStatus);
+
+                // 只有在规范化后的值真正不同时才显示变化
+                if (normalizedOld !== normalizedNew && normalizedOld !== null && normalizedNew !== null) {
+                    const oldStatusText = normalizedOld ? '启用' : '禁用';
+                    const newStatusText = normalizedNew ? '启用' : '禁用';
+                    changesArray.push(`「状态」 ${oldStatusText} → ${newStatusText}`);
+                }
+
+                // 如果没有变化，显示基本信息
+                if (changesArray.length === 0) {
+                    const mandarin = newData.mandarin_text || oldData.mandarin_text || '未知词条';
+                    const variant = newData.variant || oldData.variant || 1;
+                    detailsHtml = `"${mandarin}"${variant > 1 ? `(变体${variant})` : ''} -- 元数据更新`;
+                } else {
+                    detailsHtml = `${changesArray.join(' ; ')}`;
+                }
+            } else {
+                // 其他操作类型
+                detailsHtml = `未知操作类型`;
+            }
+
+            logsHtml += `
+                <div class="sync-log-item">
+                    <div class="sync-log-timestamp">${timestamp}</div>
+                    <div class="${operationColor}">${operationText}</div>
+                    <div class="sync-log-details">${detailsHtml}</div>
+                </div>
+            `;
+        });
+
+        logContent.innerHTML = logsHtml;
+
+    } catch (error) {
+        console.error('Load unsynced logs error:', error);
+        const logContent = document.getElementById('syncLogContent');
+
+        // 显示更详细的错误信息
+        const errorMessage = error.message || '未知错误';
+        logContent.innerHTML = `
+            <div class="sync-empty-logs">
+                <div class="sync-empty-icon">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <p>加载日志失败: ${errorMessage}</p>
+            </div>
+        `;
+    }
+}
+
+// 更新同步状态指示器
+async function updateSyncStatus() {
+    try {
+        const response = await fetch('/api/dictionary/sync-status');
+        const data = await response.json();
+
+        const statusLight = document.getElementById('syncStatusLight');
+        const statusText = statusLight.querySelector('.status-text');
+
+        if (!data.success) {
+            statusLight.className = 'sync-status-light error';
+            statusText.textContent = '连接失败';
+            return;
+        }
+
+        const syncStatus = data.sync_status;
+
+        if (syncStatus.in_sync) {
+            statusLight.className = 'sync-status-light connected';
+            statusText.textContent = '已同步';
+        } else {
+            const missingCount = syncStatus.missing_in_jieba ? syncStatus.missing_in_jieba.length : 0;
+            const dbCount = syncStatus.db_count || 0;
+            const jiebaCount = syncStatus.jieba_count || 0;
+
+            if (missingCount > 0) {
+                statusLight.className = 'sync-status-light syncing';
+                statusText.textContent = `待同步 (${missingCount}/${dbCount})`;
+            } else {
+                statusLight.className = 'sync-status-light connected';
+                statusText.textContent = `已同步 (${dbCount}条)`;
+            }
+        }
+
+    } catch (error) {
+        console.error('Update sync status error:', error);
+        const statusLight = document.getElementById('syncStatusLight');
+        const statusText = statusLight.querySelector('.status-text');
+        statusLight.className = 'sync-status-light error';
+        statusText.textContent = '未连接';
+    }
+}
+
+// Jieba字典同步功能
+async function syncJiebaDictionary(type) {
+    const fullBtn = document.querySelector('.dict-sync-full');
+    const incrementalBtn = document.querySelector('.dict-sync-incremental');
+    const targetBtn = type === 'full' ? fullBtn : incrementalBtn;
+
+    if (!targetBtn) return;
+
+    try {
+        // 设置加载状态
+        targetBtn.classList.add('loading');
+        targetBtn.disabled = true;
+
+        // 更新状态指示器为同步中
+        const statusLight = document.getElementById('syncStatusLight');
+        const statusText = statusLight.querySelector('.status-text');
+        statusLight.className = 'sync-status-light syncing';
+        statusText.textContent = '同步中...';
+
+        const response = await fetch(`/api/dictionary/sync-jieba/${type}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const syncType = type === 'full' ? '全量同步' : '增量同步';
+            const message = `${syncType}完成\n` +
+                          `新增: ${data.added || 0} 条\n` +
+                          `更新: ${data.updated || 0} 条\n` +
+                          `删除: ${data.deleted || 0} 条\n` +
+                          `总计: ${data.total || 0} 条`;
+            showToast(message, 'success', 5000);
+
+            // 同步完成后刷新日志和状态
+            setTimeout(() => {
+                loadUnsyncedLogs();
+                updateSyncStatus();
+            }, 1000);
+        } else {
+            statusLight.className = 'sync-status-light error';
+            statusText.textContent = '同步失败';
+            showToast(data.error || `${type === 'full' ? '全量' : '增量'}同步失败`, 'error');
+        }
+    } catch (error) {
+        console.error('Jieba sync error:', error);
+        const statusLight = document.getElementById('syncStatusLight');
+        const statusText = statusLight.querySelector('.status-text');
+        statusLight.className = 'sync-status-light error';
+        statusText.textContent = '连接失败';
+        showToast('同步失败，请检查网络连接', 'error');
+    } finally {
+        // 移除加载状态
+        targetBtn.classList.remove('loading');
+        targetBtn.disabled = false;
     }
 }
 
@@ -442,4 +787,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // 初始化同步界面
+    loadUnsyncedLogs();
+    updateSyncStatus();
+
+    // 定期更新同步状态
+    setInterval(updateSyncStatus, 30000); // 每30秒更新一次
 });

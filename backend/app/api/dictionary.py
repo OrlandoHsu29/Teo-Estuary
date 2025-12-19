@@ -31,8 +31,9 @@ def api_search_dictionary():
                 'error': '搜索关键词不能为空'
             }), 400
 
-        # 使用teo_dict_edit的搜索功能，支持普通话和潮语双向搜索
-        results = search_translations(keyword, limit)
+        # 使用teo_dict_edit的搜索功能，只支持普通话搜索
+        # 管理界面需要能看到所有词条（包括已禁用的）以便管理
+        results = search_translations(keyword, limit, include_inactive=True)
 
         # 转换为字典格式
         translations = []
@@ -121,19 +122,9 @@ def api_add_dictionary():
 
 @dictionary_bp.route('/api/dictionary/<int:entry_id>', methods=['PUT'])
 def api_update_dictionary(entry_id):
-    """更新词条"""
+    """更新词条（支持更新内容和状态）"""
     try:
         from app.teo_g2p.teo_dict_edit import update_translation
-        from app.teo_g2p.dao import TranslationDictDAO
-
-        # 使用DAO模式获取现有词条信息
-        dao = TranslationDictDAO()
-        entry = dao.get_translation_by_id(entry_id)
-        if not entry:
-            return jsonify({
-                'success': False,
-                'error': '未找到指定词条'
-            }), 404
 
         data = request.get_json()
         new_teochew_text = data.get('teochew_text', '').strip()
@@ -143,19 +134,16 @@ def api_update_dictionary(entry_id):
         user = data.get('user', 'admin')
         reason = data.get('reason', '通过管理界面编辑')
 
-        # 使用teo_dict_edit的更新功能
+        # 使用合并后的更新功能，通过entry_id更新记录
         success = update_translation(
-            mandarin_text=entry.mandarin_text,
+            entry_id=entry_id,
             teochew_text=new_teochew_text if new_teochew_text else None,
             variant=new_variant,
             priority=new_priority,
+            is_active=new_is_active,
             user=user,
             reason=reason
         )
-
-        # 如果需要更新状态，使用DAO直接操作数据库
-        if success and new_is_active is not None:
-            success = dao.update_translation_status(entry_id, new_is_active, user, reason)
 
         if success:
             return jsonify({

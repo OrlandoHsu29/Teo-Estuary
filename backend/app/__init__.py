@@ -101,7 +101,7 @@ def create_app():
     logger.info(f"Default limits: {default_limits}")
 
     # 注册蓝图
-    from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp
+    from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, dictionary_sync_bp
     from app.admin.routes import admin_bp
 
     app.register_blueprint(auth_bp)
@@ -109,6 +109,7 @@ def create_app():
     app.register_blueprint(keys_bp)
     app.register_blueprint(text_bp)
     app.register_blueprint(dictionary_bp)
+    app.register_blueprint(dictionary_sync_bp)
     app.register_blueprint(admin_bp)
 
     # 注册错误处理器
