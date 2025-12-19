@@ -164,6 +164,9 @@ def api_update_recording(recording_id):
         if 'actual_content' in data:
             recording.actual_content = data['actual_content']
 
+        if 'original_text' in data:
+            recording.original_text = data['original_text']
+
         if 'status' in data:
             new_status = data['status']
 

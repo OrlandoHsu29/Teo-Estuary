@@ -71,7 +71,7 @@ class TranslationService:
             if translations:
                 # 根据变体数量选择标记
                 if has_multiple:
-                    result.append(translations[0] + '$')
+                    result.append(translations[0] + f'$[{word}]')
                 else:
                     result.append(translations[0] + '#')
             else:

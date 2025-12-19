@@ -4,6 +4,10 @@
 let isEditing = false;
 let originalContent = '';
 
+// 编辑原始文本
+let isEditingOriginal = false;
+let originalContentText = '';
+
 function enableTextEdit() {
     if (isEditing) return;
 
@@ -97,6 +101,100 @@ function cancelTextEdit() {
     }
 }
 
+// 编辑原始文本功能
+function enableOriginalTextEdit() {
+    if (isEditingOriginal) return;
+
+    // 检查是否有记录数据
+    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
+        showToast('没有可编辑的记录', 'warning');
+        return;
+    }
+
+    const textElement = document.getElementById('originalText');
+    const editElement = document.getElementById('originalTextEdit');
+    const editActions = document.getElementById('originalEditActions');
+    const convertedTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:last-child');
+    const textColumn = textElement.closest('.text-column');
+
+    isEditingOriginal = true;
+    originalContentText = textElement.textContent;
+
+    editElement.value = originalContentText;
+    textElement.style.display = 'none';
+    editElement.style.display = 'block';
+    editActions.style.display = 'flex';
+
+    // 隐藏转换文本为编辑预留更多空间
+    if (convertedTextDisplay) {
+        convertedTextDisplay.style.display = 'none';
+    }
+
+    // 添加编辑状态类
+    if (textColumn) {
+        textColumn.classList.add('editing-original');
+    }
+
+    editElement.focus();
+}
+
+function saveOriginalTextEdit() {
+    if (recordingsData.length === 0) return;
+
+    const editElement = document.getElementById('originalTextEdit');
+    const newContent = editElement.value.trim();
+
+    if (newContent && newContent !== originalContentText) {
+        // 更新本地数据
+        recordingsData[currentRecordIndex].original_text = newContent;
+
+        // 使用字词按钮重新渲染内容
+        const originalTextElement = document.getElementById('originalText');
+        if (typeof renderWordButtons === 'function') {
+            renderWordButtons(originalTextElement, newContent);
+        } else {
+            originalTextElement.textContent = newContent;
+        }
+
+        // 保存到后端
+        updateRecordingOriginalText(recordingsData[currentRecordIndex].id, newContent);
+    }
+
+    cancelOriginalTextEdit();
+}
+
+function cancelOriginalTextEdit() {
+    const textElement = document.getElementById('originalText');
+    const editElement = document.getElementById('originalTextEdit');
+    const editActions = document.getElementById('originalEditActions');
+    const convertedTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:last-child');
+    const textColumn = textElement.closest('.text-column');
+
+    isEditingOriginal = false;
+
+    textElement.style.display = 'block';
+    editElement.style.display = 'none';
+    editActions.style.display = 'none';
+
+    // 恢复转换文本显示
+    if (convertedTextDisplay) {
+        convertedTextDisplay.style.display = 'block';
+    }
+
+    // 移除编辑状态类
+    if (textColumn) {
+        textColumn.classList.remove('editing-original');
+    }
+
+    // 重新渲染字词按钮以恢复原始内容
+    if (recordingsData.length > 0 && currentRecordIndex < recordingsData.length) {
+        const currentContent = recordingsData[currentRecordIndex].original_text;
+        if (typeof renderWordButtons === 'function') {
+            renderWordButtons(textElement, currentContent);
+        }
+    }
+}
+
 // 更新记录内容
 async function updateRecordingContent(id, actualContent) {
     try {
@@ -106,6 +204,30 @@ async function updateRecordingContent(id, actualContent) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ actual_content: actualContent })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('保存成功', 'success');
+        } else {
+            showToast(data.error || '保存失败', 'error');
+        }
+    } catch (error) {
+        console.error('保存失败:', error);
+        showToast('保存失败', 'error');
+    }
+}
+
+// 更新记录原始文本
+async function updateRecordingOriginalText(id, originalText) {
+    try {
+        const response = await fetch(`/api/recording/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ original_text: originalText })
         });
 
         const data = await response.json();
@@ -190,6 +312,11 @@ async function approveCurrent() {
     if (!record.actual_content && !record.original_text) {
         showToast('请先填写音频实际内容后再进行审核', 'error');
         return;
+    }
+
+    // 自动合并分词按钮为完整句子
+    if (typeof autoMergeAllTextsOnApprove === 'function') {
+        autoMergeAllTextsOnApprove();
     }
 
     // 更新内容（如果需要）然后更新状态
@@ -325,6 +452,13 @@ async function rejectCurrent() {
 async function approveFromList(id, isCurrent) {
     // 显示审核成功动画
     showProgressAnimation('approved');
+
+    // 自动合并分词按钮（为列表视图中的记录）
+    if (typeof autoMergeForListApprove === 'function') {
+        // 先执行合并，再更新状态
+        await autoMergeForListApprove(id);
+    }
+
     await updateRecordingStatus(id, 'approved');
     if (isCurrent && currentView === 'device') {
         recordingsData.splice(currentRecordIndex, 1);
