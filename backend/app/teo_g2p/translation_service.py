@@ -123,12 +123,13 @@ class TranslationService:
 
         return ' '.join(result)
 
-    def get_word_variants(self, word: str) -> List[Tuple[int, str]]:
+    def get_word_variants(self, word: str, lang: str) -> List[Tuple[int, str]]:
         """
         获取词的所有变体翻译
 
         Args:
             word: 要查询的词
+            lang: 语言类型（'mandarin' 或 'teochew'）
 
         Returns:
             [(variant_number, teochew_text), ...]
@@ -136,14 +137,26 @@ class TranslationService:
         db = next(get_db())
 
         try:
-            translations = db.query(TranslationDict).filter(
-                and_(
-                    TranslationDict.mandarin_text == word,
-                    TranslationDict.is_active == 1
-                )
-            ).order_by(TranslationDict.variant).all()
+            if lang == 'teochew':
+                # 反向查询：通过潮州话获取所有变体
+                translations = db.query(TranslationDict).filter(
+                    and_(
+                        TranslationDict.teochew_text == word,
+                        TranslationDict.is_active == 1
+                    )
+                ).order_by(TranslationDict.variant).all()
 
-            return [(t.variant, t.teochew_text) for t in translations]
+                return [(t.variant, t.teochew_text) for t in translations]
+            else:
+                # 正向查询：通过普通话获取所有变体
+                translations = db.query(TranslationDict).filter(
+                    and_(
+                        TranslationDict.mandarin_text == word,
+                        TranslationDict.is_active == 1
+                    )
+                ).order_by(TranslationDict.variant).all()
+
+                return [(t.variant, t.teochew_text) for t in translations]
 
         finally:
             db.close()
