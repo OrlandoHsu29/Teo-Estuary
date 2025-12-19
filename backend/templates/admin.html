@@ -148,7 +148,7 @@
 
                                 <div class="review-main">
                                     <div class="review-header">
-                                        <h2 id="reviewTitle">记录 #**************</h2>
+                                        <h2 id="reviewTitle">记录 #</h2>
                                         <span class="review-counter">
                                             <span id="currentIndex">0</span> / <span id="totalRecords">0</span>
                                         </span>
@@ -159,16 +159,21 @@
                                             <!-- 左侧：文本内容 -->
                                             <div class="text-column">
                                                 <div class="text-display compact">
-                                                    <label>原始文本</label>
+                                                    <label>原始文本 <span class="edit-hint" onclick="enableOriginalTextEdit()">编辑</span></label>
                                                     <div class="original-text">
                                                         <p id="originalText">-</p>
+                                                        <textarea id="originalTextEdit" style="display: none;"></textarea>
+                                                        <div class="edit-actions" id="originalEditActions" style="display: none;">
+                                                            <button class="save-btn action-btn" onclick="saveOriginalTextEdit()">保存</button>
+                                                            <button class="cancel-btn action-btn" onclick="cancelOriginalTextEdit()">取消</button>
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <div class="text-display compact">
-                                                    <label>转换文本 <span class="edit-hint" onclick="enableTextEdit()">(可编辑)</span></label>
+                                                    <label>转换文本 <span class="edit-hint" onclick="enableTextEdit()">编辑</span></label>
                                                     <div class="converted-text">
-                                                        <p id="convertedText" onclick="enableTextEdit()">-</p>
+                                                        <p id="convertedText">-</p>
                                                         <textarea id="convertedTextEdit" style="display: none;"></textarea>
                                                         <div class="edit-actions" id="editActions" style="display: none;">
                                                             <button class="save-btn action-btn" onclick="saveTextEdit()">保存</button>
@@ -193,11 +198,7 @@
                                                         <span class="meta-label">大小:</span>
                                                         <span class="meta-value" id="fileSize">-</span>
                                                     </div>
-                                                    <div class="meta-item" title="" id="userAgent">
-                                                        <span class="meta-label">浏览器:</span>
-                                                        <span class="meta-value">-</span>
-                                                    </div>
-                                                    <div class="meta-item">
+                                                      <div class="meta-item">
                                                         <span class="meta-label">来源:</span>
                                                         <span class="meta-value" id="uploadType">-</span>
                                                     </div>
