@@ -265,7 +265,7 @@ function goToPage(page) {
 async function jumpTodeviceView(recordId) {
     try {
         // 首先查找目标记录的状态
-        const listResponse = await fetch(`/api/recordings?per_page=1000`);
+        const listResponse = await fetch(`/api/recordings?per_page=200`);
         const listData = await listResponse.json();
 
         if (!listData.success) {
@@ -297,7 +297,7 @@ async function jumpTodeviceView(recordId) {
         });
 
         // 重新加载详细视图的数据（使用目标记录的状态筛选）
-        const response = await fetch(`/api/recordings?status=${targetStatus}&per_page=1000`);
+        const response = await fetch(`/api/recordings?status=${targetStatus}&page=1&per_page=50`);
         const data = await response.json();
 
         if (data.success) {

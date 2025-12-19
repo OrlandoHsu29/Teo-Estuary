@@ -76,6 +76,16 @@ async function loadRecordings(status = null) {
 
         // API期望字符串状态，不需要映射
         const response = await fetch(`/api/recordings?status=${filterStatus}&page=${currentPage}&per_page=50`);
+
+        if (!response.ok) {
+            // 处理HTTP错误
+            const errorText = await response.text();
+            console.error('HTTP错误:', response.status, errorText);
+            showToast('获取录音数据失败，服务器错误', 'error');
+            hideDataLoading();
+            return;
+        }
+
         const data = await response.json();
 
         console.log('API响应:', data); // 调试信息
@@ -105,6 +115,10 @@ async function loadRecordings(status = null) {
 
             updateNavigationButtons();
             updateReviewCounter();
+        } else {
+            // 处理业务逻辑错误
+            console.error('录音数据错误:', data.error);
+            showToast(data.error || '获取录音数据失败', 'error');
         }
     } catch (error) {
         console.error('加载录音数据失败:', error);
@@ -224,7 +238,8 @@ function displayCurrentRecord() {
 
     const convertedTextElement = document.getElementById('convertedText');
     if (convertedTextElement) {
-        convertedTextElement.textContent = record.actual_content || '-';
+        // 使用字词按钮显示转换文本
+        renderWordButtons(convertedTextElement, record.actual_content || '-');
     }
 
     // 更新元信息
@@ -251,6 +266,14 @@ function displayCurrentRecord() {
             userAgentValue.textContent = userAgent;
         }
         userAgentElement.title = userAgent;
+    }
+
+    // 更新上传途径
+    const uploadTypeElement = document.getElementById('uploadType');
+    if (uploadTypeElement) {
+        const uploadType = record.upload_type || 0;
+        uploadTypeElement.textContent = uploadType === 1 ? '素材提取' : '录音上传';
+        uploadTypeElement.className = 'meta-value ' + (uploadType === 1 ? 'upload-type-extracted' : 'upload-type-recorded');
     }
 
     // 更新音频播放器
@@ -333,4 +356,171 @@ async function deleteCurrent() {
     if (recordingsData.length === 0) return;
     const record = recordingsData[currentRecordIndex];
     await deleteFromList(record.id, true);
+}
+
+// 字词按钮相关功能
+let wordVariantCache = new Map(); // 缓存变体数据
+
+// 渲染字词按钮
+function renderWordButtons(container, text) {
+    if (!text || text === '-') {
+        container.textContent = '-';
+        return;
+    }
+
+    // 如果是编辑模式，显示纯文本
+    if (container.closest('.text-column')?.classList.contains('editing')) {
+        container.textContent = text;
+        return;
+    }
+
+    // 清空容器并创建字词按钮容器
+    container.innerHTML = '';
+    const wordButtonsContainer = document.createElement('div');
+    wordButtonsContainer.className = 'word-buttons-container';
+
+    // 分词：按空格分割，保留标记符
+    const words = text.split(' ').filter(word => word.length > 0);
+
+    words.forEach((word, index) => {
+        const button = createWordButton(word, index);
+        wordButtonsContainer.appendChild(button);
+    });
+
+    container.appendChild(wordButtonsContainer);
+}
+
+// 创建单个字词按钮
+function createWordButton(word, index) {
+    const button = document.createElement('div');
+    button.className = 'word-button';
+    button.dataset.index = index;
+    button.dataset.originalWord = word;
+
+    // 判断词的类型并设置样式
+    if (word.endsWith('$')) {
+        button.classList.add('variant');
+        // 移除$标记，显示纯文本
+        button.textContent = word.slice(0, -1);
+        button.dataset.isVariant = 'true';
+        button.dataset.baseWord = word.slice(0, -1);
+        button.dataset.currentVariant = 1; // 当前变体编号
+    } else if (word.endsWith('#')) {
+        button.classList.add('completed');
+        // 移除#标记，显示纯文本
+        button.textContent = word.slice(0, -1);
+        button.dataset.isVariant = 'false';
+    } else {
+        // 未翻译的词
+        button.textContent = word;
+        button.dataset.isVariant = 'false';
+    }
+
+    // 为多变体词添加点击事件
+    if (word.endsWith('$')) {
+        button.addEventListener('click', () => handleVariantClick(button));
+    }
+
+    return button;
+}
+
+// 处理变体词点击
+async function handleVariantClick(button) {
+    const baseWord = button.dataset.baseWord;
+    const currentVariant = parseInt(button.dataset.currentVariant);
+
+    // 添加切换动画
+    button.classList.add('switching');
+
+    try {
+        // 获取所有变体
+        const variants = await getWordVariants(baseWord);
+
+        if (variants && variants.length > 1) {
+            // 计算下一个变体
+            const nextVariantIndex = variants.findIndex(v => v[0] === currentVariant) + 1;
+            const nextVariant = variants[nextVariantIndex % variants.length];
+
+            // 更新按钮
+            button.textContent = nextVariant[1];
+            button.dataset.currentVariant = nextVariant[0];
+
+            // 更新记录数据
+            updateRecordWithNewVariant(button.dataset.index, nextVariant[1] + '$');
+
+            // 显示提示
+            showToast(`切换到变体 ${nextVariant[0]}: ${nextVariant[1]}`, 'success');
+        } else {
+            showToast('该词没有其他变体', 'warning');
+        }
+    } catch (error) {
+        console.error('获取变体失败:', error);
+        showToast('获取变体失败，请重试', 'error');
+    } finally {
+        // 移除动画
+        setTimeout(() => {
+            button.classList.remove('switching');
+        }, 300);
+    }
+}
+
+// 获取词的所有变体
+async function getWordVariants(word) {
+    // 检查缓存
+    if (wordVariantCache.has(word)) {
+        return wordVariantCache.get(word);
+    }
+
+    try {
+        const response = await fetch(`/api/word-variants/${encodeURIComponent(word)}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            // 缓存结果
+            wordVariantCache.set(word, data.variants);
+            return data.variants;
+        } else {
+            throw new Error(data.error || '获取变体失败');
+        }
+    } catch (error) {
+        console.error('获取变体失败:', error);
+        return null;
+    }
+}
+
+// 更新记录中的变体词
+function updateRecordWithNewVariant(wordIndex, newWord) {
+    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
+        return;
+    }
+
+    const record = recordingsData[currentRecordIndex];
+    const words = record.actual_content.split(' ');
+
+    // 更新指定索引的词
+    words[wordIndex] = newWord;
+
+    // 更新记录数据
+    const newContent = words.join(' ');
+    record.actual_content = newContent;
+
+    // 更新数据库
+    updateRecordingContent(record.id, newContent);
+}
+
+// 更新recording-management.js中的saveTextEdit函数，确保它与字词按钮兼容
+function syncWordButtonsWithEdit() {
+    const convertedTextElement = document.getElementById('convertedText');
+    const editElement = document.getElementById('convertedTextEdit');
+
+    if (convertedTextElement && editElement) {
+        // 同步编辑框的内容到字词按钮
+        const newContent = editElement.value.trim();
+        if (newContent) {
+            renderWordButtons(convertedTextElement, newContent);
+        }
+    }
 }

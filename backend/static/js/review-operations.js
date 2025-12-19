@@ -49,7 +49,14 @@ function saveTextEdit() {
     if (newContent && newContent !== originalContent) {
         // 更新本地数据
         recordingsData[currentRecordIndex].actual_content = newContent;
-        document.getElementById('convertedText').textContent = newContent;
+
+        // 使用字词按钮重新渲染内容
+        const convertedTextElement = document.getElementById('convertedText');
+        if (typeof renderWordButtons === 'function') {
+            renderWordButtons(convertedTextElement, newContent);
+        } else {
+            convertedTextElement.textContent = newContent;
+        }
 
         // 保存到后端
         updateRecordingContent(recordingsData[currentRecordIndex].id, newContent);
@@ -79,6 +86,14 @@ function cancelTextEdit() {
     // 移除编辑状态类
     if (textColumn) {
         textColumn.classList.remove('editing');
+    }
+
+    // 重新渲染字词按钮以恢复原始内容
+    if (recordingsData.length > 0 && currentRecordIndex < recordingsData.length) {
+        const currentContent = recordingsData[currentRecordIndex].actual_content;
+        if (typeof renderWordButtons === 'function') {
+            renderWordButtons(textElement, currentContent);
+        }
     }
 }
 
