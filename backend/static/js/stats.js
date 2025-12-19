@@ -4,6 +4,15 @@
 async function initializeStats() {
     try {
         const response = await fetch('/api/stats');
+
+        if (!response.ok) {
+            // 处理HTTP错误
+            const errorText = await response.text();
+            console.error('HTTP错误:', response.status, errorText);
+            showToast('获取统计数据失败，服务器错误', 'error');
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -14,9 +23,14 @@ async function initializeStats() {
             updateStatNumber('stat-approved', stats.approved || 0);
             updateStatNumber('stat-rejected', stats.rejected || 0);
             updateStatNumber('stat-total', stats.total || 0);
+        } else {
+            // 处理业务逻辑错误
+            console.error('统计数据错误:', data.error);
+            showToast(data.error || '获取统计数据失败', 'error');
         }
     } catch (error) {
         console.error('初始化统计数据失败:', error);
+        showToast('网络错误，无法获取统计数据', 'error');
     }
 }
 
@@ -24,6 +38,14 @@ async function initializeStats() {
 async function loadStats() {
     try {
         const response = await fetch('/api/stats');
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('HTTP错误:', response.status, errorText);
+            showToast('更新统计数据失败，服务器错误', 'error');
+            return;
+        }
+
         const data = await response.json();
 
         if (data.success) {
@@ -34,9 +56,13 @@ async function loadStats() {
             updateStatNumber('stat-approved', stats.approved || 0);
             updateStatNumber('stat-rejected', stats.rejected || 0);
             updateStatNumber('stat-total', stats.total || 0);
+        } else {
+            console.error('统计数据错误:', data.error);
+            showToast(data.error || '更新统计数据失败', 'error');
         }
     } catch (error) {
         console.error('加载统计数据失败:', error);
+        showToast('网络错误，无法更新统计数据', 'error');
     }
 }
 

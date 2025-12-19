@@ -53,6 +53,23 @@ def api_upload(key_obj):
 
         from app.models import Recording
 
+        # 获取上传类型参数 (必须传递)
+        upload_type = request.form.get('upload_type', type=int)
+        if upload_type is None:
+            return jsonify({
+                'success': False,
+                'error': '缺少upload_type参数，必须传递0(录音上传)或1(素材提取)'
+            }), 400
+
+        if upload_type not in [0, 1]:
+            return jsonify({
+                'success': False,
+                'error': 'upload_type参数值错误，必须是0(录音上传)或1(素材提取)'
+            }), 400
+
+        # 获取录音时长
+        duration = request.form.get('duration', 0, type=int)
+
         # 在数据库中存储相对于data目录的路径
         recording = Recording(
             id=recording_id,
@@ -61,7 +78,9 @@ def api_upload(key_obj):
             actual_content=actual_content,
             ip_address=get_client_ip(),
             user_agent=request.headers.get('User-Agent', '')[:500],
-            file_size=os.path.getsize(file_path)
+            file_size=os.path.getsize(file_path),
+            duration=duration,
+            upload_type=upload_type
         )
 
         db.session.add(recording)
@@ -92,12 +111,29 @@ def api_recordings():
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         status = request.args.get('status', '')
+        upload_type = request.args.get('upload_type', '', type=str)
+        search = request.args.get('search', '', type=str)
+
+        # 限制每页最大数量，避免性能问题
+        per_page = min(per_page, 100)
 
         query = Recording.query
 
         if status:
             query = query.filter_by(status=status)
 
+        # upload_type筛选
+        if upload_type.isdigit():
+            query = query.filter_by(upload_type=int(upload_type))
+
+        if search:
+            search_pattern = f'%{search}%'
+            query = query.filter(
+                (Recording.original_text.like(search_pattern)) |
+                (Recording.actual_content.like(search_pattern))
+            )
+
+        # 优化：只选择必要的字段
         recordings = query.order_by(Recording.upload_time.desc())\
             .paginate(page=page, per_page=per_page, error_out=False)
 
@@ -106,7 +142,8 @@ def api_recordings():
             'recordings': [rec.to_dict() for rec in recordings.items],
             'total': recordings.total,
             'pages': recordings.pages,
-            'current_page': page
+            'current_page': page,
+            'per_page': per_page
         })
 
     except Exception as e:

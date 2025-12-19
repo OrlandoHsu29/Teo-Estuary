@@ -555,6 +555,8 @@ class DialectRecorder {
             const formData = new FormData();
             formData.append('audio', this.audioBlob, 'recording.webm');
             formData.append('text', this.currentText);
+            formData.append('upload_type', '0'); // 0: 录音上传
+            formData.append('duration', this.recordingDuration); // 录音时长（秒）
 
             const response = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',

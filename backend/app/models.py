@@ -18,6 +18,7 @@ class Recording(db.Model):
     file_size = db.Column(db.Integer)
     duration = db.Column(db.Integer)
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
+    upload_type = db.Column(db.Integer, nullable=False)  # 0: 录音上传, 1: 素材提取 (不允许为空)
 
     def to_dict(self):
         from app.utils.timezone import format_time
@@ -32,7 +33,8 @@ class Recording(db.Model):
             'ip_address': self.ip_address,
             'file_size': self.file_size,
             'duration': self.duration,
-            'status': self.status
+            'status': self.status,
+            'upload_type': self.upload_type
         }
 
 
