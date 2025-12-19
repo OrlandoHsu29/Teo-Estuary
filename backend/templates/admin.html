@@ -137,7 +137,7 @@
                                     <i class="fas fa-sync-alt"></i>
                                 </div>
                                 <div class="loading-text">正在加载数据...</div>
-                                <div class="loading-subtitle">请稍候</div>=
+                                <div class="loading-subtitle">请稍候</div>
                             </div>
                             <div class="review-content" id="reviewContent">
                                 <button class="nav-btn" id="prevBtn" onclick="navigateRecord(-1)" disabled>
@@ -148,7 +148,7 @@
 
                                 <div class="review-main">
                                     <div class="review-header">
-                                        <h2 id="reviewTitle">暂无待审核记录</h2>
+                                        <h2 id="reviewTitle">记录 #**************</h2>
                                         <span class="review-counter">
                                             <span id="currentIndex">0</span> / <span id="totalRecords">0</span>
                                         </span>
@@ -196,6 +196,10 @@
                                                     <div class="meta-item" title="" id="userAgent">
                                                         <span class="meta-label">浏览器:</span>
                                                         <span class="meta-value">-</span>
+                                                    </div>
+                                                    <div class="meta-item">
+                                                        <span class="meta-label">来源:</span>
+                                                        <span class="meta-value" id="uploadType">-</span>
                                                     </div>
                                                 </div>
                                             </div>

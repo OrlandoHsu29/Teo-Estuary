@@ -983,9 +983,10 @@ body {
     padding: 2rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 8px;
     max-height: 100%;
-    overflow-y: auto; /* 允许滚动以防内容溢出 */
+    overflow-y: auto; 
+    
 }
 
 .review-header {
@@ -2496,7 +2497,7 @@ s
 }
 
 .media-column {
-    flex: 0 0 300px;
+    flex: 0 0 200px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -2547,11 +2548,123 @@ s
     font-weight: 600;
 }
 
-.original-text p, .converted-text p {
+.original-text p {
     font-size: 13px;
     line-height: 1.4;
     margin: 0;
     color: var(--text-primary);
+}
+
+/* 字词按钮样式 */
+.word-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0;
+    min-height: 32px;
+    padding: 4px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.word-button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    font-family: 'Noto Sans SC', sans-serif;
+    position: relative;
+    user-select: none;
+}
+
+.word-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.word-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 完成翻译的词（#结尾）- 绿色半透明 */
+.word-button.completed {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+    color: #e8f5e8;
+}
+
+.word-button.completed:hover {
+    background: rgba(76, 175, 80, 0.25);
+    border-color: rgba(76, 175, 80, 0.5);
+}
+
+/* 多变体翻译的词（$结尾）- 黄色半透明 */
+.word-button.variant {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #fff8e1;
+    position: relative;
+}
+
+.word-button.variant:hover {
+    background: rgba(255, 193, 7, 0.25);
+    border-color: rgba(255, 193, 7, 0.5);
+}
+
+/* 变体词的指示器 */
+.word-button.variant::after {
+    content: '•';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 10px;
+    color: rgba(255, 193, 7, 0.8);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* 点击变体词时的动画 */
+.word-button.variant.switching {
+    animation: switchVariant 0.3s ease;
+}
+
+@keyframes switchVariant {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); opacity: 0.7; }
+    100% { transform: scale(1); }
+}
+
+/* 编辑模式下的样式调整 */
+.text-column.editing .word-buttons-container {
+    display: none;
+}
+
+.text-column.editing .converted-text p {
+    display: block !important;
+}
+
+/* 上传途径样式 */
+.upload-type-recorded {
+    color: #64b5f6;
+    font-weight: 500;
+}
+
+.upload-type-extracted {
+    color: #81c784;
+    font-weight: 500;
 }
 
 /* 自定义音频播放器 */
@@ -2645,11 +2758,7 @@ s
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
-}
-
-.meta-info.compact .meta-item:last-child {
-    margin-bottom: 0;
-}
+}   
 
 .meta-info.compact .meta-label {
     font-size: 10px;
@@ -2722,7 +2831,7 @@ s
 }
 
 .device-screen {
-    padding: 15px 0 15px 0;
+    padding: 15px 0 0px 0;
 }
 
 .review-main {
