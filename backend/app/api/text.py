@@ -2,6 +2,7 @@
 from flask import Blueprint, jsonify, current_app
 import logging
 from app.utils.combined_decorators import api_key_required_with_rate_limit
+from app.teo_g2p.translation_service import translation_service
 
 text_bp = Blueprint('text', __name__)
 logger = logging.getLogger(__name__)
@@ -38,4 +39,24 @@ def api_generate_text(key_obj):
         return jsonify({
             'success': False,
             'error': '生成文本失败，请重试'
+        }), 500
+
+
+@text_bp.route('/api/word-variants/<word>', methods=['GET'])
+@api_key_required_with_rate_limit(hourly_limit=1000, daily_limit=5000)
+def api_get_word_variants(key_obj, word):
+    """获取词的所有变体翻译"""
+    try:
+        variants = translation_service.get_word_variants(word)
+
+        return jsonify({
+            'success': True,
+            'word': word,
+            'variants': variants
+        })
+    except Exception as e:
+        logger.error(f"Get word variants error: {e}")
+        return jsonify({
+            'success': False,
+            'error': '获取变体翻译失败，请重试'
         }), 500
