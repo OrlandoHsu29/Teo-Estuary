@@ -1,5 +1,5 @@
 """文本生成蓝图"""
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify, current_app, request
 import logging
 from app.utils.combined_decorators import api_key_required_with_rate_limit
 from app.utils.decorators import admin_required
@@ -63,12 +63,16 @@ def api_get_word_variants(key_obj, word):
         }), 500
 
 
-@text_bp.route('/admin/api/word-variants/<word>', methods=['GET'])
+@text_bp.route('/admin/api/word-variants', methods=['POST'])
 @admin_required
-def admin_api_get_word_variants(word):
+def admin_api_get_word_variants():
     """管理员获取词的所有变体翻译（无需API密钥）"""
     try:
-        variants = translation_service.get_word_variants(word)
+        data = request.get_json()
+
+        word = data.get('word', '').strip()
+        lang = data.get('lang', '').strip()
+        variants = translation_service.get_word_variants(word, lang)
 
         return jsonify({
             'success': True,
