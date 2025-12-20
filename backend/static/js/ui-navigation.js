@@ -134,6 +134,9 @@ document.head.appendChild(style);
 function filterByStatus(status) {
     console.log('切换状态筛选到:', status); // 调试信息
 
+    // 在切换状态前，确保关闭所有编辑模式
+    exitAllEditModes();
+
     // 更新当前筛选状态
     currentStatusFilter = status;
 
@@ -155,5 +158,16 @@ function filterByStatus(status) {
     // 重置页码并重新加载录音数据
     currentPage = 1;
     loadRecordings(status);
+}
+
+// 退出所有编辑模式的函数
+function exitAllEditModes() {
+    // 直接调用现有的取消编辑函数，它们已经包含完整的清理逻辑
+    if (typeof cancelTeochewTextEdit === 'function') {
+        cancelTeochewTextEdit();
+    }
+    if (typeof cancelMandarinTextEdit === 'function') {
+        cancelMandarinTextEdit();
+    }
 }
 

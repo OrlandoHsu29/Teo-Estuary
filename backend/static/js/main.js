@@ -60,6 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
         statusFilter.addEventListener('change', function() {
             currentPage = 1;
 
+            // 在切换状态前，确保关闭所有编辑模式
+            if (typeof exitAllEditModes === 'function') {
+                exitAllEditModes();
+            }
+
             // 获取筛选器选择的值
             const selectedStatus = this.value;
 

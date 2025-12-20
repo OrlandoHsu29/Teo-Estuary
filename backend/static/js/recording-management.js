@@ -58,6 +58,11 @@ function hideDataLoading() {
 // 加载录音数据
 async function loadRecordings(status = null) {
     try {
+        // 确保退出所有编辑模式
+        if (typeof exitAllEditModes === 'function') {
+            exitAllEditModes();
+        }
+
         // 使用传入的状态参数，如果没有则使用当前筛选状态
         const filterStatus = status || currentStatusFilter || 'pending';
 
@@ -219,6 +224,11 @@ function displayEmptyRecordState() {
 // 显示当前记录
 function displayCurrentRecord() {
     if (recordingsData.length === 0) return;
+
+    // 确保退出所有编辑模式
+    if (typeof exitAllEditModes === 'function') {
+        exitAllEditModes();
+    }
 
     // 确保加载动画被隐藏
     hideDataLoading();
@@ -383,6 +393,7 @@ async function navigateRecord(direction) {
     absoluteRecordIndex = newAbsoluteIndex;
     displayCurrentRecord();
     updateNavigationButtons();
+    updateReviewCounter();
 
     // 添加切换动画效果
     const device = document.getElementById('reviewDevice');
@@ -428,6 +439,7 @@ async function loadNextPage() {
 
                 displayCurrentRecord();
                 updateNavigationButtons();
+                updateReviewCounter();
             } else {
                 showToast('加载下一页失败', 'error');
             }
@@ -459,6 +471,7 @@ async function loadNextPage() {
 
                 displayCurrentRecord();
                 updateNavigationButtons();
+                updateReviewCounter();
             } else {
                 showToast('加载下一页失败', 'error');
             }
@@ -503,6 +516,7 @@ async function loadPreviousPage() {
 
             displayCurrentRecord();
             updateNavigationButtons();
+            updateReviewCounter();
             showToast('已加载上一页数据', 'success');
         } else {
             showToast('加载上一页失败', 'error');

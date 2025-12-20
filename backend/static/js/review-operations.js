@@ -56,10 +56,21 @@ function saveTeochewTextEdit() {
 
         // 使用字词按钮重新渲染内容
         const convertedTextElement = document.getElementById('convertedText');
+        const teochewTextElement = document.getElementById('teochewText');
+
         if (typeof renderWordButtons === 'function') {
-            renderWordButtons(convertedTextElement, newContent);
+            // 优先使用convertedText，如果不存在则使用teochewText
+            const targetElement = convertedTextElement || teochewTextElement;
+            if (targetElement) {
+                renderWordButtons(targetElement, newContent);
+            }
         } else {
-            convertedTextElement.textContent = newContent;
+            // 降级处理：直接设置文本内容
+            if (convertedTextElement) {
+                convertedTextElement.textContent = newContent;
+            } else if (teochewTextElement) {
+                teochewTextElement.textContent = newContent;
+            }
         }
 
         // 保存到后端
@@ -360,10 +371,8 @@ async function approveCurrent() {
                     // 从本地数据中移除已审核的记录
                     recordingsData.splice(currentRecordIndex, 1);
 
-                    // 更新绝对索引，因为我们删除了一个记录
-                    if (absoluteRecordIndex > 0) {
-                        absoluteRecordIndex--;
-                    }
+                    // 注意：currentRecordIndex保持不变，因为数组删除后下一个元素自动补位到当前索引
+                    // absoluteRecordIndex也保持不变，因为我们在全局位置中的位置没有变化
 
                 // 更新当前索引
                 if (recordingsData.length === 0) {
@@ -380,8 +389,13 @@ async function approveCurrent() {
                     updateNavigationButtons();
                 }
 
-                // 重新加载当前筛选状态的数据和统计
-                loadRecordings(currentStatusFilter);
+                // 立即更新当前筛选状态的总数和计数器
+                if (window.totalDataCount && window.totalDataCount > 0) {
+                    window.totalDataCount--;
+                }
+                updateReviewCounter(); // 立即更新计数器显示
+
+                // 异步更新统计面板（不影响当前的计数器显示）
                 loadStats();
             }); // 立即执行，不等待进度条动画
             } else {
@@ -435,13 +449,11 @@ async function rejectCurrent() {
             // 显示红色拒绝动画
             showProgressAnimation('rejected');
 
-            // 从本地数据中移除已审核的记录，使用正确的逻辑
+            // 从本地数据中移除已审核的记录
             recordingsData.splice(currentRecordIndex, 1);
 
-            // 更新绝对索引，因为我们删除了一个记录
-            if (absoluteRecordIndex > 0) {
-                absoluteRecordIndex--;
-            }
+            // 注意：currentRecordIndex保持不变，因为数组删除后下一个元素自动补位到当前索引
+            // absoluteRecordIndex也保持不变，因为我们在全局位置中的位置没有变化
 
             // 更新当前索引
             if (recordingsData.length === 0) {
@@ -458,8 +470,13 @@ async function rejectCurrent() {
                 updateNavigationButtons();
             }
 
-            // 重新加载当前筛选状态的数据和统计
-            loadRecordings(currentStatusFilter);
+            // 立即更新当前筛选状态的总数和计数器
+            if (window.totalDataCount && window.totalDataCount > 0) {
+                window.totalDataCount--;
+            }
+            updateReviewCounter(); // 立即更新计数器显示
+
+            // 异步更新统计面板（不影响当前的计数器显示）
             loadStats();
         } else {
             showToast(data.error || '拒绝失败', 'error');
@@ -485,10 +502,8 @@ async function approveFromList(id, isCurrent) {
     if (isCurrent && currentView === 'device') {
         recordingsData.splice(currentRecordIndex, 1);
 
-        // 更新绝对索引，因为我们删除了一个记录
-        if (absoluteRecordIndex > 0) {
-            absoluteRecordIndex--;
-        }
+        // 注意：currentRecordIndex和absoluteRecordIndex都保持不变
+        // 因为删除后后面的元素自动补位到当前索引位置
 
         if (recordingsData.length === 0) {
             loadRecordings();
@@ -511,10 +526,8 @@ async function rejectFromList(id, isCurrent) {
     if (isCurrent && currentView === 'device') {
         recordingsData.splice(currentRecordIndex, 1);
 
-        // 更新绝对索引，因为我们删除了一个记录
-        if (absoluteRecordIndex > 0) {
-            absoluteRecordIndex--;
-        }
+        // 注意：currentRecordIndex和absoluteRecordIndex都保持不变
+        // 因为删除后后面的元素自动补位到当前索引位置
 
         if (recordingsData.length === 0) {
             loadRecordings();
@@ -545,10 +558,8 @@ async function deleteFromList(id, isCurrent) {
             if (isCurrent && currentView === 'device') {
                 recordingsData.splice(currentRecordIndex, 1);
 
-                // 更新绝对索引，因为我们删除了一个记录
-                if (absoluteRecordIndex > 0) {
-                    absoluteRecordIndex--;
-                }
+                // 注意：currentRecordIndex和absoluteRecordIndex都保持不变
+                // 因为删除后后面的元素自动补位到当前索引位置
 
                 if (recordingsData.length === 0) {
                     loadRecordings();

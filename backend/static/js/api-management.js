@@ -14,11 +14,16 @@ function formatApiKey(key) {
 // 加载API密钥
 let isLoadingApiKeys = false; // 防止重复加载的标志
 
-async function loadApiKeys() {
-    // 防止重复加载
-    if (isLoadingApiKeys) {
+async function loadApiKeys(forceRefresh = false) {
+    // 防止重复加载，但允许强制刷新
+    if (isLoadingApiKeys && !forceRefresh) {
         console.log('API密钥正在加载中，跳过重复调用');
         return;
+    }
+
+    // 如果是强制刷新，重置加载标志
+    if (forceRefresh) {
+        isLoadingApiKeys = false;
     }
 
     isLoadingApiKeys = true;
@@ -143,7 +148,7 @@ async function createKey() {
         if (data.success) {
             showToast('创建成功', 'success');
             closeCreateKeyModal();
-            loadApiKeys();
+            loadApiKeys(true); // 强制刷新
         } else {
             showToast(data.error || '创建失败', 'error');
         }
@@ -165,7 +170,7 @@ async function resetKeyUsage(id) {
 
             if (data.success) {
                 showToast(data.message || '重置成功', 'success');
-                loadApiKeys();
+                loadApiKeys(true); // 强制刷新
             } else {
                 showToast(data.error || '重置失败', 'error');
             }
@@ -255,7 +260,7 @@ async function updateKey() {
         if (data.success) {
             showToast('更新成功', 'success');
             closeEditKeyModal();
-            loadApiKeys();
+            loadApiKeys(true); // 强制刷新
         } else {
             showToast(data.error || '更新失败', 'error');
         }
@@ -276,7 +281,7 @@ async function toggleKey(id) {
 
         if (data.success) {
             showToast(data.message || '状态切换成功', 'success');
-            loadApiKeys();
+            loadApiKeys(true); // 强制刷新
         } else {
             showToast(data.error || '切换失败', 'error');
         }
@@ -298,7 +303,7 @@ async function deleteKey(id) {
 
             if (data.success) {
                 showToast('删除成功', 'success');
-                loadApiKeys();
+                loadApiKeys(true); // 强制刷新
             } else {
                 showToast(data.error || '删除失败', 'error');
             }
