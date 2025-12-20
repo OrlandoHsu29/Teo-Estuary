@@ -34,7 +34,7 @@ class JiebaSyncService:
         if jieba_file_path is None:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             jieba_file_path = os.path.join(
-                current_dir, '..', 'teochew_g2p', 'dict_data', 'word_dict', 'jieba_cut.txt'
+                current_dir, '..', 'teo_g2p', 'word_dict', 'jieba_cut.txt'
             )
             jieba_file_path = os.path.normpath(jieba_file_path)
 

@@ -25,7 +25,7 @@ class TranslationService:
         """初始化jieba分词"""
         # 获取正确的路径
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        jieba_path = os.path.join(current_dir, '..', 'teochew_g2p', 'dict_data', 'word_dict', 'jieba_cut.txt')
+        jieba_path = os.path.join(current_dir, '..', 'teo_g2p', 'word_dict', 'jieba_cut.txt')
         jieba_path = os.path.normpath(jieba_path)
 
         if os.path.exists(jieba_path):

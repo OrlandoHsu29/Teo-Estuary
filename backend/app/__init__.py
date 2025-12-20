@@ -13,10 +13,6 @@ BACKEND_ROOT = Path(__file__).parent.parent
 # 初始化数据库
 db = SQLAlchemy()
 
-# 初始化潮汕话转换器
-from app.teochew_g2p.script.pyPengIm import pyPengIm
-teochew_converter = pyPengIm()
-
 # 配置日志
 import logging
 logging.basicConfig(
@@ -126,9 +122,6 @@ def create_app():
         # 初始化AI文本生成器
         from app.ai_generator import create_text_generator
         app.text_generator = create_text_generator(api_key=app.config['SILICONFLOW_API_KEY'])
-
-        # 添加潮汕话转换器到应用上下文
-        app.teochew_converter = teochew_converter
 
     return app
 
