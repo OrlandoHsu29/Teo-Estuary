@@ -15,27 +15,19 @@ function initializeReviewDeviceDisplay() {
     if (totalRecordsElement) totalRecordsElement.textContent = '0';
 
     // 设置默认文本内容
-    const originalTextElement = document.getElementById('originalText');
-    const convertedTextElement = document.getElementById('convertedText');
-    if (originalTextElement) originalTextElement.textContent = '加载中...';
-    if (convertedTextElement) convertedTextElement.textContent = '加载中...';
+    const mandarinTextElement = document.getElementById('mandarinText');
+    const teochewTextElement = document.getElementById('teochewText');
+    if (mandarinTextElement) mandarinTextElement.textContent = '加载中...';
+    if (teochewTextElement) teochewTextElement.textContent = '加载中...';
 
     // 设置默认元信息
     const ipAddressElement = document.getElementById('ipAddress');
     const uploadTimeElement = document.getElementById('uploadTime');
     const fileSizeElement = document.getElementById('fileSize');
-    const userAgentElement = document.getElementById('userAgent');
 
     if (ipAddressElement) ipAddressElement.textContent = '-';
     if (uploadTimeElement) uploadTimeElement.textContent = '-';
     if (fileSizeElement) fileSizeElement.textContent = '-';
-    if (userAgentElement) {
-        const userAgentValue = userAgentElement.querySelector('.meta-value');
-        if (userAgentValue) {
-            userAgentValue.textContent = '-';
-        }
-        userAgentElement.title = '-';
-    }
 
     // 禁用所有控制按钮
     updateControlButtonsByStatus();
@@ -94,8 +86,31 @@ async function loadRecordings(status = null) {
         hideDataLoading();
 
         if (data.success) {
-            recordingsData = data.recordings || [];
-            totalPages = data.pages || 1;
+            // 如果是追加加载下一页，则合并数据
+            if (isLoadingNextPage && data.current_page === windowEndPage + 1) {
+                recordingsData = [...recordingsData, ...(data.recordings || [])];
+                windowEndPage = data.current_page;
+                currentPage = data.current_page;
+                totalPages = data.pages || 1;
+                isLoadingNextPage = false;
+
+                // 计算新的绝对索引
+                absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
+            } else {
+                // 正常加载（新窗口）
+                recordingsData = data.recordings || [];
+                totalPages = data.pages || 1;
+                currentPage = data.current_page;
+                windowStartPage = data.current_page;
+                windowEndPage = data.current_page;
+                absoluteRecordIndex = 0;
+                currentRecordIndex = 0;
+            }
+
+            // 保存总数据量到全局变量
+            if (data.total !== undefined) {
+                window.totalDataCount = data.total;
+            }
 
             // 确保详细视图显示
             const deviceView = document.getElementById('deviceView');
@@ -110,6 +125,7 @@ async function loadRecordings(status = null) {
                 displayEmptyRecordState();
             } else {
                 currentRecordIndex = 0;
+                absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
                 displayCurrentRecord();
             }
 
@@ -146,7 +162,7 @@ function displayEmptyRecordState() {
     // 更新标题显示无记录信息
     const reviewTitleElement = document.getElementById('reviewTitle');
     if (reviewTitleElement) {
-        reviewTitleElement.textContent = '暂无待审核记录';
+        reviewTitleElement.textContent = '暂无待审核音频记录';
     }
 
     // 更新计数器
@@ -156,26 +172,16 @@ function displayEmptyRecordState() {
     if (totalRecordsElement) totalRecordsElement.textContent = '0';
 
     // 清空文本内容显示
-    const originalTextElement = document.getElementById('originalText');
-    const convertedTextElement = document.getElementById('convertedText');
-    if (originalTextElement) originalTextElement.textContent = '-';
-    if (convertedTextElement) convertedTextElement.textContent = '-';
+    const mandarinTextElement = document.getElementById('mandarinText');
+    const teochewTextElement = document.getElementById('teochewText');
+    if (mandarinTextElement) renderWordButtons(mandarinTextElement, '-');
+    if (teochewTextElement) renderWordButtons(teochewTextElement, '-');
 
     // 清空元信息显示
-    const ipAddressElement = document.getElementById('ipAddress');
-    const uploadTimeElement = document.getElementById('uploadTime');
-    const fileSizeElement = document.getElementById('fileSize');
-    const userAgentElement = document.getElementById('userAgent');
+    const metaValues = document.getElementsByClassName('meta-value');
 
-    if (ipAddressElement) ipAddressElement.textContent = '-';
-    if (uploadTimeElement) uploadTimeElement.textContent = '-';
-    if (fileSizeElement) fileSizeElement.textContent = '-';
-    if (userAgentElement) {
-        const userAgentValue = userAgentElement.querySelector('.meta-value');
-        if (userAgentValue) {
-            userAgentValue.textContent = '-';
-        }
-        userAgentElement.title = '-';
+    for (let i = 0; i < metaValues.length; i++) {
+        metaValues[i].textContent = '-';
     }
 
     // 隐藏音频播放器
@@ -227,19 +233,20 @@ function displayCurrentRecord() {
     // 更新标题
     const reviewTitleElement = document.getElementById('reviewTitle');
     if (reviewTitleElement) {
-        reviewTitleElement.textContent = `记录 #${record.id}`;
+        reviewTitleElement.textContent = `音频记录 #${record.id}`;
     }
 
     // 更新文本内容
-    const originalTextElement = document.getElementById('originalText');
-    if (originalTextElement) {
-        originalTextElement.textContent = record.original_text || '-';
+    const mandarinTextElement = document.getElementById('mandarinText');
+    if (mandarinTextElement) {
+        // 使用字词按钮显示普通话文本
+        renderWordButtons(mandarinTextElement, record.original_text || '-');
     }
 
-    const convertedTextElement = document.getElementById('convertedText');
-    if (convertedTextElement) {
-        // 使用字词按钮显示转换文本
-        renderWordButtons(convertedTextElement, record.actual_content || '-');
+    const teochewTextElement = document.getElementById('teochewText');
+    if (teochewTextElement) {
+        // 使用字词按钮显示潮汕话文本
+        renderWordButtons(teochewTextElement, record.actual_content || '-');
     }
 
     // 更新元信息
@@ -256,16 +263,6 @@ function displayCurrentRecord() {
     const fileSizeElement = document.getElementById('fileSize');
     if (fileSizeElement) {
         fileSizeElement.textContent = record.file_size ? formatFileSize(record.file_size) : '-';
-    }
-
-    const userAgent = record.user_agent || '-';
-    const userAgentElement = document.getElementById('userAgent');
-    if (userAgentElement) {
-        const userAgentValue = userAgentElement.querySelector('.meta-value');
-        if (userAgentValue) {
-            userAgentValue.textContent = userAgent;
-        }
-        userAgentElement.title = userAgent;
     }
 
     // 更新上传途径
@@ -298,11 +295,19 @@ function updateNavigationButtons() {
     const nextBtn = document.getElementById('nextBtn');
 
     if (prevBtn) {
-        prevBtn.disabled = currentRecordIndex === 0;
+        // 禁用第一条记录的上一条按钮
+        prevBtn.disabled = absoluteRecordIndex <= 0;
     }
 
     if (nextBtn) {
-        nextBtn.disabled = currentRecordIndex === recordingsData.length - 1;
+        // 禁用最后一条记录的下一条按钮
+        if (window.totalDataCount) {
+            nextBtn.disabled = absoluteRecordIndex >= window.totalDataCount - 1;
+        } else {
+            // 如果没有总数据量，则基于当前页判断
+            nextBtn.disabled = (absoluteRecordIndex >= recordingsData.length - 1) &&
+                             (windowEndPage >= totalPages);
+        }
     }
 
     // 如果没有记录，禁用所有导航按钮
@@ -316,22 +321,170 @@ function updateNavigationButtons() {
 }
 
 // 导航到上一条/下一条记录
-function navigateRecord(direction) {
-    const newIndex = currentRecordIndex + direction;
+async function navigateRecord(direction) {
+    const newAbsoluteIndex = absoluteRecordIndex + direction;
 
-    if (newIndex >= 0 && newIndex < recordingsData.length) {
-        currentRecordIndex = newIndex;
-        displayCurrentRecord();
-        updateNavigationButtons();
+    // 检查是否超出当前窗口范围
+    if (newAbsoluteIndex < 0) {
+        // 超出范围，不执行导航
+        return;
+    }
 
-        // 添加切换动画效果
-        const device = document.getElementById('reviewDevice');
-        if (device) {
-            device.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-                device.style.transform = 'scale(1)';
-            }, 150);
+    // 检查是否超出总数据范围
+    if (window.totalDataCount && newAbsoluteIndex >= window.totalDataCount) {
+        showToast('已经是最后一条记录', 'info');
+        return;
+    }
+
+    // 如果是向下一条导航且超出当前窗口，需要加载下一页
+    if (direction > 0 && currentRecordIndex >= recordingsData.length - 1) {
+        await loadNextPage();
+        return;
+    }
+
+    // 如果是向上一条导航且超出当前窗口开头，需要加载上一页
+    if (direction < 0 && currentRecordIndex <= 0) {
+        await loadPreviousPage();
+        return;
+    }
+
+    // 正常导航
+    currentRecordIndex += direction;
+    absoluteRecordIndex = newAbsoluteIndex;
+    displayCurrentRecord();
+    updateNavigationButtons();
+
+    // 添加切换动画效果
+    const device = document.getElementById('reviewDevice');
+    if (device) {
+        device.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+            device.style.transform = 'scale(1)';
+        }, 150);
+    }
+}
+
+// 加载下一页
+async function loadNextPage() {
+    if (isLoadingNextPage || windowEndPage >= totalPages) {
+        showToast('已经是最后一条记录', 'info');
+        return;
+    }
+
+    if (windowStartPage > 1) {
+        // 滑动窗口：移除第一页，添加新页
+        const nextPage = windowEndPage + 1;
+        isLoadingNextPage = true;
+
+        try {
+            showDataLoading('正在加载下一页...', '');
+            const response = await fetch(`/api/recordings?status=${currentStatusFilter}&page=${nextPage}&per_page=50`);
+            const data = await response.json();
+
+            if (data.success) {
+                // 移除第一页的50条数据
+                recordingsData.splice(0, 50);
+
+                // 添加新页数据
+                recordingsData.push(...(data.recordings || []));
+
+                windowStartPage++;
+                windowEndPage = nextPage;
+                currentPage = nextPage;
+
+                // 更新绝对索引
+                absoluteRecordIndex++;
+                currentRecordIndex = 0; // 重置到新加载页的第一条
+
+                displayCurrentRecord();
+                updateNavigationButtons();
+                showToast('已加载下一页数据', 'success');
+            } else {
+                showToast('加载下一页失败', 'error');
+            }
+        } catch (error) {
+            console.error('加载下一页失败:', error);
+            showToast('加载下一页失败', 'error');
+        } finally {
+            isLoadingNextPage = false;
+            hideDataLoading();
         }
+    } else {
+        // 第一页扩展：直接追加下一页数据
+        const nextPage = windowEndPage + 1;
+        isLoadingNextPage = true;
+
+        try {
+            showDataLoading('正在加载下一页...', '');
+            const response = await fetch(`/api/recordings?status=${currentStatusFilter}&page=${nextPage}&per_page=50`);
+            const data = await response.json();
+
+            if (data.success) {
+                recordingsData.push(...(data.recordings || []));
+                windowEndPage = nextPage;
+                currentPage = nextPage;
+
+                // 更新绝对索引
+                absoluteRecordIndex++;
+                currentRecordIndex++;
+
+                displayCurrentRecord();
+                updateNavigationButtons();
+                showToast('已加载下一页数据', 'success');
+            } else {
+                showToast('加载下一页失败', 'error');
+            }
+        } catch (error) {
+            console.error('加载下一页失败:', error);
+            showToast('加载下一页失败', 'error');
+        } finally {
+            isLoadingNextPage = false;
+            hideDataLoading();
+        }
+    }
+}
+
+// 加载上一页
+async function loadPreviousPage() {
+    if (isLoadingNextPage || windowStartPage <= 1) {
+        return; // 没有上一页
+    }
+
+    const prevPage = windowStartPage - 1;
+    isLoadingNextPage = true;
+
+    try {
+        showDataLoading('正在加载上一页...', '');
+        const response = await fetch(`/api/recordings?status=${currentStatusFilter}&page=${prevPage}&per_page=50`);
+        const data = await response.json();
+
+        if (data.success) {
+            // 移除最后一页的50条数据
+            recordingsData.splice(-50, 50);
+
+            // 在前面添加新页数据
+            recordingsData.unshift(...(data.recordings || []));
+
+            windowStartPage--;
+            windowEndPage--;
+            currentPage = prevPage;
+
+            // 更新绝对索引和当前索引
+            absoluteRecordIndex--;
+            currentRecordIndex = 49; // 上一页的最后一条（现在是当前页的第一条）
+
+            displayCurrentRecord();
+            updateNavigationButtons();
+            showToast('已加载上一页数据', 'success');
+        } else {
+            showToast('加载上一页失败', 'error');
+        }
+    } catch (error) {
+        console.error('加载上一页失败:', error);
+        showToast('加载上一页失败', 'error');
+    } finally {
+        isLoadingNextPage = false;
+        hideDataLoading();
     }
 }
 
@@ -364,12 +517,13 @@ let wordVariantCache = new Map(); // 缓存变体数据
 // 渲染字词按钮
 function renderWordButtons(container, text) {
     if (!text || text === '-') {
-        container.textContent = '-';
+        container.textContent = text || '-';
         return;
     }
 
     // 如果是编辑模式，显示纯文本
-    if (container.closest('.text-column')?.classList.contains('editing')) {
+    const textColumn = container.closest('.text-column');
+    if (textColumn?.classList.contains('editing') || textColumn?.classList.contains('editing-original')) {
         container.textContent = text;
         return;
     }
@@ -397,29 +551,65 @@ function createWordButton(word, index) {
     button.dataset.index = index;
     button.dataset.originalWord = word;
 
-    // 判断词的类型并设置样式
-    if (word.endsWith('$')) {
-        button.classList.add('variant');
-        // 移除$标记，显示纯文本
-        button.textContent = word.slice(0, -1);
-        button.dataset.isVariant = 'true';
-        button.dataset.baseWord = word.slice(0, -1);
-        button.dataset.currentVariant = 1; // 当前变体编号
+    // 解析变体词格式：翻译$[原词]
+    let displayText = word;
+    let baseWord = '';
+    let isVariant = false;
+
+    // 检查是否是变体词格式：翻译$[原词]
+    const variantMatch = word.match(/^(.+)\$\[(.+)\]$/);
+    if (variantMatch) {
+        displayText = variantMatch[1]; // 显示的翻译文本
+        baseWord = variantMatch[2]; // 用于查询变体的原词
+        isVariant = true;
+    } else if (word.endsWith('$')) {
+        // 兼容旧格式：翻译$
+        displayText = word.slice(0, -1);
+        baseWord = word.slice(0, -1);
+        isVariant = true;
     } else if (word.endsWith('#')) {
         button.classList.add('completed');
-        // 移除#标记，显示纯文本
-        button.textContent = word.slice(0, -1);
-        button.dataset.isVariant = 'false';
-    } else {
-        // 未翻译的词
-        button.textContent = word;
-        button.dataset.isVariant = 'false';
+        displayText = word.slice(0, -1);
+        isVariant = false;
     }
 
-    // 为多变体词添加点击事件
-    if (word.endsWith('$')) {
-        button.addEventListener('click', () => handleVariantClick(button));
+    // 判断词的类型并设置样式
+    if (isVariant) {
+        button.classList.add('variant');
+        button.textContent = displayText;
+        button.dataset.isVariant = 'true';
+        button.dataset.baseWord = baseWord;
+        button.dataset.currentVariant = 1; // 当前变体编号
+        // 为多变体词添加点击事件（切换变体）
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleVariantClick(button);
+        });
+    } else if (word.endsWith('#')) {
+        button.classList.add('completed');
+        button.textContent = displayText;
+        button.dataset.isVariant = 'false';
+        // 为已完成的词添加点击事件（编辑词内容）
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleWordEdit(button);
+        });
+    } else {
+        // 未翻译的词
+        button.textContent = displayText;
+        button.dataset.isVariant = 'false';
+        // 为普通词添加点击事件（编辑词内容）
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleWordEdit(button);
+        });
     }
+
+    // 双击进入编辑模式（针对所有词）
+    button.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        handleWordEdit(button);
+    });
 
     return button;
 }
@@ -441,12 +631,12 @@ async function handleVariantClick(button) {
             const nextVariantIndex = variants.findIndex(v => v[0] === currentVariant) + 1;
             const nextVariant = variants[nextVariantIndex % variants.length];
 
-            // 更新按钮
+            // 更新按钮显示
             button.textContent = nextVariant[1];
             button.dataset.currentVariant = nextVariant[0];
 
-            // 更新记录数据
-            updateRecordWithNewVariant(button.dataset.index, nextVariant[1] + '$');
+            // 更新记录数据 - 使用新格式：翻译$[原词]
+            updateRecordWithNewVariant(button.dataset.index, nextVariant[1] + '$[' + baseWord + ']', button);
 
             // 显示提示
             showToast(`切换到变体 ${nextVariant[0]}: ${nextVariant[1]}`, 'success');
@@ -472,7 +662,17 @@ async function getWordVariants(word) {
     }
 
     try {
-        const response = await fetch(`/api/word-variants/${encodeURIComponent(word)}`);
+        // 使用管理员API端点，无需API密钥
+        const response = await fetch(`/admin/api/word-variants`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                word: word,
+                lang: 'mandarin'
+            })
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -491,24 +691,440 @@ async function getWordVariants(word) {
     }
 }
 
-// 更新记录中的变体词
-function updateRecordWithNewVariant(wordIndex, newWord) {
+// 处理字词编辑
+function handleWordEdit(button) {
+    // 如果点击的按钮已经在编辑模式，不重复处理
+    if (button.classList.contains('editing')) return;
+
+    // 如果有其他按钮正在编辑，先完成编辑（恢复原状）
+    const currentEditing = document.querySelector('.word-button.editing');
+    if (currentEditing && currentEditing !== button) {
+        const originalText = currentEditing.dataset.originalText || '';
+        currentEditing.textContent = originalText;
+        currentEditing.classList.remove('editing');
+        delete currentEditing.dataset.isEditing;
+        delete currentEditing.dataset.originalText;
+    }
+
+    const originalText = button.textContent;
+    const buttonIndex = parseInt(button.dataset.index);
+
+    // 保存原始文本到数据属性
+    button.dataset.originalText = originalText;
+
+    // 创建输入框
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = originalText;
+    input.className = 'word-edit-input';
+
+    // 清空按钮并添加输入框
+    button.innerHTML = '';
+    button.appendChild(input);
+    button.classList.add('editing');
+
+    // 保存当前编辑状态
+    button.dataset.isEditing = 'true';
+
+    // 聚焦并选中全部文本
+    input.focus();
+    input.select();
+
+    // 绑定事件处理
+    const saveEdit = () => {
+        const newText = input.value.trim();
+        if (newText !== originalText) {
+            updateWordInText(buttonIndex, newText, button);
+        } else {
+            // 恢复原始文本
+            button.textContent = originalText;
+            button.classList.remove('editing');
+            delete button.dataset.isEditing;
+            delete button.dataset.originalText;
+        }
+    };
+
+    const cancelEdit = () => {
+        button.textContent = originalText;
+        button.classList.remove('editing');
+        delete button.dataset.isEditing;
+        delete button.dataset.originalText;
+    };
+
+    // 保存编辑
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            input.blur();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            cancelEdit();
+        }
+    });
+
+    // 防止点击事件冒泡
+    input.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+}
+
+// 更新文本中的单个词
+function updateWordInText(wordIndex, newWord, buttonElement) {
     if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
         return;
     }
 
     const record = recordingsData[currentRecordIndex];
-    const words = record.actual_content.split(' ');
+    const isOriginalText = buttonElement?.closest('#originalText');
 
-    // 更新指定索引的词
-    words[wordIndex] = newWord;
+    let newContent;
+    let originalWord = ''; // 保存原始词的完整信息
 
-    // 更新记录数据
-    const newContent = words.join(' ');
-    record.actual_content = newContent;
+    if (isOriginalText) {
+        // 更新原始文本
+        const words = record.original_text.split(' ');
+        originalWord = words[wordIndex];
+
+        // 如果新内容为空，移除这个词
+        if (!newWord || newWord.trim() === '') {
+            words.splice(wordIndex, 1);
+            newContent = words.join(' ');
+            record.original_text = newContent;
+
+            // 移除按钮元素
+            buttonElement.remove();
+
+            // 更新数据库
+            updateRecordingOriginalText(record.id, newContent);
+
+            // 重新渲染所有按钮以更新索引
+            const originalTextElement = document.getElementById('originalText');
+            if (originalTextElement) {
+                renderWordButtons(originalTextElement, newContent || (newContent === '' ? '' : '-'));
+            }
+        } else {
+            // 判断原始词的格式并保持相应的格式
+            const variantMatch = originalWord.match(/^(.+)\$\[(.+)\]$/);
+            if (variantMatch) {
+                // 新格式：翻译$[原词] -> 翻译$[原词]
+                words[wordIndex] = newWord + '$[' + variantMatch[2] + ']';
+            } else if (originalWord.endsWith('$')) {
+                // 旧格式：翻译$ -> 翻译$
+                words[wordIndex] = newWord + '$';
+            } else if (originalWord.endsWith('#')) {
+                // 完成词：翻译# -> 翻译#
+                words[wordIndex] = newWord + '#';
+            } else {
+                // 普通词：翻译 -> 翻译
+                words[wordIndex] = newWord;
+            }
+
+            newContent = words.join(' ');
+            record.original_text = newContent;
+
+            // 更新按钮数据
+            buttonElement.dataset.originalWord = words[wordIndex];
+            buttonElement.textContent = newWord;
+
+            // 更新数据库
+            updateRecordingOriginalText(record.id, newContent);
+        }
+    } else {
+        // 更新转换文本
+        const words = record.actual_content.split(' ');
+        originalWord = words[wordIndex];
+
+        // 如果新内容为空，移除这个词
+        if (!newWord || newWord.trim() === '') {
+            words.splice(wordIndex, 1);
+            newContent = words.join(' ');
+            record.actual_content = newContent;
+
+            // 移除按钮元素
+            buttonElement.remove();
+
+            // 更新数据库
+            updateRecordingContent(record.id, newContent);
+
+            // 重新渲染所有按钮以更新索引
+            const convertedTextElement = document.getElementById('convertedText');
+            if (convertedTextElement) {
+                renderWordButtons(convertedTextElement, newContent || (newContent === '' ? '' : '-'));
+            }
+        } else {
+            // 判断原始词的格式并保持相应的格式
+            const variantMatch = originalWord.match(/^(.+)\$\[(.+)\]$/);
+            if (variantMatch) {
+                // 新格式：翻译$[原词] -> 翻译$[原词]
+                words[wordIndex] = newWord + '$[' + variantMatch[2] + ']';
+            } else if (originalWord.endsWith('$')) {
+                // 旧格式：翻译$ -> 翻译$
+                words[wordIndex] = newWord + '$';
+            } else if (originalWord.endsWith('#')) {
+                // 完成词：翻译# -> 翻译#
+                words[wordIndex] = newWord + '#';
+            } else {
+                // 普通词：翻译 -> 翻译
+                words[wordIndex] = newWord;
+            }
+
+            newContent = words.join(' ');
+            record.actual_content = newContent;
+
+            // 更新按钮数据
+            buttonElement.dataset.originalWord = words[wordIndex];
+            buttonElement.textContent = newWord;
+
+            // 更新数据库
+            updateRecordingContent(record.id, newContent);
+        }
+    }
+
+    // 只有在按钮元素还存在时才移除编辑状态
+    if (buttonElement && buttonElement.parentNode) {
+        buttonElement.classList.remove('editing');
+        delete buttonElement.dataset.isEditing;
+        delete buttonElement.dataset.originalText;
+    }
+
+    // 显示成功提示
+    showToast(newWord.trim() === '' ? '分词已删除' : '字词修改成功', 'success');
+}
+
+// 更新记录中的变体词
+function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
+    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
+        return;
+    }
+
+    const record = recordingsData[currentRecordIndex];
+    const isOriginalText = buttonElement?.closest('#originalText');
+
+    let newContent;
+
+    if (isOriginalText) {
+        // 更新原始文本
+        const words = record.original_text.split(' ');
+        words[wordIndex] = newWord;
+        newContent = words.join(' ');
+        record.original_text = newContent;
+
+        // 更新按钮数据
+        buttonElement.dataset.originalWord = newWord;
+
+        // 更新数据库
+        updateRecordingOriginalText(record.id, newContent);
+    } else {
+        // 更新转换文本
+        const words = record.actual_content.split(' ');
+        words[wordIndex] = newWord;
+        newContent = words.join(' ');
+        record.actual_content = newContent;
+
+        // 更新按钮数据
+        buttonElement.dataset.originalWord = newWord;
+
+        // 更新数据库
+        updateRecordingContent(record.id, newContent);
+    }
+}
+
+// 检查是否需要合并分词按钮
+function needsMerging(text) {
+    if (!text || text === '-') return false;
+
+    // 分词检测：如果有空格分隔，说明有多个分词
+    const words = text.split(' ');
+
+    // 如果只有一个词，不需要合并
+    if (words.length <= 1) return false;
+
+    // 如果有多个词，需要合并
+    return true;
+}
+
+// 合并分词按钮为完整句子
+function mergeWordsToSentence(text) {
+    if (!text || text === '-') return text;
+
+    // 移除所有分词标记，合并成完整句子
+    const words = text.split(' ');
+    const cleanWords = words.map(word => {
+        // 处理新格式：翻译$[原词] 和旧格式：翻译$ 以及完成词：翻译#
+        const variantMatch = word.match(/^(.+)\$\[(.+)\]$/);
+        if (variantMatch) {
+            return variantMatch[1]; // 返回翻译文本
+        } else {
+            // 移除 $ 和 # 标记，保留纯文本
+            return word.replace(/[\$#]$/, '');
+        }
+    });
+
+    return cleanWords.join('');
+}
+
+// 自动合并文本中的分词按钮
+function autoMergeText(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return null;
+
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return null;
+
+    let currentText;
+    let updateFunction;
+
+    if (elementId === 'originalText') {
+        currentText = record.original_text;
+        updateFunction = updateRecordingOriginalText;
+    } else {
+        currentText = record.actual_content;
+        updateFunction = updateRecordingContent;
+    }
+
+    // 检查是否需要合并
+    if (!needsMerging(currentText)) {
+        return null; // 不需要合并
+    }
+
+    // 合并分词
+    const mergedText = mergeWordsToSentence(currentText);
+
+    // 更新本地数据
+    if (elementId === 'originalText') {
+        record.original_text = mergedText;
+    } else {
+        record.actual_content = mergedText;
+    }
+
+    // 重新渲染为单个按钮
+    renderWordButtons(element, mergedText);
 
     // 更新数据库
-    updateRecordingContent(record.id, newContent);
+    updateFunction(record.id, mergedText);
+
+    return mergedText;
+}
+
+// 自动合并所有文本（在审核通过时调用）
+function autoMergeAllTextsOnApprove() {
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return;
+
+    let originalMerged = null;
+    let convertedMerged = null;
+
+    // 合并原始文本（如果需要）
+    if (needsMerging(record.original_text)) {
+        // 添加合并动画
+        const originalTextElement = document.getElementById('originalText');
+        const originalContainer = originalTextElement?.querySelector('.word-buttons-container');
+        if (originalContainer) {
+            originalContainer.classList.add('merging');
+            const wordButtons = originalContainer.querySelectorAll('.word-button');
+            wordButtons.forEach(btn => btn.classList.add('merging'));
+        }
+
+        setTimeout(() => {
+            originalMerged = mergeWordsToSentence(record.original_text);
+            record.original_text = originalMerged;
+            updateRecordingOriginalText(record.id, originalMerged);
+
+            // 重新渲染原始文本
+            if (originalTextElement) {
+                renderWordButtons(originalTextElement, originalMerged);
+            }
+        }, 400);
+    }
+
+    // 合并转换文本（如果需要）
+    if (needsMerging(record.actual_content)) {
+        // 添加合并动画
+        const convertedTextElement = document.getElementById('convertedText');
+        const convertedContainer = convertedTextElement?.querySelector('.word-buttons-container');
+        if (convertedContainer) {
+            convertedContainer.classList.add('merging');
+            const wordButtons = convertedContainer.querySelectorAll('.word-button');
+            wordButtons.forEach(btn => btn.classList.add('merging'));
+        }
+
+        setTimeout(() => {
+            convertedMerged = mergeWordsToSentence(record.actual_content);
+            record.actual_content = convertedMerged;
+            updateRecordingContent(record.id, convertedMerged);
+
+            // 重新渲染转换文本
+            if (convertedTextElement) {
+                renderWordButtons(convertedTextElement, convertedMerged);
+            }
+        }, 400);
+    }
+
+    // 显示合并信息
+    const messages = [];
+    if (originalMerged) messages.push('原始文本已合并');
+    if (convertedMerged) messages.push('转换文本已合并');
+
+    if (messages.length > 0) {
+        setTimeout(() => {
+            showToast(messages.join('，') + '为完整句子', 'success');
+        }, 500);
+    }
+}
+
+// 为列表视图中的记录进行自动合并
+async function autoMergeForListApprove(recordId) {
+    try {
+        // 获取记录的详细信息
+        const response = await fetch(`/api/recordings?per_page=200`);
+        const data = await response.json();
+
+        if (!data.success) {
+            return;
+        }
+
+        const record = data.recordings.find(r => r.id === recordId);
+        if (!record) {
+            return;
+        }
+
+        let updateData = {};
+
+        // 检查并合并原始文本
+        if (needsMerging(record.original_text)) {
+            updateData.original_text = mergeWordsToSentence(record.original_text);
+        }
+
+        // 检查并合并转换文本
+        if (needsMerging(record.actual_content)) {
+            updateData.actual_content = mergeWordsToSentence(record.actual_content);
+        }
+
+        // 如果有需要合并的内容，更新到后端
+        if (Object.keys(updateData).length > 0) {
+            await fetch(`/api/recording/${recordId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+
+            // 显示合并信息
+            const messages = [];
+            if (updateData.original_text) messages.push('原始文本已合并');
+            if (updateData.actual_content) messages.push('转换文本已合并');
+
+            if (messages.length > 0) {
+                showToast(`记录 ${recordId} - ${messages.join('，')}`, 'success');
+            }
+        }
+    } catch (error) {
+        console.error('列表合并操作失败:', error);
+    }
 }
 
 // 更新recording-management.js中的saveTextEdit函数，确保它与字词按钮兼容

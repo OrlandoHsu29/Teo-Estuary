@@ -1,15 +1,15 @@
 // 审核操作模块
 
-// 编辑转换文本
-let isEditing = false;
-let originalContent = '';
+// 编辑潮汕话文本
+let isEditingTeochew = false;
+let originalTeochewContent = '';
 
-// 编辑原始文本
-let isEditingOriginal = false;
-let originalContentText = '';
+// 编辑普通话文本
+let isEditingMandarin = false;
+let originalMandarinContent = '';
 
-function enableTextEdit() {
-    if (isEditing) return;
+function enableTeochewTextEdit() {
+    if (isEditingTeochew) return;
 
     // 检查是否有记录数据
     if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
@@ -17,23 +17,23 @@ function enableTextEdit() {
         return;
     }
 
-    const textElement = document.getElementById('convertedText');
-    const editElement = document.getElementById('convertedTextEdit');
-    const editActions = document.getElementById('editActions');
-    const originalTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:first-child');
+    const textElement = document.getElementById('teochewText');
+    const editElement = document.getElementById('teochewTextEdit');
+    const editActions = document.getElementById('teochewEditActions');
+    const mandarinTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:first-child');
     const textColumn = textElement.closest('.text-column');
 
-    isEditing = true;
-    originalContent = textElement.textContent;
+    isEditingTeochew = true;
+    originalTeochewContent = textElement.textContent;
 
-    editElement.value = originalContent;
+    editElement.value = originalTeochewContent;
     textElement.style.display = 'none';
     editElement.style.display = 'block';
     editActions.style.display = 'flex';
 
-    // 隐藏原始文本为编辑预留更多空间
-    if (originalTextDisplay) {
-        originalTextDisplay.style.display = 'none';
+    // 隐藏普通话文本为编辑预留更多空间
+    if (mandarinTextDisplay) {
+        mandarinTextDisplay.style.display = 'none';
     }
 
     // 添加编辑状态类
@@ -44,13 +44,13 @@ function enableTextEdit() {
     editElement.focus();
 }
 
-function saveTextEdit() {
+function saveTeochewTextEdit() {
     if (recordingsData.length === 0) return;
 
-    const editElement = document.getElementById('convertedTextEdit');
+    const editElement = document.getElementById('teochewTextEdit');
     const newContent = editElement.value.trim();
 
-    if (newContent && newContent !== originalContent) {
+    if (newContent && newContent !== originalTeochewContent) {
         // 更新本地数据
         recordingsData[currentRecordIndex].actual_content = newContent;
 
@@ -66,25 +66,25 @@ function saveTextEdit() {
         updateRecordingContent(recordingsData[currentRecordIndex].id, newContent);
     }
 
-    cancelTextEdit(); // cancelTextEdit会移除编辑状态类
+    cancelTeochewTextEdit(); // cancelTeochewTextEdit会移除编辑状态类
 }
 
-function cancelTextEdit() {
-    const textElement = document.getElementById('convertedText');
-    const editElement = document.getElementById('convertedTextEdit');
-    const editActions = document.getElementById('editActions');
-    const originalTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:first-child');
+function cancelTeochewTextEdit() {
+    const textElement = document.getElementById('teochewText');
+    const editElement = document.getElementById('teochewTextEdit');
+    const editActions = document.getElementById('teochewEditActions');
+    const mandarinTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:first-child');
     const textColumn = textElement.closest('.text-column');
 
-    isEditing = false;
+    isEditingTeochew = false;
 
     textElement.style.display = 'block';
     editElement.style.display = 'none';
     editActions.style.display = 'none';
 
-    // 恢复原始文本显示
-    if (originalTextDisplay) {
-        originalTextDisplay.style.display = 'block';
+    // 恢复普通话文本显示
+    if (mandarinTextDisplay) {
+        mandarinTextDisplay.style.display = 'block';
     }
 
     // 移除编辑状态类
@@ -102,8 +102,8 @@ function cancelTextEdit() {
 }
 
 // 编辑原始文本功能
-function enableOriginalTextEdit() {
-    if (isEditingOriginal) return;
+function enableMandarinTextEdit() {
+    if (isEditingMandarin) return;
 
     // 检查是否有记录数据
     if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
@@ -111,79 +111,79 @@ function enableOriginalTextEdit() {
         return;
     }
 
-    const textElement = document.getElementById('originalText');
-    const editElement = document.getElementById('originalTextEdit');
-    const editActions = document.getElementById('originalEditActions');
-    const convertedTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:last-child');
+    const textElement = document.getElementById('mandarinText');
+    const editElement = document.getElementById('mandarinTextEdit');
+    const editActions = document.getElementById('mandarinEditActions');
+    const teochewTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:last-child');
     const textColumn = textElement.closest('.text-column');
 
-    isEditingOriginal = true;
-    originalContentText = textElement.textContent;
+    isEditingMandarin = true;
+    originalMandarinContent = textElement.textContent;
 
-    editElement.value = originalContentText;
+    editElement.value = originalMandarinContent;
     textElement.style.display = 'none';
     editElement.style.display = 'block';
     editActions.style.display = 'flex';
 
-    // 隐藏转换文本为编辑预留更多空间
-    if (convertedTextDisplay) {
-        convertedTextDisplay.style.display = 'none';
+    // 隐藏潮汕话文本为编辑预留更多空间
+    if (teochewTextDisplay) {
+        teochewTextDisplay.style.display = 'none';
     }
 
     // 添加编辑状态类
     if (textColumn) {
-        textColumn.classList.add('editing-original');
+        textColumn.classList.add('editing-mandarin');
     }
 
     editElement.focus();
 }
 
-function saveOriginalTextEdit() {
+function saveMandarinTextEdit() {
     if (recordingsData.length === 0) return;
 
-    const editElement = document.getElementById('originalTextEdit');
+    const editElement = document.getElementById('mandarinTextEdit');
     const newContent = editElement.value.trim();
 
-    if (newContent && newContent !== originalContentText) {
+    if (newContent && newContent !== originalMandarinContent) {
         // 更新本地数据
         recordingsData[currentRecordIndex].original_text = newContent;
 
         // 使用字词按钮重新渲染内容
-        const originalTextElement = document.getElementById('originalText');
+        const mandarinTextElement = document.getElementById('mandarinText');
         if (typeof renderWordButtons === 'function') {
-            renderWordButtons(originalTextElement, newContent);
+            renderWordButtons(mandarinTextElement, newContent);
         } else {
-            originalTextElement.textContent = newContent;
+            mandarinTextElement.textContent = newContent;
         }
 
         // 保存到后端
         updateRecordingOriginalText(recordingsData[currentRecordIndex].id, newContent);
     }
 
-    cancelOriginalTextEdit();
+    cancelMandarinTextEdit();
 }
 
-function cancelOriginalTextEdit() {
-    const textElement = document.getElementById('originalText');
-    const editElement = document.getElementById('originalTextEdit');
-    const editActions = document.getElementById('originalEditActions');
-    const convertedTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:last-child');
+function cancelMandarinTextEdit() {
+    const textElement = document.getElementById('mandarinText');
+    const editElement = document.getElementById('mandarinTextEdit');
+    const editActions = document.getElementById('mandarinEditActions');
+    const teochewTextDisplay = textElement.closest('.content-row').querySelector('.text-column .text-display:last-child');
     const textColumn = textElement.closest('.text-column');
 
-    isEditingOriginal = false;
+    isEditingMandarin = false;
 
     textElement.style.display = 'block';
     editElement.style.display = 'none';
     editActions.style.display = 'none';
 
-    // 恢复转换文本显示
-    if (convertedTextDisplay) {
-        convertedTextDisplay.style.display = 'block';
+    // 恢复潮汕话文本显示
+    if (teochewTextDisplay) {
+        teochewTextDisplay.style.display = 'block';
     }
 
     // 移除编辑状态类
     if (textColumn) {
-        textColumn.classList.remove('editing-original');
+        textColumn.classList.remove('editing-mandarin');
     }
 
     // 重新渲染字词按钮以恢复原始内容

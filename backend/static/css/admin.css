@@ -1024,18 +1024,16 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.original-text, .converted-text {
-    /* margin-bottom: 1rem; */
-}
 
-.original-text p {
-    font-size: 1.1rem;
+.mandarin-text p {
+    font-size: smaller;
     color: var(--text-primary);
+    font-weight: 500;
 }
 
-.converted-text p {
-    font-size: 1.2rem;
-    color: var(--primary-color);
+.teochew-text p {
+    font-size: smaller;
+    color: var(--text-primary);
     font-weight: 500;
 }
 
@@ -1806,100 +1804,6 @@ body {
     filter: invert(1);
 }
 
-/* 编辑功能样式 */
-.edit-hint {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    margin-left: 8px;
-    background: rgba(0, 255, 255, 0.15);
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    border-radius: 12px;
-    color: var(--primary-color);
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    opacity: 0.8;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(5px);
-}
-
-.edit-hint:hover {
-    background: rgba(0, 255, 255, 0.25);
-    border-color: rgba(0, 255, 255, 0.5);
-    opacity: 1;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2);
-}
-
-.edit-hint:active {
-    transform: translateY(0);
-    background: rgba(0, 255, 255, 0.3);
-}
-
-#originalTextEdit,
-#convertedTextEdit {
-    height: 90%;
-    width: 100%;
-    margin: 5px 0 5px 0;
-    padding: 12px;
-    background: rgba(26, 26, 46, 0.8);
-    border: 1px solid var(--primary-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-family: inherit;
-    line-height: 1.5;
-    resize: none;
-}
-
-#originalTextEdit,
-#convertedTextEdit:focus {
-    outline: none;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
-.edit-actions {
-    margin-top: 14px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.save-btn, .cancel-btn {
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
-    border: 1px solid;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: transparent;
-}
-
-.save-btn {
-    border-color: var(--success-color);
-    color: var(--success-color);
-}
-
-.save-btn:hover {
-    background: var(--success-color);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.cancel-btn {
-    border-color: var(--text-secondary);
-    color: var(--text-secondary);
-}
-
-.cancel-btn:hover {
-    border-color: var(--text-primary);
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
-    transform: translateY(-1px);
-}
-
 /* 元信息样式 */
 .meta-info {
     padding: 15px;
@@ -2518,6 +2422,7 @@ s
 .text-column {
     flex: 1;
     min-width: 0;
+    min-height: 210px; 
     display: flex;
     flex-direction: column;
     gap: 0; /* 移除gap，让两个text-display紧贴 */
@@ -2556,17 +2461,113 @@ s
     border-top-right-radius: 0;
 }
 
+
+/* 编辑功能样式 */
+.edit-hint {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    margin-left: 8px;
+    background: rgba(0, 255, 255, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 12px;
+    color: var(--primary-color);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.edit-hint:hover {
+    background: rgba(0, 255, 255, 0.25);
+    border-color: rgba(0, 255, 255, 0.5);
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2);
+}
+
+.edit-hint:active {
+    transform: translateY(0);
+    background: rgba(0, 255, 255, 0.3);
+}
+
+#mandarinTextEdit,
+#teochewTextEdit {
+    height: 95px;
+    flex: 1;
+    width: 100%;
+    margin: 5px 0 5px 0;
+    padding: 12px;
+    background: rgba(26, 26, 46, 0.8);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: inherit;
+    line-height: 1.5;
+    resize: none;
+}
+
+#mandarinTextEdit,
+#teochewTextEdit:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.edit-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    border: 1px solid;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.save-btn {
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.save-btn:hover {
+    background: var(--success-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.cancel-btn {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+.cancel-btn:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+}
+
+
 /* 编辑模式下的特殊样式 */
 .text-column:has(.text-display:first-child[style*="display: none"]) .text-display.compact:last-child {
     border-radius: 10px; /* 恢复完整圆角 */
     border: 1px solid rgba(255, 255, 255, 0.1); /* 恢复完整边框 */
 }
-
-/* 备用方案：通过编辑状态的父元素类来控制 */
-.text-column.editing .text-display.compact {
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.text-column:has(.text-display:last-child[style*="display: none"]) .text-display.compact:first-child {
+    border-radius: 10px; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
 }
+
 
 .text-display.compact label {
     font-size: 14px;
@@ -2576,16 +2577,9 @@ s
     font-weight: 600;
 }
 
-.original-text p {
-    font-size: 1.2rem;
-    color: var(--primary-color);
-    font-weight: 500;
-    line-height: 1.4;
-    margin: 0;
-}
 
-/* 编辑模式下原始文本的样式 */
-.text-column.editing-original .original-text p {
+/* 编辑模式下普通话文本的样式 */
+.text-column.editing-mandarin .mandarin-text p {
     display: block !important;
     font-size: 1.2rem;
     color: var(--text-primary);
@@ -2752,15 +2746,15 @@ s
     display: none;
 }
 
-.text-column.editing .converted-text p {
+.text-column.editing .teochew-text p {
     display: block !important;
 }
 
-.text-column.editing-original .word-buttons-container {
+.text-column.editing-mandarin .word-buttons-container {
     display: none;
 }
 
-.text-column.editing-original .original-text p {
+.text-column.editing-mandarin .mandarin-text p {
     display: block !important;
 }
 
@@ -2862,7 +2856,8 @@ s
     display: flex;
     flex-direction: column;
     padding: 0 0 5px 0;
-    max-height: 206px;
+    min-height: 210px;
+    max-height: 210px;
 }
 
 .meta-item {
