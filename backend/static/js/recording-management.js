@@ -61,10 +61,10 @@ async function loadRecordings(status = null) {
         // 使用传入的状态参数，如果没有则使用当前筛选状态
         const filterStatus = status || currentStatusFilter || 'pending';
 
-        console.log('正在加载录音数据，状态:', filterStatus); // 调试信息
+        console.log('正在加载记录，状态:', filterStatus); // 调试信息
 
         // 显示加载动画
-        showDataLoading('正在加载录音数据...', `状态: ${getStatusText(filterStatus)}`);
+        showDataLoading('正在加载记录...', `状态: ${getStatusText(filterStatus)}`);
 
         // API期望字符串状态，不需要映射
         const response = await fetch(`/api/recordings?status=${filterStatus}&page=${currentPage}&per_page=50`);
@@ -123,6 +123,12 @@ async function loadRecordings(status = null) {
 
             if (recordingsData.length === 0) {
                 displayEmptyRecordState();
+
+                // 即使没有记录也要确保进度条容器显示
+                const screenProgress = document.getElementById('screenProgress');
+                if (screenProgress) {
+                    screenProgress.style.display = 'block';
+                }
             } else {
                 currentRecordIndex = 0;
                 absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
@@ -202,6 +208,12 @@ function displayEmptyRecordState() {
 
     // 禁用所有控制按钮
     updateControlButtonsByStatus();
+
+    // 确保进度条容器始终显示
+    const screenProgress = document.getElementById('screenProgress');
+    if (screenProgress) {
+        screenProgress.style.display = 'block';
+    }
 }
 
 // 显示当前记录
@@ -210,6 +222,10 @@ function displayCurrentRecord() {
 
     // 确保加载动画被隐藏
     hideDataLoading();
+
+    // 恢复可能被隐藏的分词容器（之前的动画可能有残留）
+    const hiddenContainers = document.querySelectorAll('.word-buttons-container[style*="display: none"]');
+    hiddenContainers.forEach(container => container.style.display = '');
 
     const record = recordingsData[currentRecordIndex];
 
@@ -273,16 +289,31 @@ function displayCurrentRecord() {
         uploadTypeElement.className = 'meta-value ' + (uploadType === 1 ? 'upload-type-extracted' : 'upload-type-recorded');
     }
 
-    // 更新音频播放器
+    // 更新音频播放器 - 懒加载模式
     if (audioPlayer && record.file_path) {
-        audioPlayer.src = `/admin/api/download/${record.id}`;
+        // 清除之前的src，不再立即下载
+        audioPlayer.src = '';
         audioPlayer.style.display = 'none'; // 保持隐藏，使用自定义控制
-        // 延迟初始化自定义音频播放器
+
+        // 在音频播放器元素上记录当前记录ID，用于懒加载
+        audioPlayer.dataset.recordId = record.id;
+        // 添加download=false参数来获取音频流而不是文件下载
+        audioPlayer.dataset.audioUrl = `/admin/api/download/${record.id}?download=false`;
+
+        // 延迟初始化自定义音频播放器（但不加载音频）
         setTimeout(() => {
             initAudioPlayer();
         }, 100);
     } else if (audioPlayer) {
         audioPlayer.style.display = 'none';
+        delete audioPlayer.dataset.recordId;
+        delete audioPlayer.dataset.audioUrl;
+    }
+
+    // 确保进度条容器始终可见（无论是否有音频）
+    const screenProgress = document.getElementById('screenProgress');
+    if (screenProgress) {
+        screenProgress.style.display = 'block';
     }
 
     updateReviewCounter();
@@ -398,7 +429,6 @@ async function loadNextPage() {
 
                 displayCurrentRecord();
                 updateNavigationButtons();
-                showToast('已加载下一页数据', 'success');
             } else {
                 showToast('加载下一页失败', 'error');
             }
@@ -430,7 +460,6 @@ async function loadNextPage() {
 
                 displayCurrentRecord();
                 updateNavigationButtons();
-                showToast('已加载下一页数据', 'success');
             } else {
                 showToast('加载下一页失败', 'error');
             }
@@ -1017,62 +1046,64 @@ function autoMergeAllTextsOnApprove() {
     let originalMerged = null;
     let convertedMerged = null;
 
-    // 合并原始文本（如果需要）
+    // 合并普通话文本（如果需要）
     if (needsMerging(record.original_text)) {
         // 添加合并动画
-        const originalTextElement = document.getElementById('originalText');
-        const originalContainer = originalTextElement?.querySelector('.word-buttons-container');
+        const mandarinTextElement = document.getElementById('mandarinText');
+        const originalContainer = mandarinTextElement?.querySelector('.word-buttons-container');
         if (originalContainer) {
             originalContainer.classList.add('merging');
             const wordButtons = originalContainer.querySelectorAll('.word-button');
             wordButtons.forEach(btn => btn.classList.add('merging'));
+
+            // 立即计算合并后的文本并更新记录对象（同步操作）
+            const mergedText = mergeWordsToSentence(record.original_text);
+
+            // 立即更新内存中的记录对象，确保后续API调用使用合并后的数据
+            originalMerged = mergedText;
+            record.original_text = mergedText;
+
+            // 异步更新数据库（不影响动画）
+            updateRecordingOriginalText(record.id, mergedText);
+
+            // 短暂延迟后清理动画类，确保动画完成
+            setTimeout(() => {
+                originalContainer.classList.remove('merging');
+                wordButtons.forEach(btn => btn.classList.remove('merging'));
+            }, 350); // 气泡动画完成后清理
         }
-
-        setTimeout(() => {
-            originalMerged = mergeWordsToSentence(record.original_text);
-            record.original_text = originalMerged;
-            updateRecordingOriginalText(record.id, originalMerged);
-
-            // 重新渲染原始文本
-            if (originalTextElement) {
-                renderWordButtons(originalTextElement, originalMerged);
-            }
-        }, 400);
     }
 
-    // 合并转换文本（如果需要）
+    // 合并潮汕话文本（如果需要）
     if (needsMerging(record.actual_content)) {
         // 添加合并动画
-        const convertedTextElement = document.getElementById('convertedText');
-        const convertedContainer = convertedTextElement?.querySelector('.word-buttons-container');
+        const teochewTextElement = document.getElementById('teochewText');
+        const convertedContainer = teochewTextElement?.querySelector('.word-buttons-container');
         if (convertedContainer) {
             convertedContainer.classList.add('merging');
             const wordButtons = convertedContainer.querySelectorAll('.word-button');
             wordButtons.forEach(btn => btn.classList.add('merging'));
+
+            // 立即计算合并后的文本并更新记录对象（同步操作）
+            const mergedText = mergeWordsToSentence(record.actual_content);
+
+            // 立即更新内存中的记录对象，确保后续API调用使用合并后的数据
+            convertedMerged = mergedText;
+            record.actual_content = mergedText;
+
+            // 异步更新数据库（不影响动画）
+            updateRecordingContent(record.id, mergedText);
+
+            // 短暂延迟后清理动画类，确保动画完成
+            setTimeout(() => {
+                convertedContainer.classList.remove('merging');
+                wordButtons.forEach(btn => btn.classList.remove('merging'));
+            }, 350); // 气泡动画完成后清理
         }
-
-        setTimeout(() => {
-            convertedMerged = mergeWordsToSentence(record.actual_content);
-            record.actual_content = convertedMerged;
-            updateRecordingContent(record.id, convertedMerged);
-
-            // 重新渲染转换文本
-            if (convertedTextElement) {
-                renderWordButtons(convertedTextElement, convertedMerged);
-            }
-        }, 400);
     }
 
-    // 显示合并信息
-    const messages = [];
-    if (originalMerged) messages.push('原始文本已合并');
-    if (convertedMerged) messages.push('转换文本已合并');
-
-    if (messages.length > 0) {
-        setTimeout(() => {
-            showToast(messages.join('，') + '为完整句子', 'success');
-        }, 500);
-    }
+    // 不显示合并信息toast提示
+    // 合并信息仅在需要时记录到控制台，不显示给用户
 }
 
 // 为列表视图中的记录进行自动合并

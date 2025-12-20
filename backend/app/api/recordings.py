@@ -268,12 +268,20 @@ def api_delete_recording(recording_id):
         return jsonify({'error': '删除录音失败'}), 500
 
 
-@recordings_bp.route('/admin/api/download/<recording_id>')
+@recordings_bp.route('/admin/api/download/<recording_id>', methods=['GET', 'HEAD', 'OPTIONS'])
 @admin_required
 def admin_download_recording(recording_id):
     """管理员下载/访问录音文件"""
     try:
         from app.models import Recording
+
+        # Handle OPTIONS requests for CORS
+        if request.method == 'OPTIONS':
+            response = Response()
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Range'
+            return response
 
         recording = Recording.query.get_or_404(recording_id)
 
@@ -284,18 +292,72 @@ def admin_download_recording(recording_id):
             file_path = None
 
         if file_path and os.path.exists(file_path):
+            logger.info(f"Audio file exists: {file_path}")
             directory = os.path.dirname(file_path)
             filename = os.path.basename(file_path)
         else:
-            return jsonify({'error': '文件不存在'}), 404
+            logger.error(f"Audio file not found: {file_path} (exists: {os.path.exists(file_path) if file_path else 'None'})")
+            return jsonify({'error': '音频文件不存在'}), 404
 
         is_download = request.args.get('download', 'true').lower() == 'true'
 
+        # 检查文件扩展名
+        file_ext = os.path.splitext(file_path)[1].lower()
+        logger.info(f"Audio file extension: {file_ext} for recording {recording_id}")
+
+        # 根据文件扩展名确定MIME类型
+        if file_ext == '.webm':
+            mime_type = 'audio/webm'
+        elif file_ext == '.mp3':
+            mime_type = 'audio/mpeg'
+        elif file_ext == '.wav':
+            mime_type = 'audio/wav'
+        elif file_ext == '.ogg':
+            mime_type = 'audio/ogg'
+        else:
+            mime_type = 'audio/webm'  # 默认
+            logger.warning(f"Unknown audio format {file_ext}, using audio/webm")
+
+        # Handle HEAD requests (for audio URL accessibility testing)
+        if request.method == 'HEAD':
+            from flask import Response
+            response = Response()
+            response.headers['Content-Type'] = mime_type
+            response.headers['Content-Length'] = os.path.getsize(file_path)
+            response.headers['Accept-Ranges'] = 'bytes'
+            response.headers['Cache-Control'] = 'public, max-age=3600'
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Range'
+                        return response
+
         if is_download:
-            download_name = f"{recording.id}.webm"
+            download_name = f"{recording.id}{file_ext}"
             return send_from_directory(directory, filename, download_name=download_name, as_attachment=True)
         else:
-            return send_from_directory(directory, filename, as_attachment=False)
+            # 为HTML5 audio设置正确的MIME类型
+            from flask import Response
+            try:
+                logger.info(f"Serving audio file for recording {recording_id}: {file_path}")
+
+                with open(file_path, 'rb') as f:
+                    audio_data = f.read()
+
+                # 设置正确的MIME类型和响应头
+                response = Response(audio_data)
+                response.headers['Content-Type'] = mime_type
+                response.headers['Content-Length'] = len(audio_data)
+                response.headers['Accept-Ranges'] = 'bytes'
+                response.headers['Cache-Control'] = 'public, max-age=3600'
+                response.headers['Access-Control-Allow-Origin'] = '*'
+                response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
+                response.headers['Access-Control-Allow-Headers'] = 'Range'
+
+                logger.info(f"Serving audio file: {recording_id}, size: {len(audio_data)} bytes")
+                return response
+            except Exception as e:
+                logger.error(f"Error serving audio file: {e}")
+                return jsonify({'error': '读取音频文件失败'}), 500
 
     except Exception as e:
         logger.error(f"Download recording error: {e}")

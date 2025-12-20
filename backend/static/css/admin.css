@@ -601,6 +601,7 @@ body {
 .review-container {
     max-width: 1200px;
     margin: 120px auto;
+    margin-top: 180px;
     perspective: 1000px;
     position: relative;
     padding-left: 160px; /* 为左侧圆形按钮栏留出空间 */
@@ -2706,12 +2707,18 @@ s
 
 /* 分词合并动画 - 气泡融合效果 */
 .word-buttons-container.merging {
-    gap: 2px;
-    transition: gap 0.3s ease;
+    gap: 0px !important;
+    transition: gap 0.3s ease-out;
+}
+
+/* 确保气泡边框不重叠，但完全贴在一起 */
+.word-buttons-container.merging .word-button {
+    margin: 0 !important;
+    position: relative !important;
 }
 
 .word-button.merging {
-    animation: bubbleMerge 0.6s ease-in-out;
+    animation: bubbleMerge 0.3s ease-out forwards;
     border-color: var(--success-color) !important;
     background: rgba(82, 196, 26, 0.2) !important;
     box-shadow: 0 0 15px rgba(82, 196, 26, 0.4);
@@ -2721,25 +2728,13 @@ s
     0% {
         transform: scale(1);
         opacity: 1;
-        gap: 6px;
-    }
-    25% {
-        transform: scale(1.1);
-        opacity: 0.9;
-    }
-    50% {
-        transform: scale(1.05);
-        opacity: 0.7;
-    }
-    75% {
-        transform: scale(0.95);
-        opacity: 0.9;
     }
     100% {
         transform: scale(1);
-        opacity: 1;
+        opacity: 0.9;
     }
 }
+
 
 /* 编辑模式下的样式调整 */
 .text-column.editing .word-buttons-container {

@@ -314,25 +314,31 @@ async function approveCurrent() {
         return;
     }
 
-    // 自动合并分词按钮为完整句子
+    // 自动合并分词按钮为完整句子（同步进行）
     if (typeof autoMergeAllTextsOnApprove === 'function') {
+        // 先启动气泡动画
         autoMergeAllTextsOnApprove();
     }
 
-    // 更新内容（如果需要）然后更新状态
-    try {
-        const actualContent = record.actual_content || record.original_text;
+    // 短暂延迟后同时开始进度条动画
+    setTimeout(async () => {
+        // 显示进度条动画
+        showProgressAnimation('approved');
+        // 更新内容（如果需要）然后更新状态
+        try {
+            // 使用可能已经合并的最新数据
+            const actualContent = record.actual_content || record.original_text;
 
-        const response = await fetch(`/api/recording/${record.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                status: 'approved',
-                actual_content: actualContent
-            })
-        });
+            const response = await fetch(`/api/recording/${record.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: 'approved',
+                    actual_content: actualContent
+                })
+            });
 
         // 检查响应类型
         const contentType = response.headers.get('content-type');
@@ -346,36 +352,42 @@ async function approveCurrent() {
         const data = await response.json();
 
         if (data.success) {
-            // 显示绿色通过动画
-            showProgressAnimation('approved');
+                // 显示绿色通过动画（与气泡动画同时开始）
+                showProgressAnimation('approved');
 
-            // 从本地数据中移除已审核的记录，使用正确的逻辑
-            recordingsData.splice(currentRecordIndex, 1);
+                // 等待气泡动画完成后立即移除记录（350ms后）
+                setTimeout(() => {
+                    // 从本地数据中移除已审核的记录
+                    recordingsData.splice(currentRecordIndex, 1);
 
-            // 更新当前索引
-            if (recordingsData.length === 0) {
-                // 没有更多记录，重新加载
-                loadRecordings();
-            } else if (currentRecordIndex >= recordingsData.length) {
-                // 当前索引超出范围，回到最后一条
-                currentRecordIndex = recordingsData.length - 1;
-                displayCurrentRecord();
-                updateNavigationButtons();
+                // 更新当前索引
+                if (recordingsData.length === 0) {
+                    // 没有更多记录，重新加载
+                    loadRecordings();
+                } else if (currentRecordIndex >= recordingsData.length) {
+                    // 当前索引超出范围，回到最后一条
+                    currentRecordIndex = recordingsData.length - 1;
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                } else {
+                    // 显示当前索引的记录
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                }
+
+                // 更新统计
+                loadStats();
+                // 更新本地计数器
+                updateReviewCounter();
+            }); // 立即执行，不等待进度条动画
             } else {
-                // 显示当前索引的记录
-                displayCurrentRecord();
-                updateNavigationButtons();
+                showToast(data.error || '审核失败', 'error');
             }
-
-            // 更新统计
-            loadStats();
-        } else {
-            showToast(data.error || '审核失败', 'error');
+        } catch (error) {
+            console.error('审核失败:', error);
+            showToast('审核失败: ' + error.message, 'error');
         }
-    } catch (error) {
-        console.error('审核失败:', error);
-        showToast('审核失败: ' + error.message, 'error');
-    }
+    }, 0); // 立即启动动画
 }
 
 // 审核拒绝
@@ -439,6 +451,8 @@ async function rejectCurrent() {
 
             // 更新统计
             loadStats();
+            // 更新本地计数器
+            updateReviewCounter();
         } else {
             showToast(data.error || '拒绝失败', 'error');
         }
