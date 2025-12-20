@@ -101,17 +101,19 @@ function updateReviewCounter() {
             currentIndexElement.textContent = '0';
         }
         if (totalRecordsElement) {
-            totalRecordsElement.textContent = '0';
+            totalRecordsElement.textContent = window.totalDataCount || '0';
         }
         return;
     }
 
     // 显示当前索引和总数
     if (currentIndexElement) {
-        currentIndexElement.textContent = currentRecordIndex + 1;
+        // 显示绝对索引（相对于总数据量）
+        currentIndexElement.textContent = absoluteRecordIndex + 1;
     }
 
     if (totalRecordsElement) {
-        totalRecordsElement.textContent = recordingsData.length;
+        // 优先显示总数据量，如果没有则显示当前页数据量
+        totalRecordsElement.textContent = window.totalDataCount || recordingsData.length;
     }
 }
