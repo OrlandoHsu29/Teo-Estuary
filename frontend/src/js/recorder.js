@@ -37,6 +37,13 @@ class DialectRecorder {
         this.playbackStartTime = 0;
         this.playbackProgressTimer = null;
 
+        // 上传状态跟踪
+        this.isUploading = false;
+        this.uploadAbortController = null;
+
+        // 录音状态跟踪
+        this.isStartingRecording = false;
+
         this.initElements();
         this.initEventListeners();
         this.checkApiKeyStatus();
@@ -135,12 +142,24 @@ class DialectRecorder {
     }
 
     async startRecording() {
+        // 防止重复点击和状态冲突
+        if (this.isRecording || this.isStartingRecording) {
+            this.showToast('正在录音或正在启动录音，请稍候...', 'warning');
+            return;
+        }
+
         if (!this.currentText) {
             this.showToast('请先获取要朗读的文本', 'warning');
             return;
         }
 
+        // 设置启动录音状态
+        this.isStartingRecording = true;
+
         try {
+            // 禁用录音按钮，防止重复点击
+            this.elements.btnRecord.disabled = true;
+
             // 获取麦克风权限
             this.stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -196,6 +215,9 @@ class DialectRecorder {
             this.elements.progressFill.style.background = ''; // 重置为默认蓝色
             this.elements.progressFill.style.width = '0%';
 
+            // 重置启动状态（录音已成功开始）
+            this.isStartingRecording = false;
+
             // 更新UI
             this.updateRecordingUI(true);
             this.startTimer();
@@ -205,6 +227,9 @@ class DialectRecorder {
 
         } catch (error) {
             console.error('开始录音失败:', error);
+
+            // 重置启动状态
+            this.isStartingRecording = false;
 
             // 简化的错误处理
             let errorMessage = '录音失败，请检查麦克风权限和设备设置';
@@ -315,9 +340,11 @@ class DialectRecorder {
         this.audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         this.audioUrl = URL.createObjectURL(this.audioBlob);
 
-        // 启用播放和上传按钮
+        // 启用播放按钮
         this.elements.btnPlay.disabled = false;
-        this.elements.btnUpload.disabled = false;
+
+        // 设置上传按钮状态（启用但不在上传中）
+        this.setUploadButtonState(false);
 
         // 重置音量显示
         this.updateVolumeMeter(0);
@@ -536,12 +563,22 @@ class DialectRecorder {
     }
 
     async uploadRecording() {
+        // 检查是否正在上传中
+        if (this.isUploading) {
+            this.showToast('正在上传中，请稍候...', 'warning');
+            return;
+        }
+
         if (!this.audioBlob || !this.currentText) {
             this.showToast('没有可上传的录音', 'error');
             return;
         }
 
         try {
+            // 设置上传状态
+            this.isUploading = true;
+            this.setUploadButtonState(); // 根据状态自动设置按钮
+
             // 检查API密钥
             const apiKey = localStorage.getItem('apiKey');
             if (!apiKey) {
@@ -549,6 +586,9 @@ class DialectRecorder {
                 window.openKeyConfig();
                 return;
             }
+
+            // 创建 AbortController 用于取消请求
+            this.uploadAbortController = new AbortController();
 
             this.updateStatus('正在上传...', 'uploading');
 
@@ -563,7 +603,8 @@ class DialectRecorder {
                 headers: {
                     'X-API-Key': apiKey
                 },
-                body: formData
+                body: formData,
+                signal: this.uploadAbortController.signal
             });
 
             if (!response.ok) {
@@ -576,15 +617,22 @@ class DialectRecorder {
             this.updateStatus('上传成功', 'success');
             this.showTemporaryStatusMessages('继续录下一条音频吧~','info');
 
-
             // 执行上传成功动画
             this.animateUploadSuccess();
 
         } catch (error) {
-            console.error('上传失败:', error);
-            this.showToast(`上传失败: ${error.message}`, 'error');
-            this.updateStatus('上传失败', 'error');
+            // 如果是用户取消的错误，不显示错误信息
+            if (error.name !== 'AbortError') {
+                console.error('上传失败:', error);
+                this.showToast(`上传失败: ${error.message}`, 'error');
+                this.updateStatus('上传失败', 'error');
+            }
         } finally {
+            // 重置上传状态
+            this.isUploading = false;
+            this.uploadAbortController = null;
+            // 重新设置上传按钮状态
+            this.setUploadButtonState();
         }
     }
 
@@ -605,10 +653,11 @@ class DialectRecorder {
 
         // 重置UI状态
         this.elements.btnPlay.disabled = true;
-        this.elements.btnUpload.disabled = true;
         this.elements.btnStop.disabled = true;
         // 只有在有文本时才启用录音按钮
         this.elements.btnRecord.disabled = !this.currentText;
+        // 重置上传按钮状态
+        this.setUploadButtonState(); // 根据状态自动设置按钮
 
         // 如果有录音完成状态，保持绿色和录制时长显示
         if (this.isRecordingCompleted) {
@@ -637,6 +686,11 @@ class DialectRecorder {
             this.stopPlayback();
         }
 
+        // 取消正在进行的上传
+        if (this.isUploading && this.uploadAbortController) {
+            this.uploadAbortController.abort();
+        }
+
         // 清理音频资源
         if (this.audioUrl) {
             URL.revokeObjectURL(this.audioUrl);
@@ -649,6 +703,9 @@ class DialectRecorder {
         // 重置所有状态
         this.recordingDuration = 0;
         this.isRecordingCompleted = false;
+        this.isUploading = false;
+        this.uploadAbortController = null;
+        this.isStartingRecording = false;
 
         // 重置UI状态
         this.setAllButtonsDisabled(false); // 使用统一的按钮状态管理
@@ -656,6 +713,10 @@ class DialectRecorder {
         this.elements.progressFill.style.width = '0%';
         this.elements.progressFill.style.background = ''; // 重置进度条颜色
         this.updateVolumeMeter(0);
+
+        // 重置上传按钮的视觉状态
+        this.elements.btnUpload.classList.remove('uploading');
+        this.elements.btnUpload.title = '上传录音';
     }
 
     updateRecordingUI(recording) {
@@ -780,7 +841,24 @@ class DialectRecorder {
         this.elements.btnRecord.disabled = disabled || !this.currentText; // 如果没有文本，录音按钮保持禁用
         this.elements.btnStop.disabled = disabled || !this.isRecording;   // 如果不在录音，停止按钮保持禁用
         this.elements.btnPlay.disabled = disabled || !this.audioBlob;      // 如果没有录音，播放按钮保持禁用
-        this.elements.btnUpload.disabled = disabled || !this.audioBlob;    // 如果没有录音，上传按钮保持禁用
+        this.elements.btnUpload.disabled = disabled || !this.audioBlob || this.isUploading;    // 如果没有录音或正在上传，上传按钮保持禁用
+    }
+
+    setUploadButtonState(forceDisabled = null) {
+        // 如果没有强制设置，根据当前状态决定是否禁用
+        const isDisabled = forceDisabled !== null ? forceDisabled : this.isUploading || !this.audioBlob;
+
+        this.elements.btnUpload.disabled = isDisabled;
+
+        // 添加上传中的视觉反馈
+        if (this.isUploading) {
+            this.elements.btnUpload.classList.add('uploading');
+            // 更新按钮 title 属性
+            this.elements.btnUpload.title = '正在上传中...';
+        } else {
+            this.elements.btnUpload.classList.remove('uploading');
+            this.elements.btnUpload.title = '上传录音';
+        }
     }
 
     showToast(message, type = 'info') {
@@ -804,6 +882,11 @@ class DialectRecorder {
         // 停止录音
         if (this.isRecording) {
             this.stopRecording();
+        }
+
+        // 取消正在进行的上传
+        if (this.isUploading && this.uploadAbortController) {
+            this.uploadAbortController.abort();
         }
 
         // 清理资源
@@ -843,6 +926,11 @@ class DialectRecorder {
             this.currentAudio.pause();
             this.currentAudio = null;
         }
+
+        // 重置上传状态
+        this.isUploading = false;
+        this.uploadAbortController = null;
+        this.isStartingRecording = false;
     }
 
     checkApiKeyStatus() {
