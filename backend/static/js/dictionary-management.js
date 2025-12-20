@@ -492,24 +492,41 @@ function updateVariantStatusForEntry(currentEntry, allResults) {
     }
 }
 
-// 加载未同步日志
+// 加载日志（根据复选框状态决定加载待同步日志或完整日志）
 async function loadUnsyncedLogs() {
     try {
-        const response = await fetch('/api/dictionary/unsynced-logs');
+        // 获取复选框状态
+        const onlyPendingSync = document.getElementById('onlyPendingSync').checked;
+        const apiUrl = onlyPendingSync ? '/api/jieba/changes' : '/api/jieba/logs?page=1&per_page=100';
+
+        // 显示加载动画（选中和取消选中都要获取数据）
+        const logContent = document.getElementById('syncLogContent');
+        const loadingText = onlyPendingSync ? '正在加载待同步日志...' : '正在加载操作日志...';
+        logContent.innerHTML = `
+            <div class="sync-loading-logs">
+                <div class="sync-loading-spinner">
+                    <svg fill="currentColor" viewBox="0 0 20 20" class="animate-spin">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <p>${loadingText}</p>
+            </div>
+        `;
+
+        const response = await fetch(apiUrl);
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('Sync logs response:', data); // 调试日志
+        console.log('Logs response:', data); // 调试日志
 
-        const logContent = document.getElementById('syncLogContent');
 
-        if (!data.success || data.logs.length === 0) {
-            let message = '暂无未同步日志';
-            if (data.message) {
-                message = data.message; // 显示错误消息而不是默认消息
+        if (!data.success || !data.logs || data.logs.length === 0) {
+            let message = onlyPendingSync ? '暂无未同步日志' : '暂无操作日志';
+            if (data.error) {
+                message = data.error; // 显示错误消息而不是默认消息
             }
 
             logContent.innerHTML = `
@@ -525,15 +542,11 @@ async function loadUnsyncedLogs() {
             return;
         }
 
-        // 显示日志内容（按时间倒序排列，最新的在上面）
+        // 显示日志内容
         let logsHtml = '';
-        const sortedLogs = data.logs.sort((a, b) => {
-            const timeA = new Date(a.timestamp).getTime();
-            const timeB = new Date(b.timestamp).getTime();
-            return timeB - timeA; // 降序排列
-        });
+        const logs = data.logs;
 
-        sortedLogs.forEach(log => {
+        logs.forEach(log => {
             const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString() : '未知时间';
             const identifier = log.identifier || {};
             const changes = log.changes || {};
@@ -562,8 +575,7 @@ async function loadUnsyncedLogs() {
                 const teochew = identifier.teochew_text || changes.new?.teochew_text || changes.old?.teochew_text || '未知潮汕话';
                 const variant = identifier.variant || changes.new?.variant || changes.old?.variant || 1;
 
-                const operationText = operation === 'add' ? '添加' : '删除';
-                detailsHtml = `${operationText}：「普」"${mandarin}"${variant > 1 ? `(变体${variant})` : ''}  · 「潮」"${teochew}"`;
+                detailsHtml = `「普」"${mandarin}"${variant > 1 ? `(变体${variant})` : ''}  · 「潮」"${teochew}"`;
             } else if (operation === 'update') {
                 // 修改操作显示：“old_data”->“new_data”（相同数据不显示）
                 const oldData = changes.old || {};
@@ -581,7 +593,7 @@ async function loadUnsyncedLogs() {
                 }
 
                 if (oldData.variant !== newData.variant) {
-                    changesArray.push(`「变体」 ${oldData.variant || 1} → ${newData.variant || 1}`);
+                    changesArray.push(`「变体编号」 ${oldData.variant || 1} → ${newData.variant || 1}`);
                 }
 
                 if (oldData.priority !== newData.priority) {
@@ -659,7 +671,7 @@ async function loadUnsyncedLogs() {
 // 更新同步状态指示器
 async function updateSyncStatus() {
     try {
-        const response = await fetch('/api/dictionary/sync-status');
+        const response = await fetch('/api/jieba/sync/status');
         const data = await response.json();
 
         const statusLight = document.getElementById('syncStatusLight');
@@ -671,23 +683,15 @@ async function updateSyncStatus() {
             return;
         }
 
-        const syncStatus = data.sync_status;
+        const syncNeeded = data.sync_needed;
+        const unsyncedCount = data.unsynced_logs_count || 0;
 
-        if (syncStatus.in_sync) {
+        if (syncNeeded && unsyncedCount > 0) {
+            statusLight.className = 'sync-status-light syncing';
+            statusText.textContent = `待同步 (${unsyncedCount}条)`;
+        } else {
             statusLight.className = 'sync-status-light connected';
             statusText.textContent = '已同步';
-        } else {
-            const missingCount = syncStatus.missing_in_jieba ? syncStatus.missing_in_jieba.length : 0;
-            const dbCount = syncStatus.db_count || 0;
-            const jiebaCount = syncStatus.jieba_count || 0;
-
-            if (missingCount > 0) {
-                statusLight.className = 'sync-status-light syncing';
-                statusText.textContent = `待同步 (${missingCount}/${dbCount})`;
-            } else {
-                statusLight.className = 'sync-status-light connected';
-                statusText.textContent = `已同步 (${dbCount}条)`;
-            }
         }
 
     } catch (error) {
@@ -700,17 +704,15 @@ async function updateSyncStatus() {
 }
 
 // Jieba字典同步功能
-async function syncJiebaDictionary(type) {
-    const fullBtn = document.querySelector('.dict-sync-full');
-    const incrementalBtn = document.querySelector('.dict-sync-incremental');
-    const targetBtn = type === 'full' ? fullBtn : incrementalBtn;
+async function syncJiebaDictionary() {
+    const syncBtn = document.querySelector('.dict-sync-btn');
 
-    if (!targetBtn) return;
+    if (!syncBtn) return;
 
     try {
         // 设置加载状态
-        targetBtn.classList.add('loading');
-        targetBtn.disabled = true;
+        syncBtn.classList.add('loading');
+        syncBtn.disabled = true;
 
         // 更新状态指示器为同步中
         const statusLight = document.getElementById('syncStatusLight');
@@ -718,7 +720,7 @@ async function syncJiebaDictionary(type) {
         statusLight.className = 'sync-status-light syncing';
         statusText.textContent = '同步中...';
 
-        const response = await fetch(`/api/dictionary/sync-jieba/${type}`, {
+        const response = await fetch('/api/jieba/sync', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -728,12 +730,12 @@ async function syncJiebaDictionary(type) {
         const data = await response.json();
 
         if (data.success) {
-            const syncType = type === 'full' ? '全量同步' : '增量同步';
-            const message = `${syncType}完成\n` +
-                          `新增: ${data.added || 0} 条\n` +
-                          `更新: ${data.updated || 0} 条\n` +
-                          `删除: ${data.deleted || 0} 条\n` +
-                          `总计: ${data.total || 0} 条`;
+            const stats = data.stats || {};
+            const message = `Jieba同步完成\n` +
+                          `新增: ${stats.added || 0} 条\n` +
+                          `更新: ${stats.modified || 0} 条\n` +
+                          `删除: ${stats.deleted || 0} 条\n` +
+                          `总计: ${stats.total_changes || 0} 条`;
             showToast(message, 'success', 5000);
 
             // 同步完成后刷新日志和状态
@@ -744,7 +746,7 @@ async function syncJiebaDictionary(type) {
         } else {
             statusLight.className = 'sync-status-light error';
             statusText.textContent = '同步失败';
-            showToast(data.error || `${type === 'full' ? '全量' : '增量'}同步失败`, 'error');
+            showToast(data.error || 'Jieba同步失败', 'error');
         }
     } catch (error) {
         console.error('Jieba sync error:', error);
@@ -755,8 +757,8 @@ async function syncJiebaDictionary(type) {
         showToast('同步失败，请检查网络连接', 'error');
     } finally {
         // 移除加载状态
-        targetBtn.classList.remove('loading');
-        targetBtn.disabled = false;
+        syncBtn.classList.remove('loading');
+        syncBtn.disabled = false;
     }
 }
 
@@ -785,6 +787,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === modal) {
                 closeDictModal();
             }
+        });
+    }
+
+    // 添加复选框事件监听器
+    const onlyPendingSyncCheckbox = document.getElementById('onlyPendingSync');
+
+    if (onlyPendingSyncCheckbox) {
+        onlyPendingSyncCheckbox.addEventListener('change', function() {
+
+            // 重新加载日志
+            loadUnsyncedLogs();
         });
     }
 

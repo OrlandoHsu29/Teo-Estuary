@@ -12,7 +12,16 @@ function formatApiKey(key) {
 }
 
 // 加载API密钥
+let isLoadingApiKeys = false; // 防止重复加载的标志
+
 async function loadApiKeys() {
+    // 防止重复加载
+    if (isLoadingApiKeys) {
+        console.log('API密钥正在加载中，跳过重复调用');
+        return;
+    }
+
+    isLoadingApiKeys = true;
     try {
         const response = await fetch('/api/keys');
         const data = await response.json();

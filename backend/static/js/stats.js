@@ -18,6 +18,11 @@ async function initializeStats() {
         if (data.success) {
             const stats = data.stats;
 
+            // 更新全局所有数据总量（用于统计面板）
+            if (stats.total !== undefined) {
+                window.allDataCount = stats.total;
+            }
+
             // 只更新数字，因为HTML中已经有了默认结构
             updateStatNumber('stat-pending', stats.pending || 0);
             updateStatNumber('stat-approved', stats.approved || 0);
@@ -50,6 +55,11 @@ async function loadStats() {
 
         if (data.success) {
             const stats = data.stats;
+
+            // 更新全局所有数据总量（用于统计面板）
+            if (stats.total !== undefined) {
+                window.allDataCount = stats.total;
+            }
 
             // 只更新数字，避免重新渲染
             updateStatNumber('stat-pending', stats.pending || 0);

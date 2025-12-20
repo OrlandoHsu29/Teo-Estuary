@@ -355,10 +355,15 @@ async function approveCurrent() {
                 // 显示绿色通过动画（与气泡动画同时开始）
                 showProgressAnimation('approved');
 
-                // 等待气泡动画完成后立即移除记录（350ms后）
+                // 等待气泡动画完成后立即移除记录（200ms后）
                 setTimeout(() => {
                     // 从本地数据中移除已审核的记录
                     recordingsData.splice(currentRecordIndex, 1);
+
+                    // 更新绝对索引，因为我们删除了一个记录
+                    if (absoluteRecordIndex > 0) {
+                        absoluteRecordIndex--;
+                    }
 
                 // 更新当前索引
                 if (recordingsData.length === 0) {
@@ -375,10 +380,9 @@ async function approveCurrent() {
                     updateNavigationButtons();
                 }
 
-                // 更新统计
+                // 重新加载当前筛选状态的数据和统计
+                loadRecordings(currentStatusFilter);
                 loadStats();
-                // 更新本地计数器
-                updateReviewCounter();
             }); // 立即执行，不等待进度条动画
             } else {
                 showToast(data.error || '审核失败', 'error');
@@ -434,6 +438,11 @@ async function rejectCurrent() {
             // 从本地数据中移除已审核的记录，使用正确的逻辑
             recordingsData.splice(currentRecordIndex, 1);
 
+            // 更新绝对索引，因为我们删除了一个记录
+            if (absoluteRecordIndex > 0) {
+                absoluteRecordIndex--;
+            }
+
             // 更新当前索引
             if (recordingsData.length === 0) {
                 // 没有更多记录，重新加载
@@ -449,10 +458,9 @@ async function rejectCurrent() {
                 updateNavigationButtons();
             }
 
-            // 更新统计
+            // 重新加载当前筛选状态的数据和统计
+            loadRecordings(currentStatusFilter);
             loadStats();
-            // 更新本地计数器
-            updateReviewCounter();
         } else {
             showToast(data.error || '拒绝失败', 'error');
         }
@@ -476,6 +484,12 @@ async function approveFromList(id, isCurrent) {
     await updateRecordingStatus(id, 'approved');
     if (isCurrent && currentView === 'device') {
         recordingsData.splice(currentRecordIndex, 1);
+
+        // 更新绝对索引，因为我们删除了一个记录
+        if (absoluteRecordIndex > 0) {
+            absoluteRecordIndex--;
+        }
+
         if (recordingsData.length === 0) {
             loadRecordings();
         } else if (currentRecordIndex >= recordingsData.length) {
@@ -496,6 +510,12 @@ async function rejectFromList(id, isCurrent) {
     await updateRecordingStatus(id, 'rejected');
     if (isCurrent && currentView === 'device') {
         recordingsData.splice(currentRecordIndex, 1);
+
+        // 更新绝对索引，因为我们删除了一个记录
+        if (absoluteRecordIndex > 0) {
+            absoluteRecordIndex--;
+        }
+
         if (recordingsData.length === 0) {
             loadRecordings();
         } else if (currentRecordIndex >= recordingsData.length) {
@@ -524,6 +544,12 @@ async function deleteFromList(id, isCurrent) {
             showToast('删除成功', 'success');
             if (isCurrent && currentView === 'device') {
                 recordingsData.splice(currentRecordIndex, 1);
+
+                // 更新绝对索引，因为我们删除了一个记录
+                if (absoluteRecordIndex > 0) {
+                    absoluteRecordIndex--;
+                }
+
                 if (recordingsData.length === 0) {
                     loadRecordings();
                 } else if (currentRecordIndex >= recordingsData.length) {
@@ -575,7 +601,7 @@ function showProgressAnimation(status) {
         setTimeout(() => {
             // 直接移除状态类，触发收起动画
             reviewAnimationOverlay.classList.remove(status);
-        }, status === 'approved' ? 600 : 650); // 适中的保持时间
+        }, status === 'approved' ? 300 : 350); // 更快的保持时间
     }, 20);
 }
 

@@ -316,7 +316,6 @@ function displayCurrentRecord() {
         screenProgress.style.display = 'block';
     }
 
-    updateReviewCounter();
     updateControlButtonsByStatus();
 }
 

@@ -4595,6 +4595,91 @@ mark {
     border-bottom: 1px solid var(--border-color);
 }
 
+/* 日志切换复选框样式 */
+.sync-log-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkbox-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.checkbox-custom {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(145deg, #2a2d3a, #1f2029);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.3),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+.checkbox-custom::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(145deg, #4A76BE, #1AC1F2);
+    border-radius: 2px;
+    transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom {
+    background: linear-gradient(145deg, #1e4056, #223344);
+    border-color: var(--primary-color);
+    box-shadow:
+        0 0 8px rgba(74, 118, 190, 0.3),
+        1px 1px 2px rgba(0, 0, 0, 0.3),
+        inset 1px 1px 2px rgba(74, 118, 190, 0.1);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom::before {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked + .checkbox-custom + .checkbox-label {
+    color: var(--primary-color);
+}
+
+.checkbox-wrapper:hover .checkbox-custom {
+    background: linear-gradient(145deg, #2e3142, #24252f);
+    border-color: var(--border-light);
+}
+
+.checkbox-wrapper:active .checkbox-custom {
+    transform: scale(0.95);
+    box-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.2),
+        inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 .sync-device-info {
     display: flex;
     align-items: center;
@@ -4767,6 +4852,14 @@ mark {
     border-left: 2px solid rgba(255, 255, 255, 0.1);
 }
 
+.sync-log-user {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    margin-top: 2px;
+    padding-left: 8px;
+    font-style: italic;
+}
+
 .sync-empty-logs {
     display: flex;
     flex-direction: column;
@@ -4790,6 +4883,35 @@ mark {
 .sync-empty-logs p {
     margin: 0;
     font-size: 14px;
+}
+
+/* 同步日志加载动画 */
+.sync-loading-logs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 32px;
+}
+
+.sync-loading-spinner {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+    color: var(--primary-color);
+}
+
+.sync-loading-spinner svg {
+    width: 100%;
+    height: 100%;
+    animation: loadingSpin 1.5s linear infinite;
+}
+
+.sync-loading-logs p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
 }
 
 /* 同步设备控制台 */
@@ -4846,32 +4968,18 @@ mark {
         inset 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.dict-sync-btn.dict-sync-full {
+.dict-sync-btn {
     background: linear-gradient(145deg, #4A76BE, #1AC1F2);
     box-shadow:
         4px 4px 8px rgba(0, 0, 0, 0.4),
         -2px -2px 4px rgba(26, 193, 242, 0.2);
 }
 
-.dict-sync-btn.dict-sync-full:hover {
+.dict-sync-btn:hover {
     background: linear-gradient(145deg, #5A86CE, #2AD1FF);
     box-shadow:
         6px 6px 12px rgba(0, 0, 0, 0.5),
         -3px -3px 6px rgba(26, 193, 242, 0.3);
-}
-
-.dict-sync-btn.dict-sync-incremental {
-    background: linear-gradient(145deg, #52C41A, #73D13D);
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.4),
-        -2px -2px 4px rgba(82, 196, 26, 0.2);
-}
-
-.dict-sync-btn.dict-sync-incremental:hover {
-    background: linear-gradient(145deg, #62D42A, #83E14D);
-    box-shadow:
-        6px 6px 12px rgba(0, 0, 0, 0.5),
-        -3px -3px 6px rgba(82, 196, 26, 0.3);
 }
 
 /* 同步状态加载动画 */

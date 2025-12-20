@@ -45,8 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadRecordings();
     }
 
-    console.log('加载API密钥...');
-    loadApiKeys();
+    console.log('API密钥将在导航到相应页面时加载');
 
     console.log('初始化键盘快捷键...');
     initializeKeyboardShortcuts();

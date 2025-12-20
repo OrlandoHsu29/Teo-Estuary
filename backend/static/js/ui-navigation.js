@@ -96,7 +96,11 @@ function refreshAllData() {
     }
 
     loadDataPromises.push(loadStats()); // 现在这个函数只更新数字，不会重新渲染
-    loadDataPromises.push(loadApiKeys());
+
+    // 只有当前在API管理页面时才加载API密钥
+    if (currentSection === 'apikeys') {
+        loadDataPromises.push(loadApiKeys());
+    }
 
     Promise.all(loadDataPromises).then(() => {
         // 刷新完成后移除动画
