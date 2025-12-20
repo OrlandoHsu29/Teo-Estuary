@@ -28,6 +28,9 @@ backend/data/
 *.mp3
 *.wav
 
+# 词典文件 (自动生成或用户特定)
+backend/app/teo_g2p/word_dict/jieba_cut.txt
+
 # Python缓存 (自动生成)
 __pycache__/
 *.pyc
