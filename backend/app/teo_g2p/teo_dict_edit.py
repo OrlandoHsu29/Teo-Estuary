@@ -9,11 +9,13 @@ from typing import List, Dict, Optional, Tuple
 from app.teo_g2p.models import TranslationDict
 from app.teo_g2p.dao import TranslationDictDAO, ChangeLog
 from app.teo_g2p.jieba_sync_service import JiebaSyncService
+from app.teo_g2p.jieba_temp_manager import JiebaTempManager
 
 # 创建全局实例
 _change_logger = ChangeLog()
 _dao = TranslationDictDAO(_change_logger)
 _sync_service = JiebaSyncService(change_logger=_change_logger)
+_jieba_manager = JiebaTempManager()
 
 def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
                    priority: float = 1.0, user: str = "system", reason: str = "") -> bool:
@@ -31,7 +33,7 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
     Returns:
         bool: 是否添加成功
     """
-    return _dao.add_translation(
+    success = _dao.add_translation(
         mandarin_text=mandarin_text,
         teochew_text=teochew_text,
         variant=variant,
@@ -39,6 +41,16 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
         user=user,
         reason=reason
     )
+
+    if success:
+        # 将潮汕话翻译结果添加到jieba_cut_temp.txt
+        if teochew_text:
+            # 分词处理每个潮汕话词汇
+            teochew_words = [word.strip() for word in teochew_text.split() if word.strip()]
+            for word in teochew_words:
+                _jieba_manager.add_word(word)
+
+    return success
 
 def update_translation(mandarin_text: str = None, entry_id: int = None,
                       teochew_text: str = None, variant: int = None,
@@ -60,7 +72,23 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
     Returns:
         bool: 是否更新成功
     """
-    return _dao.update_translation(
+    # 如果要更新潮汕话文本，先获取旧的文本
+    old_teochew_texts = []
+    if teochew_text is not None:
+        if entry_id is not None:
+            # 通过ID获取旧词条
+            old_entry = _dao.get_translation_by_id(entry_id)
+            if old_entry:
+                old_teochew_texts.append(old_entry.teochew_text)
+        elif mandarin_text is not None:
+            # 通过普通话文本获取旧词条
+            old_entries = _dao.list_translations(mandarin_text, limit=100, include_inactive=True)
+            if variant is not None:
+                old_entries = [e for e in old_entries if e.variant == variant]
+            old_teochew_texts = [e.teochew_text for e in old_entries]
+
+    # 执行更新
+    success = _dao.update_translation(
         mandarin_text=mandarin_text,
         entry_id=entry_id,
         teochew_text=teochew_text,
@@ -70,6 +98,23 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         user=user,
         reason=reason
     )
+
+    if success and teochew_text is not None:
+        # 处理jieba_cut_temp.txt的同步
+        # 删除旧词语
+        for old_text in old_teochew_texts:
+            if old_text:
+                old_teochew_words = [word.strip() for word in old_text.split() if word.strip()]
+                for word in old_teochew_words:
+                    _jieba_manager.delete_word(word)
+
+        # 添加新词语
+        if teochew_text:
+            new_teochew_words = [word.strip() for word in teochew_text.split() if word.strip()]
+            for word in new_teochew_words:
+                _jieba_manager.add_word(word)
+
+    return success
 
 def update_translation_status(entry_id: int, is_active: bool,
                             user: str = "system", reason: str = "") -> bool:
@@ -101,12 +146,30 @@ def delete_translation(mandarin_text: str, variant: int = None,
     Returns:
         bool: 是否删除成功
     """
-    return _dao.delete_translation(
+    # 先获取要删除的词条的潮汕话文本
+    entries_to_delete = _dao.list_translations(mandarin_text, limit=100, include_inactive=True)
+    if variant is not None:
+        entries_to_delete = [e for e in entries_to_delete if e.variant == variant]
+
+    teochew_texts_to_delete = [e.teochew_text for e in entries_to_delete]
+
+    # 执行删除
+    success = _dao.delete_translation(
         mandarin_text=mandarin_text,
         variant=variant,
         user=user,
         reason=reason
     )
+
+    if success:
+        # 从jieba_temp.txt中删除相关的潮汕话词语
+        for teochew_text in teochew_texts_to_delete:
+            if teochew_text:
+                teochew_words = [word.strip() for word in teochew_text.split() if word.strip()]
+                for word in teochew_words:
+                    _jieba_manager.delete_word(word)
+
+    return success
 
 def get_translation(mandarin_text: str, variant: int = None) -> Optional[TranslationDict]:
     """

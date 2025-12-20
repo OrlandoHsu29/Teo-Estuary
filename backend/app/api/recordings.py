@@ -329,7 +329,7 @@ def admin_download_recording(recording_id):
             response.headers['Access-Control-Allow-Origin'] = '*'
             response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, OPTIONS'
             response.headers['Access-Control-Allow-Headers'] = 'Range'
-                        return response
+            return response
 
         if is_download:
             download_name = f"{recording.id}{file_ext}"
