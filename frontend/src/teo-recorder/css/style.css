@@ -710,160 +710,6 @@ body {
         0 0 0 1px rgba(0, 255, 153, 0.4);
 }
 
-/* 密钥配置弹窗 */
-.key-config-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(5px);
-}
-
-.key-config-modal {
-    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-    border: 2px solid #3a3a4e;
-    border-radius: 20px;
-    padding: 30px;
-    min-width: 400px;
-    max-width: 500px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-.key-config-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #3a3a4e;
-}
-
-.key-config-header h3 {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.2rem;
-    color: #ffffff;
-    margin: 0;
-}
-
-.key-config-header .close-btn {
-    background: transparent;
-    border: none;
-    color: #888899;
-    font-size: 28px;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.key-config-header .close-btn:hover {
-    background: rgba(255, 80, 80, 0.2);
-    color: #ff5050;
-}
-
-.key-config-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.key-config-content .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.key-config-content .form-group label {
-    font-size: 0.9rem;
-    color: #ccccdd;
-    font-weight: 500;
-}
-
-.key-config-content .form-group input {
-    background: #1a1a2e;
-    border: 1px solid #3a3a4e;
-    border-radius: 8px;
-    padding: 12px 15px;
-    color: #ffffff;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-}
-
-.key-config-content .form-group input:focus {
-    outline: none;
-    border-color: #00ffff;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-}
-
-.key-config-content .form-group input::placeholder {
-    color: #666677;
-}
-
-.key-config-content .form-help {
-    font-size: 0.8rem;
-    color: #888899;
-    line-height: 1.4;
-}
-
-.key-config-content .form-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.key-config-content .form-actions button {
-    flex: 1;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Noto Sans SC', sans-serif;
-}
-
-.key-config-content .btn-cancel {
-    background: #3a3a4e;
-    color: #ccccdd;
-}
-
-.key-config-content .btn-cancel:hover {
-    background: #4a4a5e;
-}
-
-.key-config-content .btn-clear {
-    background: rgba(255, 80, 80, 0.2);
-    color: #ff5050;
-    border: 1px solid rgba(255, 80, 80, 0.3);
-}
-
-.key-config-content .btn-clear:hover {
-    background: rgba(255, 80, 80, 0.3);
-    border-color: rgba(255, 80, 80, 0.5);
-}
-
-.key-config-content .btn-confirm {
-    background: linear-gradient(135deg, #00aa55, #009944);
-    color: #ffffff;
-}
-
-.key-config-content .btn-confirm:hover {
-    background: linear-gradient(135deg, #00bb66, #00aa55);
-    box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
-}
-
 /* 密钥过期提示弹窗 */
 .key-expired-overlay {
     display: none;
@@ -955,6 +801,102 @@ body {
 }
 
 .key-expired-actions .btn-confirm:hover {
+    background: linear-gradient(135deg, #00bb66, #00aa55);
+    box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
+}
+
+/* 密钥配置询问弹窗（共享样式） */
+.key-config-prompt-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.key-config-prompt-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.key-config-prompt-modal {
+    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+    border: 2px solid #3a3a4e;
+    border-radius: 20px;
+    padding: 30px;
+    min-width: 320px;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.key-config-prompt-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.key-config-prompt-header h3 {
+    font-size: 1.1rem;
+    color: #00ffff;
+    margin: 0;
+}
+
+.key-config-prompt-content {
+    text-align: center;
+}
+
+.key-config-prompt-content p {
+    color: #ccccdd;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.key-config-prompt-content .prompt-detail {
+    color: #888899;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+}
+
+.key-config-prompt-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.key-config-prompt-actions button {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.key-config-prompt-actions .btn-cancel {
+    background: #3a3a4e;
+    color: #ccccdd;
+}
+
+.key-config-prompt-actions .btn-cancel:hover {
+    background: #4a4a5e;
+}
+
+.key-config-prompt-actions .btn-confirm {
+    background: linear-gradient(135deg, #00aa55, #009944);
+    color: #ffffff;
+}
+
+.key-config-prompt-actions .btn-confirm:hover {
     background: linear-gradient(135deg, #00bb66, #00aa55);
     box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
 }

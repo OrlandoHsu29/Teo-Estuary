@@ -146,7 +146,7 @@
             </div>
 
             <!-- 密钥配置按钮 -->
-            <button class="key-config-btn" id="keyConfigBtn" onclick="goToKeyConfig()" title="配置API密钥">
+            <button class="key-config-btn" id="keyConfigBtn" onclick="KeyManager.goToKeyConfig()" title="配置API密钥">
                 <svg class="key-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <circle cx="8" cy="8" r="5"></circle>
                     <line x1="13" y1="13" x2="20" y2="20"></line>
@@ -192,34 +192,12 @@
             <a href="http://www.beian.gov.cn/portal/registerSystemInfo" target="_blank" rel="noopener noreferrer" class="icp-link">粤公网安备44520202000473号</a>
         </div>
     </div>
-
-    <!-- 密钥配置弹窗 -->
-    <div class="key-config-overlay" id="keyConfigOverlay">
-        <div class="key-config-modal">
-            <div class="key-config-header">
-                <h3>API 密钥配置</h3>
-                <button class="close-btn" onclick="closeKeyConfig()">×</button>
-            </div>
-            <div class="key-config-content">
-                <div class="form-group">
-                    <label for="apiKey">请输入 API 密钥:</label>
-                    <input type="text" id="apiKey" placeholder="输入您的API密钥" />
-                    <small class="form-help">API 密钥用于验证您的访问权限，请联系管理员获取</small>
-                </div>
-                <div class="form-actions">
-                    <button class="btn-cancel" onclick="closeKeyConfig()">取消</button>
-                    <button class="btn-clear" onclick="clearApiKey()">清空</button>
-                    <button class="btn-confirm" onclick="saveApiKey()">保存</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- 隐藏的文件输入 -->
 <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
 
-<script src="../js/key-config.js"></script>
 <script src="./js/phonograph.js"></script>
+<script src="../js/key-manager.js"></script>
 </body>
 </html>

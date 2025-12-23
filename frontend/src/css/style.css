@@ -873,7 +873,7 @@ body {
 }
 
 .key-config-header h3 {
-    font-family: 'DottedSongtiSquareRegular', sans-serif;
+    font-family: 'DottedSongtiSquareRegular', monospace;
     font-size: 20px;
     font-weight: 700;
     color: #00ffff;

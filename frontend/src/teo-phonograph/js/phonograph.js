@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化状态灯
     elements.powerLight.classList.add('active');
     elements.statusText.textContent = 'READY';
+
+    // 初始化密钥按钮状态
+    updateKeyButtonState();
 });
 
 function initializeElements() {
