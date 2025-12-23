@@ -39,8 +39,8 @@ function showKeyConfigPrompt() {
                 <h3>API 密钥配置</h3>
             </div>
             <div class="key-config-prompt-content">
-                <p>需要配置API密钥才能使用此功能</p>
-                <p class="prompt-detail">是否跳转到主页面进行密钥配置？</p>
+                <p>需要跳转到主页面进行密钥配置</p>
+                <p class="prompt-detail">是否跳转到主页面？</p>
                 <div class="key-config-prompt-actions">
                     <button class="btn-cancel" onclick="KeyManager.closeKeyConfigPrompt()">取消</button>
                     <button class="btn-confirm" onclick="KeyManager.confirmGoToKeyConfig()">前往配置</button>
