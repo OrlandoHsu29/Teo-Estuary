@@ -52,7 +52,7 @@ function saveTeochewTextEdit() {
 
     if (newContent && newContent !== originalTeochewContent) {
         // 更新本地数据
-        recordingsData[currentRecordIndex].actual_content = newContent;
+        recordingsData[currentRecordIndex].teochew_text = newContent;
 
         // 使用字词按钮重新渲染内容
         const convertedTextElement = document.getElementById('convertedText');
@@ -105,7 +105,7 @@ function cancelTeochewTextEdit() {
 
     // 重新渲染字词按钮以恢复原始内容
     if (recordingsData.length > 0 && currentRecordIndex < recordingsData.length) {
-        const currentContent = recordingsData[currentRecordIndex].actual_content;
+        const currentContent = recordingsData[currentRecordIndex].teochew_text;
         if (typeof renderWordButtons === 'function') {
             renderWordButtons(textElement, currentContent);
         }
@@ -157,7 +157,7 @@ function saveMandarinTextEdit() {
 
     if (newContent && newContent !== originalMandarinContent) {
         // 更新本地数据
-        recordingsData[currentRecordIndex].original_text = newContent;
+        recordingsData[currentRecordIndex].mandarin_text = newContent;
 
         // 使用字词按钮重新渲染内容
         const mandarinTextElement = document.getElementById('mandarinText');
@@ -199,7 +199,7 @@ function cancelMandarinTextEdit() {
 
     // 重新渲染字词按钮以恢复原始内容
     if (recordingsData.length > 0 && currentRecordIndex < recordingsData.length) {
-        const currentContent = recordingsData[currentRecordIndex].original_text;
+        const currentContent = recordingsData[currentRecordIndex].mandarin_text;
         if (typeof renderWordButtons === 'function') {
             renderWordButtons(textElement, currentContent);
         }
@@ -207,14 +207,14 @@ function cancelMandarinTextEdit() {
 }
 
 // 更新记录内容
-async function updateRecordingContent(id, actualContent) {
+async function updateRecordingContent(id, teochewText) {
     try {
         const response = await fetch(`/api/recording/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ actual_content: actualContent })
+            body: JSON.stringify({ teochew_text: teochewText })
         });
 
         const data = await response.json();
@@ -231,14 +231,14 @@ async function updateRecordingContent(id, actualContent) {
 }
 
 // 更新记录原始文本
-async function updateRecordingOriginalText(id, originalText) {
+async function updateRecordingOriginalText(id, mandarinText) {
     try {
         const response = await fetch(`/api/recording/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ original_text: originalText })
+            body: JSON.stringify({ mandarin_text: mandarinText })
         });
 
         const data = await response.json();
@@ -252,6 +252,101 @@ async function updateRecordingOriginalText(id, originalText) {
         console.error('保存失败:', error);
         showToast('保存失败', 'error');
     }
+}
+
+// 审核通过
+async function approveCurrent() {
+    if (recordingsData.length === 0) return;
+
+    const record = recordingsData[currentRecordIndex];
+
+    // 检查是否有实际内容
+    if (!record.teochew_text && !record.mandarin_text) {
+        showToast('请先填写音频实际内容后再进行审核', 'error');
+        return;
+    }
+
+    // 自动合并分词按钮为完整句子（同步进行）
+    if (typeof autoMergeAllTextsOnApprove === 'function') {
+        // 先启动气泡动画
+        autoMergeAllTextsOnApprove();
+    }
+
+    // 短暂延迟后同时开始进度条动画
+    setTimeout(async () => {
+        // 显示进度条动画
+        showProgressAnimation('approved');
+        // 更新内容（如果需要）然后更新状态
+        try {
+            // 使用可能已经合并的最新数据
+            const teochewText = record.teochew_text || record.mandarin_text;
+
+            const response = await fetch(`/api/recording/${record.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: 'approved',
+                    teochew_text: teochewText
+                })
+            });
+
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('API返回HTML而非JSON:', text.substring(0, 200));
+            showToast('服务器错误，请检查API配置', 'error');
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 显示绿色通过动画（与气泡动画同时开始）
+            showProgressAnimation('approved');
+
+            // 等待气泡动画完成后立即移除记录（200ms后）
+            setTimeout(() => {
+                // 从本地数据中移除已审核的记录
+                recordingsData.splice(currentRecordIndex, 1);
+
+                // 注意：currentRecordIndex保持不变，因为数组删除后下一个元素自动补位到当前索引
+                // absoluteRecordIndex也保持不变，因为我们在全局位置中的位置没有变化
+
+                // 更新当前索引
+                if (recordingsData.length === 0) {
+                    // 没有更多记录，重新加载
+                    loadRecordings();
+                } else if (currentRecordIndex >= recordingsData.length) {
+                    // 当前索引超出范围，回到最后一条
+                    currentRecordIndex = recordingsData.length - 1;
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                } else {
+                    // 显示当前索引的记录
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                }
+
+                // 立即更新当前筛选状态的总数和计数器
+                if (window.totalDataCount && window.totalDataCount > 0) {
+                    window.totalDataCount--;
+                }
+                updateReviewCounter(); // 立即更新计数器显示
+
+                // 异步更新统计面板（不影响当前的计数器显示）
+                loadStats();
+            }); // 立即执行，不等待进度条动画
+        } else {
+            showToast(data.error || '审核失败', 'error');
+        }
+    } catch (error) {
+        console.error('审核失败:', error);
+        showToast('审核失败: ' + error.message, 'error');
+    }
+    }, 0); // 立即启动动画
 }
 
 // 更新记录状态
@@ -320,7 +415,7 @@ async function approveCurrent() {
     const record = recordingsData[currentRecordIndex];
 
     // 检查是否有实际内容
-    if (!record.actual_content && !record.original_text) {
+    if (!record.teochew_text && !record.mandarin_text) {
         showToast('请先填写音频实际内容后再进行审核', 'error');
         return;
     }
@@ -338,7 +433,7 @@ async function approveCurrent() {
         // 更新内容（如果需要）然后更新状态
         try {
             // 使用可能已经合并的最新数据
-            const actualContent = record.actual_content || record.original_text;
+            const teochewText = record.teochew_text || record.mandarin_text;
 
             const response = await fetch(`/api/recording/${record.id}`, {
                 method: 'PUT',
@@ -347,7 +442,7 @@ async function approveCurrent() {
                 },
                 body: JSON.stringify({
                     status: 'approved',
-                    actual_content: actualContent
+                    teochew_text: teochewText
                 })
             });
 
@@ -415,13 +510,13 @@ async function rejectCurrent() {
     const record = recordingsData[currentRecordIndex];
 
     // 检查是否有实际内容
-    if (!record.actual_content && !record.original_text) {
+    if (!record.teochew_text && !record.mandarin_text) {
         showToast('请先填写音频实际内容后再进行审核', 'error');
         return;
     }
 
     try {
-        const actualContent = record.actual_content || record.original_text;
+        const teochewText = record.teochew_text || record.mandarin_text;
 
         const response = await fetch(`/api/recording/${record.id}`, {
             method: 'PUT',
@@ -430,7 +525,7 @@ async function rejectCurrent() {
             },
             body: JSON.stringify({
                 status: 'rejected',
-                actual_content: actualContent
+                teochew_text: teochewText
             })
         });
 

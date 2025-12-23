@@ -10,8 +10,8 @@ class Recording(db.Model):
 
     id = db.Column(db.String(32), primary_key=True)
     file_path = db.Column(db.String(500), nullable=False)
-    original_text = db.Column(db.Text, nullable=False)
-    actual_content = db.Column(db.Text)
+    mandarin_text = db.Column(db.Text, nullable=False)
+    teochew_text = db.Column(db.Text)
     upload_time = db.Column(db.DateTime, default=now)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(500))
@@ -26,8 +26,8 @@ class Recording(db.Model):
             'id': self.id,
             'filename': os.path.basename(self.file_path) if self.file_path else None,
             'file_path': self.file_path,
-            'original_text': self.original_text,
-            'actual_content': self.actual_content,
+            'mandarin_text': self.mandarin_text,
+            'teochew_text': self.teochew_text,
             'upload_time': self.upload_time.isoformat(),
             'upload_time_formatted': format_time(self.upload_time),
             'ip_address': self.ip_address,

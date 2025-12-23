@@ -156,16 +156,16 @@ function renderListView(recordings, total, current, pages) {
 
             <div class="list-item-content">
                 <div class="text-display">
-                    <label>原始文本</label>
-                    <div class="original-text">
-                        <p>${highlightText(record.original_text)}</p>
+                    <label>普通话文本</label>
+                    <div class="mandarin-text">
+                        <p>${highlightText(record.mandarin_text)}</p>
                     </div>
                 </div>
 
                 <div class="text-display">
-                    <label>转换文本</label>
-                    <div class="converted-text">
-                        <p>${highlightText(record.actual_content)}</p>
+                    <label>潮汕话文本</label>
+                    <div class="teochew-text">
+                        <p>${highlightText(record.teochew_text)}</p>
                     </div>
                 </div>
             </div>

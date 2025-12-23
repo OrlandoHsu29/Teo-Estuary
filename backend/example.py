@@ -19,7 +19,7 @@ def basic_example():
     print("=== 基本翻译 ===")
 
     text = "这是我的朋友"
-    result = translation_service.translate_to_oral(text)
+    result = translation_service.translate(text, lang='teochew')
     print(f"普通话: {text}")
     print(f"潮州话: {result}")
     print()
@@ -37,7 +37,7 @@ def variants_example():
 
     text = "这样就好"
     print(f"'{text}' 的含变体翻译:")
-    res = translation_service.translate_to_oral(text, True)
+    res = translation_service.translate(text, True, lang='teochew')
     print(f"{res}")
     
     print()
@@ -48,7 +48,7 @@ def custom_translation_example():
 
     # 测试自定义翻译
     text = "我是程序员"
-    result = translation_service.translate_to_oral(text)
+    result = translation_service.translate(text, lang='teochew')
     print(f"普通话: {text}")
     print(f"潮州话: {result}")
     print()
@@ -67,7 +67,7 @@ def batch_translate_example():
 
     print("普通话 -> 潮州话")
     for text in texts:
-        result = translation_service.translate_to_oral(text)
+        result = translation_service.translate(text, lang='teochew')
         print(f"{text} -> {result}")
     print()
 
@@ -76,7 +76,7 @@ def long_text_example():
     print("=== 长文本翻译 ===")
 
     text = "这里是我的家，欢迎来玩。我们会准备一些吃的，不用担心。"
-    result = translation_service.translate_to_oral(text)
+    result = translation_service.translate(text, lang='teochew')
 
     print(f"原文: {text}")
     print(f"译文: {result}")

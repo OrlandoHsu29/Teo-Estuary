@@ -142,7 +142,7 @@ function deleteCurrentRecording() {
 
     const recording = recordingsData[currentRecordIndex];
 
-    if (confirm(`确定要删除这条录音吗？\n${recording.original_text || '无标题'}`)) {
+    if (confirm(`确定要删除这条录音吗？\n${recording.mandarin_text || '无标题'}`)) {
         // 调用删除API
         fetch(`/admin/api/recordings/${recording.id}`, {
             method: 'DELETE'

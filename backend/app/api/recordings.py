@@ -48,8 +48,8 @@ def api_upload(key_obj):
         file.save(file_path)
 
         # 翻译普通话参考文本
-        actual_content = translation_service.translate_to_oral(text, auto_split=True)
-        # actual_content = current_app.teochew_converter.to_oral(text, auto_split=True)
+        teochew_text = translation_service.translate(text, auto_split=True, lang='teochew')
+        # teochew_text = current_app.teochew_converter.to_oral(text, auto_split=True)
 
         from app.models import Recording
 
@@ -74,8 +74,8 @@ def api_upload(key_obj):
         recording = Recording(
             id=recording_id,
             file_path=os.path.join('uploads', safe_filename).replace('\\', '/'),
-            original_text=text,
-            actual_content=actual_content,
+            mandarin_text=text,
+            teochew_text=teochew_text,
             ip_address=get_client_ip(),
             user_agent=request.headers.get('User-Agent', '')[:500],
             file_size=os.path.getsize(file_path),
@@ -129,8 +129,8 @@ def api_recordings():
         if search:
             search_pattern = f'%{search}%'
             query = query.filter(
-                (Recording.original_text.like(search_pattern)) |
-                (Recording.actual_content.like(search_pattern))
+                (Recording.mandarin_text.like(search_pattern)) |
+                (Recording.teochew_text.like(search_pattern))
             )
 
         # 优化：只选择必要的字段
@@ -161,17 +161,17 @@ def api_update_recording(recording_id):
         data = request.get_json()
         old_status = recording.status
 
-        if 'actual_content' in data:
-            recording.actual_content = data['actual_content']
+        if 'teochew_text' in data:
+            recording.teochew_text = data['teochew_text']
 
-        if 'original_text' in data:
-            recording.original_text = data['original_text']
+        if 'mandarin_text' in data:
+            recording.mandarin_text = data['mandarin_text']
 
         if 'status' in data:
             new_status = data['status']
 
             if new_status in ['approved', 'rejected'] and old_status != new_status:
-                if not recording.actual_content:
+                if not recording.teochew_text:
                     return jsonify({
                         'success': False,
                         'error': '请先填写音频实际内容后再进行审核'

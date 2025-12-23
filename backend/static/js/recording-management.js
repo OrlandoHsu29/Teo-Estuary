@@ -266,13 +266,13 @@ function displayCurrentRecord() {
     const mandarinTextElement = document.getElementById('mandarinText');
     if (mandarinTextElement) {
         // 使用字词按钮显示普通话文本
-        renderWordButtons(mandarinTextElement, record.original_text || '-');
+        renderWordButtons(mandarinTextElement, record.mandarin_text || '-');
     }
 
     const teochewTextElement = document.getElementById('teochewText');
     if (teochewTextElement) {
         // 使用字词按钮显示潮汕话文本
-        renderWordButtons(teochewTextElement, record.actual_content || '-');
+        renderWordButtons(teochewTextElement, record.teochew_text || '-');
     }
 
     // 更新元信息
@@ -827,14 +827,14 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
 
     if (isOriginalText) {
         // 更新原始文本
-        const words = record.original_text.split(' ');
+        const words = record.mandarin_text.split(' ');
         originalWord = words[wordIndex];
 
         // 如果新内容为空，移除这个词
         if (!newWord || newWord.trim() === '') {
             words.splice(wordIndex, 1);
             newContent = words.join(' ');
-            record.original_text = newContent;
+            record.mandarin_text = newContent;
 
             // 移除按钮元素
             buttonElement.remove();
@@ -865,7 +865,7 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             }
 
             newContent = words.join(' ');
-            record.original_text = newContent;
+            record.mandarin_text = newContent;
 
             // 更新按钮数据
             buttonElement.dataset.originalWord = words[wordIndex];
@@ -876,14 +876,14 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
         }
     } else {
         // 更新转换文本
-        const words = record.actual_content.split(' ');
+        const words = record.teochew_text.split(' ');
         originalWord = words[wordIndex];
 
         // 如果新内容为空，移除这个词
         if (!newWord || newWord.trim() === '') {
             words.splice(wordIndex, 1);
             newContent = words.join(' ');
-            record.actual_content = newContent;
+            record.teochew_text = newContent;
 
             // 移除按钮元素
             buttonElement.remove();
@@ -914,7 +914,7 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             }
 
             newContent = words.join(' ');
-            record.actual_content = newContent;
+            record.teochew_text = newContent;
 
             // 更新按钮数据
             buttonElement.dataset.originalWord = words[wordIndex];
@@ -949,10 +949,10 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
 
     if (isOriginalText) {
         // 更新原始文本
-        const words = record.original_text.split(' ');
+        const words = record.mandarin_text.split(' ');
         words[wordIndex] = newWord;
         newContent = words.join(' ');
-        record.original_text = newContent;
+        record.mandarin_text = newContent;
 
         // 更新按钮数据
         buttonElement.dataset.originalWord = newWord;
@@ -961,10 +961,10 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
         updateRecordingOriginalText(record.id, newContent);
     } else {
         // 更新转换文本
-        const words = record.actual_content.split(' ');
+        const words = record.teochew_text.split(' ');
         words[wordIndex] = newWord;
         newContent = words.join(' ');
-        record.actual_content = newContent;
+        record.teochew_text = newContent;
 
         // 更新按钮数据
         buttonElement.dataset.originalWord = newWord;
@@ -1020,10 +1020,10 @@ function autoMergeText(elementId) {
     let updateFunction;
 
     if (elementId === 'originalText') {
-        currentText = record.original_text;
+        currentText = record.mandarin_text;
         updateFunction = updateRecordingOriginalText;
     } else {
-        currentText = record.actual_content;
+        currentText = record.teochew_text;
         updateFunction = updateRecordingContent;
     }
 
@@ -1037,9 +1037,9 @@ function autoMergeText(elementId) {
 
     // 更新本地数据
     if (elementId === 'originalText') {
-        record.original_text = mergedText;
+        record.mandarin_text = mergedText;
     } else {
-        record.actual_content = mergedText;
+        record.teochew_text = mergedText;
     }
 
     // 重新渲染为单个按钮
@@ -1060,7 +1060,7 @@ function autoMergeAllTextsOnApprove() {
     let convertedMerged = null;
 
     // 合并普通话文本（如果需要）
-    if (needsMerging(record.original_text)) {
+    if (needsMerging(record.mandarin_text)) {
         // 添加合并动画
         const mandarinTextElement = document.getElementById('mandarinText');
         const originalContainer = mandarinTextElement?.querySelector('.word-buttons-container');
@@ -1070,11 +1070,11 @@ function autoMergeAllTextsOnApprove() {
             wordButtons.forEach(btn => btn.classList.add('merging'));
 
             // 立即计算合并后的文本并更新记录对象（同步操作）
-            const mergedText = mergeWordsToSentence(record.original_text);
+            const mergedText = mergeWordsToSentence(record.mandarin_text);
 
             // 立即更新内存中的记录对象，确保后续API调用使用合并后的数据
             originalMerged = mergedText;
-            record.original_text = mergedText;
+            record.mandarin_text = mergedText;
 
             // 异步更新数据库（不影响动画）
             updateRecordingOriginalText(record.id, mergedText);
@@ -1088,7 +1088,7 @@ function autoMergeAllTextsOnApprove() {
     }
 
     // 合并潮汕话文本（如果需要）
-    if (needsMerging(record.actual_content)) {
+    if (needsMerging(record.teochew_text)) {
         // 添加合并动画
         const teochewTextElement = document.getElementById('teochewText');
         const convertedContainer = teochewTextElement?.querySelector('.word-buttons-container');
@@ -1098,11 +1098,11 @@ function autoMergeAllTextsOnApprove() {
             wordButtons.forEach(btn => btn.classList.add('merging'));
 
             // 立即计算合并后的文本并更新记录对象（同步操作）
-            const mergedText = mergeWordsToSentence(record.actual_content);
+            const mergedText = mergeWordsToSentence(record.teochew_text);
 
             // 立即更新内存中的记录对象，确保后续API调用使用合并后的数据
             convertedMerged = mergedText;
-            record.actual_content = mergedText;
+            record.teochew_text = mergedText;
 
             // 异步更新数据库（不影响动画）
             updateRecordingContent(record.id, mergedText);
@@ -1138,13 +1138,13 @@ async function autoMergeForListApprove(recordId) {
         let updateData = {};
 
         // 检查并合并原始文本
-        if (needsMerging(record.original_text)) {
-            updateData.original_text = mergeWordsToSentence(record.original_text);
+        if (needsMerging(record.mandarin_text)) {
+            updateData.mandarin_text = mergeWordsToSentence(record.mandarin_text);
         }
 
         // 检查并合并转换文本
-        if (needsMerging(record.actual_content)) {
-            updateData.actual_content = mergeWordsToSentence(record.actual_content);
+        if (needsMerging(record.teochew_text)) {
+            updateData.teochew_text = mergeWordsToSentence(record.teochew_text);
         }
 
         // 如果有需要合并的内容，更新到后端
@@ -1159,8 +1159,8 @@ async function autoMergeForListApprove(recordId) {
 
             // 显示合并信息
             const messages = [];
-            if (updateData.original_text) messages.push('原始文本已合并');
-            if (updateData.actual_content) messages.push('转换文本已合并');
+            if (updateData.mandarin_text) messages.push('原始文本已合并');
+            if (updateData.teochew_text) messages.push('转换文本已合并');
 
             if (messages.length > 0) {
                 showToast(`记录 ${recordId} - ${messages.join('，')}`, 'success');
