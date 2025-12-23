@@ -844,8 +844,7 @@ body {
 }
 
 .key-config-prompt-header h3 {
-    font-size: 1.1rem;
-    color: #00ffff;
+    font-size: 1.3rem;
     margin: 0;
 }
 
@@ -1521,7 +1520,7 @@ body {
 .footer-info {
     width: 100%;
     max-width: 500px;
-    margin: 15px auto 0;
+    margin: 0px auto 0;
     padding: 8px;
     display: flex;
     flex-direction: column;
