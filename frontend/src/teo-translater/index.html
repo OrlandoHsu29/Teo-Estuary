@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teo Translater - 潮汕话翻译器</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 背景动画元素 -->
+    <div class="grid-overlay"></div>
+
+    <div class="container">
+        <div class="pager-metro">
+            <!-- 返回按钮 - 设备上方居中 -->
+            <button class="back-btn" onclick="goBack()" title="返回主页">
+                <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M15 3h6v18h-6M10 17l5-5-5-5M15 12H3"/>
+                </svg>
+            </button>
+            <!-- 寻呼机主体 -->
+            <div class="pager-body">
+                <!-- 顶部品牌区域 -->
+                <div class="top-section">
+                    <div class="brand-info">
+                        <div class="brand-name">TEO TRANSLATOR</div>
+                        <div class="model-number">Olndio-2025</div>
+                    </div>
+                </div>
+
+                <!-- LCD显示屏 -->
+                <div class="lcd-section">
+                    <div class="lcd-frame">
+                        <div class="lcd-glass">
+                            <!-- 状态栏 -->
+                            <div class="lcd-status">
+                                <div class="mode-text" id="modeText">普通话→潮汕</div>
+                                <div class="signal-bars">
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                </div>
+                            </div>
+
+                            <!-- 显示区域 -->
+                            <div class="lcd-display" id="lcdDisplay">
+                                <div class="display-text" id="displayText">等待输入...</div>
+                                <!-- 字符计数器 -->
+                                <div class="char-counter">
+                                    <span id="charCount">0</span>/100
+                                </div>
+                            </div>
+
+                            <!-- 光标 -->
+                            <div class="cursor-block">■</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输入区域 -->
+                <div class="input-section">
+                    <div class="input-frame">
+                        <textarea
+                            class="input-field"
+                            id="textInput"
+                            placeholder="输入文本..."
+                            maxlength="100"
+                        ></textarea>
+                    </div>
+                    <!-- 右侧按钮组 -->
+                    <div class="button-group">
+                        <button class="control-btn toggle-btn" onclick="toggleMode()" title="切换模式">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                            </svg>
+                        </button>
+                        <button class="control-btn translate-btn" onclick="handleTranslateClick()" id="translateBtn" title="翻译">
+                            <span class="btn-content">
+                                <span class="btn-arrow">→</span>
+                                <span class="btn-text" id="translateBtnText">潮</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="manual-container" id="manualContainer">
+            <div class="manual-controls">
+                <!-- 折叠按钮 -->
+                <button class="manual-toggle" id="manualToggle" onclick="toggleManual()">
+                    <svg class="manual-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                    <span>使用说明</span>
+                </button>
+
+                <!-- 密钥配置按钮 -->
+                <button class="key-config-btn" id="keyConfigBtn" onclick="goToKeyConfig()" title="配置API密钥">
+                    <svg class="key-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="8" cy="8" r="5"></circle>
+                        <line x1="13" y1="13" x2="20" y2="20"></line>
+                        <line x1="15" y1="15" x2="15" y2="18"></line>
+                        <line x1="18" y1="18" x2="18" y2="21"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 说明书内容 -->
+            <div class="manual-content" id="manualContent">
+                <div class="manual-paper">
+                    <div class="manual-header">
+                        <div class="manual-title">TEO TRANSLATER</div>
+                        <div class="manual-subtitle">潮汕话翻译器快速使用指南</div>
+                    </div>
+
+                    <div class="manual-steps">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-text">点击"切换模式"按钮选择翻译方向（普通话→潮汕 或 潮汕→普通话）</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-text">在输入框中输入要翻译的文本内容（最多100字）</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-text">点击"翻译"按钮进行翻译，结果将显示在屏幕上</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div class="footer-info">
+            <div class="footer-divider"></div>
+            <div class="footer-line">
+                <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer" class="icp-link">粤ICP备2025500777号</a>
+                <span class="icp-separator">|</span>
+                <a href="http://www.beian.gov.cn/portal/registerSystemInfo" target="_blank" rel="noopener noreferrer" class="icp-link">粤公网安备44520202000473号</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 密钥配置弹窗 -->
+    <div class="key-config-overlay" id="keyConfigOverlay">
+        <div class="key-config-modal">
+            <div class="key-config-header">
+                <h3>API 密钥配置</h3>
+                <button class="close-btn" onclick="closeKeyConfig()">×</button>
+            </div>
+            <div class="key-config-content">
+                <div class="form-group">
+                    <label for="apiKey">请输入 API 密钥:</label>
+                    <input type="text" id="apiKey" placeholder="输入您的API密钥" />
+                    <small class="form-help">API 密钥用于验证您的访问权限，请联系管理员获取</small>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-cancel" onclick="closeKeyConfig()">取消</button>
+                    <button class="btn-clear" onclick="clearApiKey()">清空</button>
+                    <button class="btn-confirm" onclick="saveApiKey()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading-layer" id="loadingLayer">
+        <div class="loading-box">
+            <div class="loading-message">翻译中...</div>
+        </div>
+    </div>
+
+    <script src="../js/key-config.js"></script>
+    <script src="./js/translator.js"></script>
+
+    <script>
+        // 创建背景动画效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 创建数据包传输效果
+            const packetCount = 6;
+            for (let i = 0; i < packetCount; i++) {
+                const packet = document.createElement('div');
+                packet.className = 'data-packet';
+
+                // 随机起点和终点
+                const startX = Math.random() * 100;
+                const startY = Math.random() * 100;
+                const endX = Math.random() * 100;
+                const endY = Math.random() * 100;
+
+                packet.style.left = startX + '%';
+                packet.style.top = startY + '%';
+                packet.style.setProperty('--tx', (endX - startX) + 'vw');
+                packet.style.setProperty('--ty', (endY - startY) + 'vh');
+                // 使用负延迟，让粒子已经在运动中，避免初始静止
+                packet.style.animationDelay = (-Math.random() * 10) + 's';
+                packet.style.animationDuration = (10 + Math.random() * 8) + 's';
+
+                document.body.appendChild(packet);
+            }
+        });
+
+        // 说明书折叠功能
+        function toggleManual() {
+            const content = document.getElementById('manualContent');
+            const toggle = document.getElementById('manualToggle');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                toggle.querySelector('span').textContent = '使用说明';
+            } else {
+                content.classList.add('expanded');
+                toggle.querySelector('span').textContent = '收起说明';
+            }
+        }
+    </script>
+</body>
+</html>
