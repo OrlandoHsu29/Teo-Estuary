@@ -1,8 +1,10 @@
 """录音管理蓝图"""
+import io
 import os
+import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, Response
 from werkzeug.utils import secure_filename
 
 import logging
@@ -364,6 +366,114 @@ def admin_download_recording(recording_id):
         return jsonify({'error': '下载失败'}), 500
 
 
+@recordings_bp.route('/api/batch-update-text', methods=['POST'])
+@api_key_required_with_rate_limit(hourly_limit=100, daily_limit=500)
+def api_batch_update_text(key_obj):
+    """批量更新录音的潮州话文本
+    请求体格式：
+    [
+        {
+            "id": "FCC8B093F79148C7",
+            "text": "你是否应该总是联系在球娘上的每一个位置发球 标准中一个点",
+            "start": 8.13,
+            "end": 15.20,
+            "dnsmos": 3.26
+        }
+    ]
+    限制：
+    - 每小时最多100次请求
+    - 每天最多500次请求
+    """
+    try:
+        from app.models import Recording
+
+        # 获取JSON数据
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': '没有提供JSON数据'}), 400
+
+        if not isinstance(data, list):
+            return jsonify({'error': '数据格式错误，应该是JSON数组'}), 400
+
+        # 处理结果统计
+        results = {
+            'success': 0,
+            'updated': 0,
+            'created': 0,
+            'failed': 0,
+            'errors': []
+        }
+
+        for item in data:
+            try:
+                # 验证必需字段
+                if 'id' not in item or 'text' not in item:
+                    results['failed'] += 1
+                    results['errors'].append({
+                        'item': item,
+                        'error': '缺少id或text字段'
+                    })
+                    continue
+
+                recording_id = item['id']
+                teochew_text = item['text'].strip()
+
+                if not teochew_text:
+                    results['failed'] += 1
+                    results['errors'].append({
+                        'id': recording_id,
+                        'error': 'text字段为空'
+                    })
+                    continue
+
+                # 查找或创建记录
+                recording = Recording.query.get(recording_id)
+
+                if recording:
+                    # 更新现有记录
+                    recording.teochew_text = teochew_text
+                    results['updated'] += 1
+                    logger.info(f"Updated recording {recording_id} teochew_text")
+                else:
+                    # 创建新记录
+                    recording = Recording(
+                        id=recording_id,
+                        file_path='',  # 空路径，因为没有实际文件
+                        mandarin_text='',
+                        teochew_text=teochew_text,
+                        upload_type=1,  # 默认为素材提取
+                        status='pending'
+                    )
+                    db.session.add(recording)
+                    results['created'] += 1
+                    logger.info(f"Created new recording {recording_id}")
+
+                results['success'] += 1
+
+            except Exception as e:
+                results['failed'] += 1
+                results['errors'].append({
+                    'item': item,
+                    'error': str(e)
+                })
+                logger.error(f"Error processing item {item}: {e}")
+                continue
+
+        # 提交所有更改
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'处理完成：成功{results["success"]}条，更新{results["updated"]}条，创建{results["created"]}条，失败{results["failed"]}条',
+            'results': results
+        })
+
+    except Exception as e:
+        logger.error(f"Batch update error: {e}")
+        db.session.rollback()
+        return jsonify({'error': '批量更新失败'}), 500
+
+
 @recordings_bp.route('/api/stats')
 def api_stats():
     """获取统计信息"""
@@ -394,3 +504,91 @@ def api_stats():
     except Exception as e:
         logger.error(f"Stats error: {e}")
         return jsonify({'error': '获取统计信息失败'}), 500
+
+
+@recordings_bp.route('/admin/api/export/train-dataset', methods=['GET'])
+@admin_required
+def export_train_dataset():
+    """导出模型训练数据集（压缩包）"""
+    try:
+        from app.models import Recording
+
+        # 查询所有approved状态的记录
+        approved_recordings = Recording.query.filter_by(status='approved').all()
+
+        if not approved_recordings:
+            return jsonify({'error': '没有已通过审核的数据'}), 404
+
+        # 在内存中创建压缩包
+        memory_file = io.BytesIO()
+
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # 创建train_text.txt内容
+            train_text_lines = []
+            for recording in approved_recordings:
+                if recording.teochew_text:
+                    train_text_lines.append(f"{recording.id} {recording.teochew_text}")
+
+            train_text_content = '\n'.join(train_text_lines)
+            zf.writestr('train_text.txt', train_text_content)
+
+            # 创建train_wav.txt内容
+            train_wav_lines = []
+            for recording in approved_recordings:
+                if recording.file_path:
+                    train_wav_lines.append(f"{recording.id} {recording.file_path}")
+
+            train_wav_content = '\n'.join(train_wav_lines)
+            zf.writestr('train_wav.txt', train_wav_content)
+
+        memory_file.seek(0)
+
+        logger.info(f"Exported train dataset: {len(approved_recordings)} approved recordings")
+
+        return Response(
+            memory_file.getvalue(),
+            mimetype='application/zip',
+            headers={
+                'Content-Disposition': 'attachment; filename=train_dataset.zip'
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Export train dataset error: {e}")
+        return jsonify({'error': '导出失败'}), 500
+
+
+@recordings_bp.route('/admin/api/export/jieba-dict', methods=['GET'])
+@admin_required
+def export_jieba_dict():
+    """导出Jieba潮汕话适配版词库"""
+    try:
+        # jieba_cut.txt文件路径
+        jieba_dict_path = os.path.join(
+            os.path.dirname(__file__),
+            '..', 'teo_g2p', 'word_dict', 'jieba_cut.txt'
+        )
+
+        # 规范化路径
+        jieba_dict_path = os.path.abspath(jieba_dict_path)
+
+        if not os.path.exists(jieba_dict_path):
+            logger.error(f"Jieba dictionary file not found: {jieba_dict_path}")
+            return jsonify({'error': '词库文件不存在'}), 404
+
+        # 获取目录和文件名
+        directory = os.path.dirname(jieba_dict_path)
+        filename = os.path.basename(jieba_dict_path)
+
+        logger.info(f"Exporting jieba dictionary: {jieba_dict_path}")
+
+        return send_from_directory(
+            directory,
+            filename,
+            download_name='jieba_cut.txt',
+            as_attachment=True
+        )
+
+    except Exception as e:
+        logger.error(f"Export jieba dictionary error: {e}")
+        return jsonify({'error': '导出失败'}), 500

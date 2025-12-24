@@ -46,6 +46,14 @@
                             <span>潮汕话字典管理</span>
                         </a>
                     </li>
+                    <li class="nav-item" data-section="export">
+                        <a href="#" class="nav-link">
+                            <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                            </svg>
+                            <span>导出数据</span>
+                        </a>
+                    </li>
                 </ul>
             </nav>
 
@@ -518,6 +526,57 @@
                     </div>
                 </div>
             </section>
+
+            <!-- 导出数据界面 -->
+            <section class="content-section" id="export-section">
+                <div class="section-header">
+                    <div class="header-left">
+                        <h1>导出数据</h1>
+                    </div>
+                </div>
+
+                <div class="export-container">
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <div class="export-icon">
+                                <svg fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+                                </svg>
+                            </div>
+                            <h2>Jieba潮汕话适配版词库</h2>
+                        </div>
+                        <div class="export-card-body">
+                            <p class="export-description">导出经过潮汕话适配的Jieba分词词库文件，用于自然语言处理和文本分析。</p>
+                            <button class="export-btn" onclick="exportJiebaDict()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>导出Jieba潮汕话适配版词库</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <div class="export-icon">
+                                <svg fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <h2>模型训练数据集</h2>
+                        </div>
+                        <div class="export-card-body">
+                            <p class="export-description">导出已通过审核的录音数据，包含train_text.txt（ID+潮汕话文本）和train_wav.txt（ID+音频文件路径）。</p>
+                            <button class="export-btn" onclick="exportTrainDataset()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>导出模型训练数据集</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -656,6 +715,7 @@
     <script src="{{ url_for('static', filename='js/api-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/review-operations.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dictionary-management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/export-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui-navigation.js') }}"></script>
     <script src="{{ url_for('static', filename='js/keyboard-shortcuts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
