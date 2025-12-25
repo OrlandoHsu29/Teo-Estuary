@@ -178,6 +178,9 @@
                         <div class="step-number">4</div>
                         <div class="step-text">播放核对无误后即可点击 SUBMIT 提交潮汕话音频素材到服务器</div>
                     </div>
+                    <div class="step-item">
+                        <p style="font-size: small;font-weight: bolder;color: #0068DF;line-height: 25px;">Tips：由于音频素材批量转录服务需要的性能较高，需要调用个人电脑的算力，因此服务不定时开启（当然也可以联系我开启）（开启状态见PWR状态灯）</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,6 +199,9 @@
 
 <!-- 隐藏的文件输入 -->
 <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+
+<!-- 通用 Toast 提示消息 -->
+<div class="toast-universal" id="toastUniversal"></div>
 
 <script src="./js/phonograph.js"></script>
 <script src="../js/key-manager.js"></script>

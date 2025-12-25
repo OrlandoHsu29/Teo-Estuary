@@ -97,6 +97,11 @@ function refreshAllData() {
 
     loadDataPromises.push(loadStats()); // 现在这个函数只更新数字，不会重新渲染
 
+    // 刷新 Emilia 服务状态
+    if (typeof checkEmiliaHealth === 'function') {
+        loadDataPromises.push(checkEmiliaHealth());
+    }
+
     // 只有当前在API管理页面时才加载API密钥
     if (currentSection === 'apikeys') {
         loadDataPromises.push(loadApiKeys());

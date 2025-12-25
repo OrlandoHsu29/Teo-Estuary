@@ -932,8 +932,6 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
         delete buttonElement.dataset.originalText;
     }
 
-    // 显示成功提示
-    showToast(newWord.trim() === '' ? '分词已删除' : '字词修改成功', 'success');
 }
 
 // 更新记录中的变体词

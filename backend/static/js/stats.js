@@ -28,6 +28,7 @@ async function initializeStats() {
             updateStatNumber('stat-approved', stats.approved || 0);
             updateStatNumber('stat-rejected', stats.rejected || 0);
             updateStatNumber('stat-total', stats.total || 0);
+            updateStatNumber('stat-transcribed', stats.transcribed || 0);
         } else {
             // 处理业务逻辑错误
             console.error('统计数据错误:', data.error);
@@ -66,6 +67,7 @@ async function loadStats() {
             updateStatNumber('stat-approved', stats.approved || 0);
             updateStatNumber('stat-rejected', stats.rejected || 0);
             updateStatNumber('stat-total', stats.total || 0);
+            updateStatNumber('stat-transcribed', stats.transcribed || 0);
         } else {
             console.error('统计数据错误:', data.error);
             showToast(data.error || '更新统计数据失败', 'error');

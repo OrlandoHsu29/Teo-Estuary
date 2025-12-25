@@ -219,9 +219,7 @@ async function updateRecordingContent(id, teochewText) {
 
         const data = await response.json();
 
-        if (data.success) {
-            showToast('保存成功', 'success');
-        } else {
+        if (!data.success) {
             showToast(data.error || '保存失败', 'error');
         }
     } catch (error) {
@@ -243,9 +241,7 @@ async function updateRecordingOriginalText(id, mandarinText) {
 
         const data = await response.json();
 
-        if (data.success) {
-            showToast('保存成功', 'success');
-        } else {
+        if (!data.success) {
             showToast(data.error || '保存失败', 'error');
         }
     } catch (error) {

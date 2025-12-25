@@ -739,6 +739,8 @@
             background: rgba(0, 255, 255, 0.4);
             border-radius: 50%;
             animation: floatParticle 20s linear infinite;
+            /* 初始状态不可见，等待动画开始 */
+            opacity: 0;
         }
 
         @keyframes floatParticle {
@@ -804,7 +806,7 @@
             </a>
 
             <a href="./teo-phonograph/index.html" class="option-card">
-                <span class="status-dot" style="background-color:#FFCE45;"></span>
+                <span class="status-dot"></span>
                 <div class="option-icon">P</div>
                 <h3 class="option-title">Teo Phonograph</h3>
                 <p class="option-description">潮汕话音频处理<br>将潮汕话音频转录为数据集</p>
@@ -846,7 +848,7 @@
 
     <script>
         // API配置
-        const API_BASE_URL = 'http://localhost:5000';
+        const API_BASE_URL = 'https://your-domain.com';
 
         // 密钥配置功能
         function openKeyConfig() {
@@ -949,8 +951,10 @@
                 const particle = document.createElement('div');
                 particle.className = 'particle';
                 particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 20 + 's';
-                particle.style.animationDuration = (18 + Math.random() * 10) + 's';
+                // 使用负的delay，让动画从中间开始，避免粒子在顶部堆积
+                const duration = 18 + Math.random() * 10;
+                particle.style.animationDelay = -(Math.random() * duration) + 's';
+                particle.style.animationDuration = duration + 's';
                 particlesContainer.appendChild(particle);
             }
         }

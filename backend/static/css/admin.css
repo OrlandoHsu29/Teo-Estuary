@@ -45,6 +45,7 @@ body {
 .main-container {
     display: flex;
     height: 100vh;
+    
 }
 
 /* 侧边栏样式 */
@@ -279,7 +280,6 @@ body {
     display: flex;
     align-items: center;
     gap: 2.5rem;
-    padding: 0.8rem 1.2rem;
 }
 
 .stat-item {
@@ -640,8 +640,6 @@ body {
     border-radius: 10px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
-
-/* .review-device::after 已移除 - 去掉了不必要的装饰性色块 */
 
 .device-screen {
     background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -5440,9 +5438,15 @@ textarea::-webkit-scrollbar-thumb:hover {
     padding: 30px;
     max-width: 1400px;
     margin: 0 auto;
+    /* 垂直居中 */
+    align-items: center;
+    height:85%;
+    padding-top: 0px;
+
 }
 
 .export-card {
+    height: 260px;
     background: linear-gradient(145deg, rgba(42, 42, 62, 0.8), rgba(26, 26, 46, 0.9));
     border-radius: var(--border-radius);
     padding: 35px;
@@ -5501,8 +5505,10 @@ textarea::-webkit-scrollbar-thumb:hover {
     color: var(--text-secondary);
     font-size: 14px;
     line-height: 1.6;
+    min-height: 3rem;
     margin: 0;
 }
+
 
 .export-btn {
     display: flex;
@@ -5510,20 +5516,21 @@ textarea::-webkit-scrollbar-thumb:hover {
     justify-content: center;
     gap: 10px;
     padding: 14px 24px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(145deg, #667788, #556677);
+
+    
     border: none;
     border-radius: 12px;
-    color: #000;
+    color: white;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
 }
 
 .export-btn:hover {
+    background: linear-gradient(145deg, #778899, #667788);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
 }
 
 .export-btn:active {
@@ -5533,4 +5540,187 @@ textarea::-webkit-scrollbar-thumb:hover {
 .export-btn svg {
     width: 18px;
     height: 18px;
+}
+
+
+/* ==================== Emilia 服务融入统计卡片样式 ==================== */
+
+/* Emilia 统计卡片 - 融入现有设计 */
+.stat-item.emilia-stat {
+    position: relative;
+}
+
+/* Emilia 健康状态指示器 */
+.emilia-health-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+}
+
+.health-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
+    background: var(--warning-color);
+    /* 像素风格 - 使用 box-shadow 创建像素块效果 */
+    box-shadow:
+        4px 0 0 var(--warning-color),
+        -4px 0 0 var(--warning-color),
+        0 4px 0 var(--warning-color),
+        0 -4px 0 var(--warning-color),
+        0 0 8px rgba(250, 173, 20, 0.5);
+    animation: pixel-pulse 2s ease-in-out infinite;
+    transition: all 0.2s steps(1);
+    position: relative;
+}
+
+/* 像素风的额外装饰层 */
+.health-dot::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 0;
+}
+
+.health-dot.online {
+    background: var(--success-color);
+    box-shadow:
+        4px 0 0 var(--success-color),
+        -4px 0 0 var(--success-color),
+        0 4px 0 var(--success-color),
+        0 -4px 0 var(--success-color),
+        0 0 8px rgba(82, 196, 26, 0.5);
+    animation: pixel-glow 1.5s steps(2) infinite;
+}
+
+.health-dot.online::before {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.health-dot.offline {
+    background: var(--danger-color);
+    box-shadow:
+        4px 0 0 var(--danger-color),
+        -4px 0 0 var(--danger-color),
+        0 4px 0 var(--danger-color),
+        0 -4px 0 var(--danger-color);
+    animation: pixel-flicker 0.5s steps(1) infinite;
+}
+
+.health-dot.offline::before {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* 像素风格动画 */
+@keyframes pixel-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(0.95);
+    }
+}
+
+@keyframes pixel-glow {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.3);
+    }
+}
+
+@keyframes pixel-flicker {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Emilia 数字样式 */
+.emilia-number {
+    color: #FBC55B;
+}
+
+/* Emilia 数据转录按钮 */
+.emilia-import-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(145deg, #667788, #556677);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.3),
+        -2px -2px 4px rgba(255, 255, 255, 0.05),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.1);
+    margin-left: 20px;
+}
+
+.emilia-import-action:hover:not(:disabled) {
+    background: linear-gradient(145deg, #6c7f92, #5e7083);
+    transform: translateY(-2px);
+    box-shadow:
+        6px 6px 12px rgba(0, 0, 0, 0.4),
+        -2px -2px 4px rgba(255, 255, 255, 0.05);
+}
+
+.emilia-import-action:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.emilia-import-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.emilia-import-action i {
+    font-size: 14px;
+}
+
+/* Emilia 导入状态提示 */
+.emilia-import-status {
+    margin-left: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    min-width: 80px;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+    .emilia-import-action span {
+        display: none;
+    }
+    
+    .emilia-import-action {
+        padding: 12px;
+        margin-left: 10px;
+    }
 }

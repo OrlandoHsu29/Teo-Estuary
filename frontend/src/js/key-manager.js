@@ -4,7 +4,8 @@
  */
 
 // API配置
-const API_BASE_URL = 'http://localhost:5000';
+// const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://your-domain.com';
 
 // 获取密钥状态
 function getApiKeyStatus() {

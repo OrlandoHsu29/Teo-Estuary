@@ -90,6 +90,10 @@
                     <div class="stats" id="statsGrid">
                         <div class="stats-container">
                             <div class="stat-item">
+                                <span class="stat-number" id="stat-total">0</span>
+                                <div class="stat-label">总计</div>
+                            </div>
+                            <div class="stat-item">
                                 <span class="stat-number" id="stat-pending">0</span>
                                 <div class="stat-label">待审核</div>
                             </div>
@@ -102,10 +106,29 @@
                                 <div class="stat-label">已拒绝</div>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-number" id="stat-total">0</span>
-                                <div class="stat-label">总计</div>
+                                <span class="stat-number" id="stat-transcribed">0</span>
+                                <div class="stat-label">已转录</div>
                             </div>
+                            <!-- Emilia 待处理素材 -->
+                            <div class="stat-item emilia-stat">
+                                <span class="stat-number emilia-number" id="emiliaPendingNumber">?</span>
+                                <div class="stat-label">待转录</div>
+                            </div>
+                            <!-- Emilia 服务状态 - 作为统计卡片融入 -->
+                            <div class="stat-item emilia-stat">
+                                <div class="emilia-health-indicator" id="emiliaHealthIndicator">
+                                    <div class="health-dot" id="emiliaHealthDot"></div>
+                                </div>
+                                <div class="stat-label">Emilia</div>
+                            </div>
+
                         </div>
+
+                        <!-- Emilia 数据转录按钮 -->
+                        <button class="emilia-import-action" id="emiliaImportBtn" onclick="importEmiliaData()" title="从 Emilia 导入已处理的数据">
+                            <i class="fas fa-file-import"></i>
+                            <span id="emiliaImportText">数据转录</span>
+                        </button>
                     </div>
                 </div>
 
@@ -137,6 +160,7 @@
                         <p>当前没有需要审核的音频记录</p>
                     </div>
 
+                    <!-- 主设备 -->
                     <div class="review-device" id="reviewDevice" style="display: block;">
                         <div class="device-screen">
                             <!-- 数据加载覆盖层 -->
