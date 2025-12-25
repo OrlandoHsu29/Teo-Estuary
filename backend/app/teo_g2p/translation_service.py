@@ -34,23 +34,22 @@ class TranslationService:
         else:
             print(f"[WARNING] jieba词典未找到: {jieba_path}")
 
-    def translate_to_oral(self, text: str, auto_split: bool = True, use_cache: bool = True, cache_ttl: int = 3600) -> str:
+    def translate(self, text: str, auto_split: bool = True, use_cache: bool = True, cache_ttl: int = 3600, target_lang: str = 'teochew') -> str:
         """
-        将普通话文本转换为潮州话口语
-        保持与原始to_oral完全一致的逻辑
-        如果词有多个变体，使用$标记而不是#
+        双向翻译功能：普通话<->潮州话
 
         Args:
             text: 要翻译的文本
             auto_split: 是否使用jieba自动分词
             use_cache: 是否使用缓存
             cache_ttl: 缓存生存时间（秒）
+            target_lang: 目标语言 ('teochew'=普通话转潮州话, 'mandarin'=潮州话转普通话)
 
         Returns:
-            翻译后的潮州话文本
+            翻译后的文本
         """
         # 生成缓存键
-        cache_key = self._generate_cache_key(f"translate:{text}:{auto_split}")
+        cache_key = self._generate_cache_key(f"translate:{text}:{auto_split}:{target_lang}")
 
         if use_cache:
             cached = self.cache.get(cache_key)
@@ -66,8 +65,7 @@ class TranslationService:
         # 逐词翻译
         result = []
         for word in word_list:
-            # 一次性获取翻译和变体信息
-            translations, has_multiple = self._get_word_translations(word, return_variant_info=True)
+            translations, has_multiple = self._get_word_translations(word, return_variant_info=True, target_lang=target_lang)
             if translations:
                 # 根据变体数量选择标记
                 if has_multiple:
@@ -161,20 +159,21 @@ class TranslationService:
         finally:
             db.close()
 
-    def _get_word_translations(self, word: str, return_variant_info: bool = False) -> List[str] | Tuple[List[str], bool]:
+    def _get_word_translations(self, word: str, return_variant_info: bool = False, target_lang: str = 'teochew') -> List[str] | Tuple[List[str], bool]:
         """
         获取词的所有翻译，按优先级排序
 
         Args:
             word: 要查询的词
             return_variant_info: 是否返回变体信息
+            target_lang: 目标语言 ('teochew'=普通话转潮州话, 'mandarin'=潮州话转普通话)
 
         Returns:
             如果return_variant_info=False: [翻译列表]
             如果return_variant_info=True: (翻译列表, 是否有多个变体)
         """
         # 生成缓存键
-        cache_key = self._generate_cache_key(f"word_translations:{word}")
+        cache_key = self._generate_cache_key(f"word_translations:{word}:{target_lang}")
 
         # 尝试从缓存获取
         cached = self.cache.get(cache_key)
@@ -187,10 +186,19 @@ class TranslationService:
         db = next(get_db())
 
         try:
+            if target_lang == 'teochew':
+                # 普通话转潮州话
+                source_field = TranslationDict.mandarin_text
+                target_field = TranslationDict.teochew_text
+            else:
+                # 潮州话转普通话
+                source_field = TranslationDict.teochew_text
+                target_field = TranslationDict.mandarin_text
+
             # 查询基础词（没有数字后缀的）
             base_query = db.query(TranslationDict).filter(
                 and_(
-                    TranslationDict.mandarin_text == word,
+                    source_field == word,
                     TranslationDict.is_active == 1
                 )
             )
@@ -201,7 +209,7 @@ class TranslationService:
                 base_word, variant_num = variant_match.groups()
                 variant_query = db.query(TranslationDict).filter(
                     and_(
-                        TranslationDict.mandarin_text == base_word,
+                        source_field == base_word,
                         TranslationDict.variant == int(variant_num),
                         TranslationDict.is_active == 1
                     )
@@ -215,7 +223,7 @@ class TranslationService:
             # 按优先级和词语长度排序（优先级高的在前，长度长的在前）
             translations.sort(key=lambda x: (x.priority, x.word_length), reverse=True)
 
-            result = [t.teochew_text for t in translations]
+            result = [getattr(t, 'teochew_text' if target_lang == 'teochew' else 'mandarin_text') for t in translations]
             has_multiple = len(result) > 1
 
             # 缓存结果（单词翻译缓存时间更长）
