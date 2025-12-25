@@ -62,7 +62,10 @@ curl http://localhost:5001/health
 
 - **端口**: 5001:5000 (主机:容器)
 - **健康检查**: 每30秒检查一次
-- **挂载卷**: 整个backend目录，便于开发调试
+- **挂载卷**: 数据目录持久化
+  - `./data/data:/app/data` - 音频文件
+  - `./data/logs:/app/logs` - 日志文件
+  - `./data/db:/app/instance` - 数据库文件
 - **依赖**: redis服务
 
 ### Redis服务 (redis)
@@ -70,6 +73,36 @@ curl http://localhost:5001/health
 - **端口**: 6379:6379
 - **数据持久化**: 使用 `redis_data` 卷
 - **配置**: 开启AOF持久化
+- **健康检查**: 每10秒检查一次
+
+### Emilia服务（可选）
+
+如果需要使用Emilia音频处理服务，可以：
+
+1. **在宿主机运行Emilia**（推荐用于开发）:
+   ```bash
+   # Emilia服务运行在宿主机5029端口
+   # Docker容器通过 host.docker.internal 访问（Windows/Mac）
+   # Linux需要使用宿主机IP
+   ```
+
+2. **在Docker网络中运行Emilia**（推荐用于生产）:
+   ```yaml
+   # 取消docker-compose.yml中emilia服务的注释
+   # 并配置正确的镜像和端口
+   ```
+
+配置Emilia服务URL：
+```env
+# 宿主机运行（Windows/Mac）
+EMILIA_SERVICE_URL=http://host.docker.internal:5029
+
+# 宿主机运行（Linux）
+EMILIA_SERVICE_URL=http://172.17.0.1:5029
+
+# Docker网络中运行
+EMILIA_SERVICE_URL=http://emilia:5029
+```
 
 ## 速率限制配置
 
@@ -223,9 +256,9 @@ curl http://localhost:5001/health
 
 ## 数据持久化
 
-- **数据库文件**: `./instance/dialect_recorder.db`
-- **日志文件**: `./logs/app.log`
-- **音频文件**: `./data/uploads/`, `./data/good/`, `./data/bad/`
+- **数据库文件**: `./data/db/dialect_recorder.db`
+- **日志文件**: `./data/logs/app.log`
+- **音频文件**: `./data/data/uploads/`, `./data/data/good/`, `./data/data/bad/`
 - **Redis数据**: Docker卷 `redis_data`
 
 ## 环境变量参考
@@ -236,9 +269,10 @@ curl http://localhost:5001/health
 | `SILICONFLOW_API_KEY` | 硅基流动API密钥 | - | ✅ |
 | `ADMIN_USERNAME` | 管理员用户名 | admin | ❌ |
 | `ADMIN_PASSWORD` | 管理员密码 | - | ✅ |
-| `DATABASE_URL` | 数据库URL | sqlite:///dialect_recorder.db | ❌ |
-| `RATELIMIT_STORAGE_URL` | 速率限制存储 | memory:// | ❌ |
+| `DATABASE_URL` | 数据库URL | sqlite:///instance/dialect_recorder.db | ❌ |
+| `RATELIMIT_STORAGE_URL` | 速率限制存储 | redis://redis:6379 | ❌ |
 | `RATELIMIT_DEFAULT` | 默认速率限制 | 1000 per day, 100 per hour | ❌ |
+| `EMILIA_SERVICE_URL` | Emilia服务URL | http://localhost:5029 | ❌ |
 | `DEBUG` | 调试模式 | False | ❌ |
 | `HOST` | 监听地址 | 0.0.0.0 | ❌ |
 | `PORT` | 监听端口 | 5000 | ❌ |

@@ -19,17 +19,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制requirements.txt并安装Python依赖
-COPY ../requirements.txt .
+COPY requirements.txt .
 RUN pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install -r requirements.txt
 
 # 复制应用代码
-COPY ../app ./app
-COPY ../run.py .
+COPY app ./app
+COPY run.py .
 
 # 创建必要的目录
-RUN mkdir -p logs instance
+RUN mkdir -p logs instance data/uploads data/good data/bad
 
 # 暴露端口
 EXPOSE 5000
