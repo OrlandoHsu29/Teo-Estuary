@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   teorecord-backend:
     build:
@@ -11,9 +9,9 @@ services:
 
     volumes:
       # 持久化数据目录
-      - ./data/data:/app/data
+      - db_data:/app/instance
       - ./data/logs:/app/logs
-      - ./data/db:/app/instance
+      - ./data/data:/app/data
     environment:
       # Flask配置
       - HOST=0.0.0.0
@@ -22,7 +20,7 @@ services:
       - DEBUG=${DEBUG:-False}
 
       # 数据库配置
-      - DATABASE_URL=sqlite:///instance/dialect_recorder.db
+      - DATABASE_URL=sqlite:////app/instance/dialect_recorder.db
 
       # 硅基流动API配置
       - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY:-}
@@ -36,7 +34,13 @@ services:
       - RATELIMIT_DEFAULT=${RATELIMIT_DEFAULT:-1000 per day, 100 per hour}
 
       # Emilia服务配置（可选）
-      - EMILIA_SERVICE_URL=${EMILIA_SERVICE_URL:-http://localhost:5029}
+      - EMILIA_SERVICE_URL=${EMILIA_SERVICE_URL:-http://host.docker.internal:5029}
+
+      # Gunicorn配置（生产环境）
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+      - GUNICORN_THREADS=${GUNICORN_THREADS:-4}
+      - GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-120}
+      - GUNICORN_LOG_LEVEL=${GUNICORN_LOG_LEVEL:-info}
 
     restart: unless-stopped
 
@@ -51,11 +55,8 @@ services:
       - teorecord-network
     depends_on:
       - redis
-
-    # 如果需要连接到外部Emilia服务，可以使用extra_hosts
     extra_hosts:
-      # 如果Emilia服务在宿主机上运行，取消下面的注释
-      # - "emilia:host.docker.internal"
+      - "host.docker.internal:host-gateway"
 
   # Redis服务用于Flask-Limiter存储
   redis:
@@ -96,4 +97,5 @@ networks:
 
 volumes:
   redis_data:     # Redis数据持久化
+  db_data:        # 数据库数据持久化
   emilia_data:    # Emilia服务数据持久化（可选）

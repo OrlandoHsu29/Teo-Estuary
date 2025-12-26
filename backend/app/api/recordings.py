@@ -5,11 +5,10 @@ import zipfile
 import requests
 from datetime import datetime, timedelta
 from pathlib import Path
-from flask import Blueprint, request, jsonify, send_from_directory, Response
+from flask import Blueprint, request, jsonify, send_from_directory, Response, current_app
 from werkzeug.utils import secure_filename
 
 import logging
-from flask import current_app
 from app import db
 from app.utils.combined_decorators import api_key_required_with_rate_limit
 from app.utils.decorators import admin_required, get_client_ip
@@ -20,7 +19,8 @@ recordings_bp = Blueprint('recordings', __name__)
 logger = logging.getLogger(__name__)
 
 # 内网穿透到本机的 Emilia 服务端口
-emilia_service_host = 'http://localhost:5029'
+# 从环境变量读取，支持 Docker 环境 (host.docker.internal) 和本地环境 (localhost)
+emilia_service_host = os.getenv('EMILIA_SERVICE_URL', 'http://localhost:5029')
 
 
 @recordings_bp.route('/api/upload', methods=['POST'])
