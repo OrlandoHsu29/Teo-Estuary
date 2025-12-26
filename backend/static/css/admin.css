@@ -1099,6 +1099,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
+    min-height: 265px; /* 固定最小高度，与密钥卡片保持一致 */
 }
 
 .add-card:hover {

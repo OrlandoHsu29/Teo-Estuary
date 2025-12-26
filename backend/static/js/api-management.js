@@ -33,23 +33,19 @@ async function loadApiKeys(forceRefresh = false) {
 
         const keysGrid = document.getElementById('keysGrid');
 
-        if (!data.success || data.keys.length === 0) {
-            keysGrid.innerHTML = `
-                <div class="empty-state">
-                    <h3>暂无API密钥</h3>
-                    <p>点击"创建新密钥"按钮添加第一个API密钥</p>
-                </div>
-            `;
-            return;
-        }
-
-        // 添加创建新密钥按钮
+        // 添加创建新密钥按钮（始终显示）
         const createKeyCard = `
             <div class="add-card" onclick="showCreateKeyModal()">
                 <i class="fas fa-plus"></i>
                 <span>创建新密钥</span>
             </div>
         `;
+
+        if (!data.success || data.keys.length === 0) {
+            // 没有密钥时，只显示创建新密钥卡片
+            keysGrid.innerHTML = createKeyCard;
+            return;
+        }
 
         const keyCards = data.keys.map(key => `
             <div class="key-card">
