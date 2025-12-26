@@ -8,10 +8,10 @@ services:
       - "5001:5000"
 
     volumes:
-      # 持久化数据目录
-      - db_data:/app/instance
-      - ./data/logs:/app/logs
-      - ./data/data:/app/data
+      # 持久化数据目录 - 挂载到宿主机便于访问和备份
+      - ./instance:/app/instance           # 统一数据库文件（recorder_manager.db，包含所有表）
+      - ./data/logs:/app/logs              # 日志文件
+      - ./data/data:/app/data              # 用户上传的音频文件
     environment:
       # Flask配置
       - HOST=0.0.0.0
@@ -19,8 +19,12 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - DEBUG=${DEBUG:-False}
 
-      # 数据库配置
-      - DATABASE_URL=sqlite:////app/instance/dialect_recorder.db
+      # 数据库配置 - 统一的 recorder_manager.db
+      - DATABASE_URL=sqlite:////app/instance/recorder_manager.db
+
+      # Redis配置 - 用于速率限制和翻译缓存
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 
       # 硅基流动API配置
       - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY:-}
@@ -96,6 +100,5 @@ networks:
     driver: bridge
 
 volumes:
-  redis_data:     # Redis数据持久化
-  db_data:        # 数据库数据持久化
+  redis_data:     # Redis数据持久化（Docker命名卷）
   emilia_data:    # Emilia服务数据持久化（可选）

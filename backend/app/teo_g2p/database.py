@@ -1,50 +1,45 @@
-from sqlalchemy import create_engine
+"""teo_g2p 数据库配置 - 使用主数据库连接"""
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.pool import StaticPool
-import os
+import logging
 
-# 数据库配置 - 使用instance目录
-# 获取相对于backend目录的路径
-current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.dirname(os.path.dirname(current_dir))
-instance_dir = os.path.join(backend_dir, 'instance')
-db_path = os.path.join(instance_dir, 'teo_g2p.db')
+logger = logging.getLogger(__name__)
 
-# 确保instance目录存在
-os.makedirs(instance_dir, exist_ok=True)
+# 全局变量，将在应用上下文中初始化
+engine = None
+SessionLocal = None
+db_session = None
 
-DATABASE_URL = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
+def init_from_app(app):
+    """
+    从Flask应用初始化数据库连接
+    teo_g2p 现在使用主数据库的引擎
+    """
+    global engine, SessionLocal, db_session
 
-# 创建数据库引擎
-engine = create_engine(
-    DATABASE_URL,
-    poolclass=StaticPool,
-    connect_args={
-        "check_same_thread": False,
-        "timeout": 20
-    },
-    echo=False  # 设置为True可以查看SQL执行日志
-)
+    # 使用主数据库的引擎
+    from app import db as main_db
+    engine = main_db.engine
 
-# 创建会话工厂
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-db_session = scoped_session(SessionLocal)
+    # 创建会话工厂
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db_session = scoped_session(SessionLocal)
+
+    logger.info("teo_g2p is using the main database engine (recorder_manager.db)")
 
 def init_db():
-    """初始化数据库表"""
-    from models import Base
+    """初始化数据库表（如果不存在）"""
+    from app.teo_g2p.models import Base
+
+    if engine is None:
+        raise RuntimeError("Database engine not initialized. Call init_from_app() first.")
+
     Base.metadata.create_all(bind=engine)
+    logger.info("teo_g2p database tables created/verified in main database")
 
 def get_db():
     """获取数据库会话"""
-    # 检查数据库文件是否存在
-    if not os.getenv('DATABASE_URL'):  # 只有在使用SQLite时才检查文件
-        if not os.path.exists(db_path):
-            raise FileNotFoundError(
-                f"Database file not found: {db_path}\n"
-                "Please ensure the database file exists before running the application.\n"
-                "To create a new database, run the initialization script first."
-            )
+    if engine is None or db_session is None:
+        raise RuntimeError("Database not initialized. Call init_from_app() first.")
 
     db = db_session()
     try:
@@ -54,4 +49,5 @@ def get_db():
 
 def close_db():
     """关闭数据库连接"""
-    db_session.remove()
+    if db_session is not None:
+        db_session.remove()

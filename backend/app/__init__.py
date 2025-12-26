@@ -37,7 +37,13 @@ def create_app():
 
     # 配置
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///dialect_recorder.db')
+
+    # 数据库配置 - 使用统一的 recorder_manager.db
+    default_db_path = BACKEND_ROOT / 'instance' / 'recorder_manager.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'DATABASE_URL',
+        f'sqlite:///{default_db_path}'
+    )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -125,9 +131,10 @@ def create_app():
     app.register_blueprint(admin_bp)
 
     # 豁免特定路由的速率限制
-    # Emilia 健康检查路由会被前端频繁调用，需要豁免
+    # Emilia 健康检查路由和统计路由会被前端频繁调用，需要豁免
     # 注意：蓝图路由注册后，视图函数名格式为 {蓝图名}.{函数名}
     limiter.exempt(app.view_functions['recordings.teo_emilia_health'])
+    limiter.exempt(app.view_functions['recordings.api_stats'])
 
     # 注册错误处理器
     register_error_handlers(app)
@@ -137,7 +144,21 @@ def create_app():
 
     # 创建数据库表
     with app.app_context():
+        from app.models import Recording, APIKey
         db.create_all()
+
+        # 初始化 teo_g2p 使用主数据库连接
+        try:
+            from app.teo_g2p.database import init_from_app, init_db
+            from app.teo_g2p import models  # 确保导入模型以便注册
+
+            # 先初始化 teo_g2p 的数据库连接
+            init_from_app(app)
+            # 然后创建表
+            init_db()
+            logger.info("teo_g2p database tables initialized successfully in main database")
+        except Exception as e:
+            logger.error(f"Failed to initialize teo_g2p database: {e}")
 
         # 初始化AI文本生成器
         from app.ai_generator import create_text_generator
