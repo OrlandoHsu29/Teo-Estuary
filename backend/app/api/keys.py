@@ -36,7 +36,12 @@ def api_create_key():
         max_requests = data.get('max_requests', 1000)
 
         if not name:
-            return jsonify({'error': '密钥名称不能为空'}), 400
+            return jsonify({'success': False, 'error': '密钥名称不能为空'}), 400
+
+        # 检查名称是否已存在
+        existing_key = APIKey.query.filter_by(name=name).first()
+        if existing_key:
+            return jsonify({'success': False, 'error': f'密钥名称 "{name}" 已存在'}), 400
 
         key = APIKey(
             name=name,
@@ -70,7 +75,15 @@ def api_update_key(key_id):
         data = request.get_json()
 
         if 'name' in data:
-            key.name = data['name'].strip()
+            new_name = data['name'].strip()
+            # 检查新名称是否与其他密钥重复
+            existing_key = APIKey.query.filter(
+                APIKey.name == new_name,
+                APIKey.id != key_id
+            ).first()
+            if existing_key:
+                return jsonify({'success': False, 'error': f'密钥名称 "{new_name}" 已存在'}), 400
+            key.name = new_name
         if 'description' in data:
             key.description = data['description'].strip()
         if 'max_requests' in data:
