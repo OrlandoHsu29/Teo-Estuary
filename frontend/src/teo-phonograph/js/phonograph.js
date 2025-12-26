@@ -7,6 +7,11 @@ let currentRotation = 0; // 当前旋转角度
 let lastAnimationTime = 0; // 上一次动画更新时间
 let emiliaServiceHealthy = false; // Emilia服务健康状态
 
+// API配置（根据环境动态选择）
+const API_BASE_URL = window.location.protocol === 'file:' || window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : 'https://your-domain.com';
+
 // 旋转拖拽相关变量
 let isDragging = false;
 let isRotating = false;
@@ -47,9 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 绑定事件
     bindEvents();
 
-    // 初始化状态灯（先显示为检查中，黄色）
-    elements.powerLight.classList.add('checking');
-    elements.statusText.textContent = 'CHECKING...';
+    // 初始化状态灯
+    elements.powerLight.classList.add('on');
+    elements.statusText.textContent = 'READY';
 
     // 初始化密钥按钮状态
     updateKeyButtonState();
@@ -343,6 +348,16 @@ async function handleSubmit() {
             body: formData
         });
 
+        // 处理401错误
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('apiKey');
+            KeyManager.updateKeyButtonState();
+            elements.statusText.textContent = 'NEED KEY';
+            elements.submitBtn.disabled = false;
+            showToast('密钥已失效，请重新配置', 'error');
+            return;
+        }
+
         const result = await response.json();
 
         if (response.ok && result.success) {
@@ -581,11 +596,6 @@ function showToast(message, type = 'info') {
 // 检查Emilia服务健康状态
 async function checkEmiliaHealth() {
     try {
-        // 获取后端API地址
-        const API_BASE_URL = window.location.protocol === 'file:' || window.location.hostname === 'localhost'
-            ? 'http://localhost:5000'
-            : `${window.location.protocol}//${window.location.hostname}:5000`;
-
         const response = await fetch(`${API_BASE_URL}/teo_emilia_health`, {
             method: 'GET',
             headers: {

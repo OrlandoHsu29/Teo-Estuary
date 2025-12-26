@@ -42,7 +42,6 @@ class DialectRecorder {
 
         this.initElements();
         this.initEventListeners();
-        this.checkApiKeyStatus();
     }
 
     initElements() {
@@ -111,7 +110,16 @@ class DialectRecorder {
             });
 
             if (!response.ok) {
-                throw new Error('获取新文本失败');
+                // 根据HTTP状态码处理不同错误
+                if (response.status === 401 || response.status === 403) {
+                    // 清空密钥
+                    localStorage.removeItem('apiKey');
+                    throw new Error('密钥已失效，请重新配置');
+                } else if (response.status === 429) {
+                    throw new Error('请求过于频繁，请稍后重试');
+                } else {
+                    throw new Error('获取新文本失败');
+                }
             }
 
             const data = await response.json();
@@ -124,9 +132,17 @@ class DialectRecorder {
             this.showTemporaryStatusMessages('开始录音后用潮汕话口语朗读文本(要口齿清晰！)','info');
         } catch (error) {
             console.error('获取文本失败:', error);
-            this.showToast('获取新句子失败，请重试', 'error');
-            this.updateStatus('获取文本失败', 'error');
+            const errorMessage = error.message || '获取新句子失败，请重试';
+            this.showToast(errorMessage, 'error');
+            this.updateStatus(errorMessage, 'error');
             this.elements.textDisplay.textContent = ''; // 清空显示屏
+
+            // 如果是密钥失效，更新按钮状态
+            if (errorMessage.includes('密钥已失效')) {
+                if (window.KeyManager) {
+                    window.KeyManager.updateKeyButtonState();
+                }
+            }
         } finally {
             // 恢复按钮状态
             this.setAllButtonsDisabled(false);
@@ -927,97 +943,6 @@ class DialectRecorder {
         this.isUploading = false;
         this.uploadAbortController = null;
         this.isStartingRecording = false;
-    }
-
-    checkApiKeyStatus() {
-        const apiKey = localStorage.getItem('apiKey');
-        if (!apiKey) {
-            // 没有配置密钥，显示关机状态
-            this.setPoweredOffState();
-        } else {
-            // 有密钥，显示正常状态
-            this.setPoweredOnState();
-        }
-    }
-
-    // 设置API密钥验证中的状态
-    setApiKeyVerifyingState() {
-        // 更新状态为验证中
-        this.updateStatus('验证密钥中...', 'processing');
-
-        // 屏幕显示变暗
-        this.elements.textDisplay.style.opacity = '0.5';
-
-        // 禁用所有按钮
-        this.elements.btnGetText.disabled = true;
-        this.elements.btnRecord.disabled = true;
-        this.elements.btnStop.disabled = true;
-        this.elements.btnPlay.disabled = true;
-        this.elements.btnUpload.disabled = true;
-
-        // 音量条变暗
-        this.elements.volumeBars.forEach(bar => {
-            bar.style.opacity = '0.3';
-        });
-    }
-
-    setPoweredOffState() {
-        // 状态文本和指示灯
-        this.updateStatus('需要先配置API密钥才能使用', 'error');
-
-        // 屏幕内容清空并变暗
-        this.elements.textDisplay.textContent = '';
-        this.elements.textDisplay.style.opacity = '0.3';
-
-        // 时间显示变暗
-        this.elements.timer.style.opacity = '0.3';
-        this.elements.timer.textContent = '00:00';
-
-        // 进度条变暗
-        this.elements.progressFill.style.opacity = '0.3';
-
-        // 禁用所有按钮
-        this.elements.btnGetText.disabled = true;
-        this.elements.btnRecord.disabled = true;
-        this.elements.btnStop.disabled = true;
-        this.elements.btnPlay.disabled = true;
-        this.elements.btnUpload.disabled = true;
-
-        // 音量条变暗
-        this.elements.volumeBars.forEach(bar => {
-            bar.style.opacity = '0.3';
-        });
-
-    }
-
-    setPoweredOnState() {
-        // 恢复屏幕显示
-        this.elements.textDisplay.style.opacity = '1';
-        this.elements.textDisplay.textContent = '点击【刷新】按钮获取句子后开始录音跟读';
-
-        // 时间显示恢复正常5
-        this.elements.timer.style.opacity = '1';
-
-        // 进度条恢复正常
-        this.elements.progressFill.style.opacity = '1';
-
-        // 启用获取文本按钮
-        this.elements.btnGetText.disabled = false;
-        // 录音按钮只有在有文本时才启用
-        this.elements.btnRecord.disabled = !this.currentText;
-        // 其他按钮默认禁用
-        this.elements.btnStop.disabled = true;
-        this.elements.btnPlay.disabled = true;
-        this.elements.btnUpload.disabled = true;
-
-        // 音量条恢复正常
-        this.elements.volumeBars.forEach(bar => {
-            bar.style.opacity = '1';
-        });
-
-        // 更新状态为准备就绪
-        this.updateStatus('API密钥验证成功', 'success');
-        this.showTemporaryStatusMessages('准备就绪','success');
     }
 }
 

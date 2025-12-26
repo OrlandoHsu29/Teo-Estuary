@@ -3,13 +3,41 @@
  * 提供统一的密钥配置弹窗和状态管理
  */
 
-// API配置
-// const API_BASE_URL = 'http://localhost:5000';
+// API配置（统一的API地址）
 const API_BASE_URL = 'https://your-domain.com';
 
 // 获取密钥状态
 function getApiKeyStatus() {
     return localStorage.getItem('apiKey') || null;
+}
+
+// 验证密钥是否有效
+async function validateApiKey() {
+    const apiKey = getApiKeyStatus();
+    if (!apiKey) {
+        return { valid: false, exists: false };
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/validate-key`, {
+            method: 'GET',
+            headers: {
+                'X-API-Key': apiKey
+            }
+        });
+
+        if (response.ok) {
+            return { valid: true, exists: true };
+        } else if (response.status === 401 || response.status === 403) {
+            return { valid: false, exists: true, expired: true };
+        } else {
+            return { valid: false, exists: true };
+        }
+    } catch (error) {
+        console.warn('无法验证密钥:', error);
+        // 网络错误时返回未知状态，但不阻止使用
+        return { valid: null, exists: true, networkError: true };
+    }
 }
 
 // 更新密钥按钮状态
@@ -98,6 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // 导出函数供全局使用
 window.KeyManager = {
     getApiKeyStatus,
+    validateApiKey,
     updateKeyButtonState,
     showKeyConfigPrompt,
     closeKeyConfigPrompt,

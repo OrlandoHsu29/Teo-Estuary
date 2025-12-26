@@ -43,6 +43,26 @@ def api_generate_text(key_obj):
         }), 500
 
 
+@text_bp.route('/api/validate-key', methods=['GET'])
+@api_key_required_with_rate_limit(hourly_limit=100, daily_limit=1000)
+def api_validate_key(key_obj):
+    """验证API密钥是否有效"""
+    try:
+        # 如果能到这里，说明密钥已经通过验证（装饰器已验证）
+        return jsonify({
+            'success': True,
+            'valid': True,
+            'message': '密钥有效'
+        }), 200
+    except Exception as e:
+        logger.error(f"Validate key error: {e}")
+        return jsonify({
+            'success': False,
+            'valid': False,
+            'message': '密钥验证失败'
+        }), 500
+
+
 @text_bp.route('/api/word-variants/<word>', methods=['GET'])
 @api_key_required_with_rate_limit(hourly_limit=1000, daily_limit=5000)
 def api_get_word_variants(key_obj, word):
