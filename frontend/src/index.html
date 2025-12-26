@@ -106,9 +106,10 @@
 
         .main-title {
             font-family: 'Orbitron', monospace;
-            font-size: 5rem;
+            font-size: 8rem;
             font-weight: 900;
             margin-bottom: 15px;
+            margin-top: 100px;
             background: linear-gradient(135deg, #1e00ff 0%, #00fff7 50%, #005ab5 100%);
             background-size: 200% 200%;
             -webkit-background-clip: text;
@@ -312,7 +313,7 @@
         /* 密钥配置按钮 */
         .key-config-btn {
             position: absolute;
-            top: 20px;
+            top: 60px;
             right: 20px;
             width: 50px;
             height: 50px;
@@ -623,6 +624,26 @@
 
         /* 响应式设计 */
         @media (max-width: 1024px) {
+            .main-title {
+                font-size: 5.5rem;
+                letter-spacing: 4px;
+                margin-top: 200px;
+
+            }
+
+            .key-config-btn {
+                position: absolute;
+                top: 140px;
+                right: 0px;
+                width: 50px;
+                height: 50px;
+            }
+
+
+            .main-subtitle {
+                margin-bottom: 150px;
+
+            }
             .projects-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 30px;
@@ -639,11 +660,23 @@
             .main-title {
                 font-size: 3.5rem;
                 letter-spacing: 4px;
+                margin-top: 120px;
+            }
+
+            
+            .key-config-btn {
+                position: absolute;
+                top: 80px;
+                right: 0px;
+                width: 50px;
+                height: 50px;
             }
 
             .main-subtitle {
                 font-size: 1rem;
                 letter-spacing: 2px;
+                margin-bottom: 100px;
+
             }
 
             .projects-grid {
@@ -685,6 +718,14 @@
             .main-title {
                 font-size: 2.5rem;
                 letter-spacing: 2px;
+            }
+
+            .key-config-btn {
+                position: absolute;
+                top: 80px;
+                right: 5px;
+                width: 45px;
+                height: 45px;
             }
 
             .main-subtitle {
