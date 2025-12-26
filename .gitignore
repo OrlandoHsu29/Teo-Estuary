@@ -17,8 +17,13 @@ backend/docker/.env
 # 运行时生成的文件 (自动生成，不需要版本控制)
 logs/
 *.log
+
+# instance 目录配置
 instance/
+!backend/docker/instance/
+
 *.db
+!backend/docker/instance/recorder_manager.db
 *.sqlite
 *.sqlite3
 
