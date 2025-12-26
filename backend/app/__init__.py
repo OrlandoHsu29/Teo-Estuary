@@ -77,10 +77,17 @@ def create_app():
     })
 
     # Flask-Limiter 配置
-    from app.utils.rate_limiter import limiter
-
     rate_limit_storage = os.environ.get('RATELIMIT_STORAGE_URL', 'memory://')
     rate_limit_default = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 100 per hour')
+
+    # 通过 Flask app config 配置 Flask-Limiter
+    app.config['RATELIMIT_STORAGE_URL'] = rate_limit_storage
+    app.config['RATELIMIT_DEFAULT'] = rate_limit_default
+    app.config['RATELIMIT_STRATEGY'] = 'fixed-window'
+
+    # 重新创建 Limiter 实例并初始化（因为需要使用配置）
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
 
     # 解析默认限制配置
     default_limits = []
@@ -89,9 +96,16 @@ def create_app():
         if limit:
             default_limits.append(limit)
 
-    limiter.init_app(app)
-    limiter.storage_uri = rate_limit_storage
-    limiter.default_limits = default_limits
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=default_limits,
+        storage_uri=rate_limit_storage,
+        headers_enabled=True
+    )
+
+    # 将 limiter 附加到 app 对象，以便其他模块可以使用
+    app.limiter = limiter
 
     logger.info(f"Flask-Limiter initialized with storage: {rate_limit_storage}")
     logger.info(f"Default limits: {default_limits}")
@@ -109,6 +123,11 @@ def create_app():
     app.register_blueprint(dictionary_sync_bp)
     app.register_blueprint(jieba_sync_bp)
     app.register_blueprint(admin_bp)
+
+    # 豁免特定路由的速率限制
+    # Emilia 健康检查路由会被前端频繁调用，需要豁免
+    # 注意：蓝图路由注册后，视图函数名格式为 {蓝图名}.{函数名}
+    limiter.exempt(app.view_functions['recordings.teo_emilia_health'])
 
     # 注册错误处理器
     register_error_handlers(app)
