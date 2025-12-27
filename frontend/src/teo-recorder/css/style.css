@@ -5,6 +5,15 @@
     box-sizing: border-box;
 }
 
+/* 本地字体定义 - 优化加载 */
+@font-face {
+    font-family: 'DottedSongtiSquareRegular';
+    src: url('../assets/fonts/dotted_songti_subset/DottedSongtiSquareRegular.otf') format('opentype');
+    font-display: swap; /* 优化字体加载体验 */
+    font-weight: normal;
+    font-style: normal;
+}
+
 body {
     font-family: 'Noto Sans SC', sans-serif;
     background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 30%, #0f1f3a 60%, #0d0d1a 100%);
@@ -241,22 +250,14 @@ body {
     }
 }
 
-/* 本地字体定义 - 优化加载 */
-@font-face {
-    font-family: 'DottedSongtiSquareRegular';
-    src: url('../assets/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf') format('opentype');
-    font-display: swap; /* 优化字体加载体验 */
-    font-weight: normal;
-    font-style: normal;
-}
 
 /* 快速模式 - 仅使用系统字体，无需加载 */
 .fast-mode .status-text {
-    font-family: monospace;
+    font-family: sans-serif;
 }
 
 .fast-mode .text-display {
-    font-family: monospace;
+    font-family: sans-serif;
     font-weight: bold;
     letter-spacing: 2px;
 }
@@ -271,7 +272,7 @@ body {
 }
 
 .status-text {
-    font-family: 'DottedSongtiSquareRegular', monospace;
+    font-family: 'DottedSongtiSquareRegular', sans-serif;
     font-size: 14px;
     font-weight: 600;
     margin-bottom: -2px;
@@ -280,7 +281,7 @@ body {
 }
 
 
-/* 文本显示区域 - 像素风 */
+/* 文本显示区域 */
 .text-display {
     background: #0a0a1a;
     border-radius: 0px;
@@ -289,7 +290,8 @@ body {
     margin-bottom: 20px;
     font-size: 20px;
     line-height: 1.4;
-    font-family: 'DottedSongtiSquareRegular', monospace;
+    font-family: 'sans-serif';
+    font-weight: 300;
     box-shadow:
         inset 3px 3px 6px #000000,
         inset -3px -3px 6px #1a1a2e;

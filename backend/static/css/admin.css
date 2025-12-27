@@ -31,7 +31,7 @@
 
 @font-face {
     font-family: 'DottedSongtiSquareRegular';
-    src: url('../fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf') format('opentype');
+    src: url('../fonts/dotted_songti_subset/DottedSongtiSquareRegular.otf') format('opentype');
 }
 
 body {

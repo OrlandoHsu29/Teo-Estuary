@@ -148,7 +148,7 @@ class DialectRecorder {
             this.setAllButtonsDisabled(false);
             // 如果没有当前文本，显示默认提示
             if (!this.currentText) {
-                this.elements.textDisplay.textContent = '点击【刷新】按钮获取跟读文本';
+                this.elements.textDisplay.textContent = '点击「刷新」按钮获取跟读文本';
             }
         }
     }
@@ -560,7 +560,7 @@ class DialectRecorder {
                 // 完全重置所有状态
                 this.fullResetRecording();
                 this.currentText = '';
-                this.elements.textDisplay.textContent = '点击【刷新】按钮继续获取新句子';
+                this.elements.textDisplay.textContent = '点击「刷新」按钮继续获取新句子';
 
                 // 重置录音相关状态
                 this.recordingDuration = 0;
@@ -869,7 +869,7 @@ class DialectRecorder {
             this.setAllButtonsDisabled(true);
         } else {
             // 开机状态
-            this.elements.textDisplay.textContent = '点击【刷新】按钮获取句子后开始录音跟读';
+            this.elements.textDisplay.textContent = '点击「刷新」按钮获取句子后开始录音跟读';
             this.elements.textDisplay.classList.add('power-on');
             this.elements.timer.classList.add('power-on');
             document.body.classList.add('power-on');
