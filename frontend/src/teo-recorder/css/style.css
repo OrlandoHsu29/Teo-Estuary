@@ -5,16 +5,6 @@
     box-sizing: border-box;
 }
 
-/* 本地字体定义 - 优化加载 */
-@font-face {
-    font-family: 'DottedSongtiSquareRegular';
-    src: url('../assets/fonts/DottedSongtiSquareRegular.woff2') format('woff2'),
-         url('../assets/fonts/DottedSongtiSquareRegular.woff') format('woff');
-    font-display: swap; /* 优化字体加载体验 */
-    font-weight: normal;
-    font-style: normal;
-}
-
 body {
     font-family: 'Noto Sans SC', sans-serif;
     background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 30%, #0f1f3a 60%, #0d0d1a 100%);
