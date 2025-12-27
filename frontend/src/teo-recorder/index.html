@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teo Recorder - 潮汕话录音机</title>
     <link rel="preload" href="./assets/fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf" as="font" type="font/otf" crossorigin>
+    <link rel="stylesheet" href="../css/toast.css">
+    <link rel="stylesheet" href="../css/key-config.css">
     <link rel="stylesheet" href="./css/style.css">
+
+    <script src="../js/config.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -32,11 +37,11 @@
                     <div class="screen-content">
                         <div class="status-indicator">
                             <span class="status-dot" id="statusDot"></span>
-                            <span class="status-text" id="statusText">准备就绪</span>
+                            <span class="status-text" id="statusText">----</span>
                         </div>
 
                         <div class="text-display" id="textDisplay">
-                            点击【刷新】按钮获取句子后开始录音跟读
+                            
                         </div>
 
                         <div class="progress-bar">
@@ -190,44 +195,12 @@
         </div>
     </div>
 
-    <!-- 密钥过期提示弹窗 -->
-    <div class="key-expired-overlay" id="keyExpiredOverlay">
-        <div class="key-expired-modal">
-            <div class="key-expired-header">
-                <h3>API密钥未配置或已过期</h3>
-            </div>
-            <div class="key-expired-content">
-                <p>请先配置有效的API密钥才能使用此功能</p>
-                <div class="key-expired-actions">
-                    <button class="btn-cancel" onclick="closeKeyExpired()">稍后配置</button>
-                    <button class="btn-confirm" onclick="goToKeyConfigFromModal()">前往配置</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 提示消息 -->
-    <div class="toast" id="toast"></div>
+    <div class="toast-universal" id="toastUniversal"></div>
 
-    <script src="../js/key-manager.js"></script>
     <script src="./js/recorder.js"></script>
 
     <script>
-        // 密钥过期弹窗相关
-        function goToKeyConfigFromModal() {
-            closeKeyExpired();
-            KeyManager.goToKeyConfig();
-        }
-
-        // 关闭密钥过期弹窗
-        function closeKeyExpired() {
-            document.getElementById('keyExpiredOverlay').style.display = 'none';
-        }
-
-        // 显示密钥过期弹窗
-        function showKeyExpired() {
-            document.getElementById('keyExpiredOverlay').style.display = 'flex';
-        }
 
         // 调试信息 - API_BASE_URL已在recorder.js中定义
         console.log('页面加载完成，检查API配置...');

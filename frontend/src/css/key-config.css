@@ -42,6 +42,7 @@
 .key-icon {
     width: 24px;
     height: 24px;
+    color: #666677;
     transition: color 0.3s ease;
 }
 
@@ -144,6 +145,102 @@
 }
 
 .key-config-confirm-actions .btn-confirm:hover {
+    background: linear-gradient(135deg, #00bb66, #00aa55);
+    box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
+}
+
+
+/* 子页面密钥配置询问弹窗（共享样式）*/
+.key-config-prompt-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.key-config-prompt-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.key-config-prompt-modal {
+    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+    border: 2px solid #3a3a4e;
+    border-radius: 20px;
+    padding: 30px;
+    min-width: 320px;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.key-config-prompt-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.key-config-prompt-header h3 {
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.key-config-prompt-content {
+    text-align: center;
+}
+
+.key-config-prompt-content p {
+    color: #ccccdd;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.key-config-prompt-content .prompt-detail {
+    color: #888899;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+}
+
+.key-config-prompt-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.key-config-prompt-actions button {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.key-config-prompt-actions .btn-cancel {
+    background: #3a3a4e;
+    color: #ccccdd;
+}
+
+.key-config-prompt-actions .btn-cancel:hover {
+    background: #4a4a5e;
+}
+
+.key-config-prompt-actions .btn-confirm {
+    background: linear-gradient(135deg, #00aa55, #009944);
+    color: #ffffff;
+}
+
+.key-config-prompt-actions .btn-confirm:hover {
     background: linear-gradient(135deg, #00bb66, #00aa55);
     box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
 }

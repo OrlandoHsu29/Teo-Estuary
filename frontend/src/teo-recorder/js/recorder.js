@@ -1,4 +1,4 @@
-// API配置 - 已在 key-manager.js 中定义
+// API配置 - 已在 config.js 中定义
 // 调试信息
 console.log('API_BASE_URL:', API_BASE_URL);
 console.log('当前页面URL:', window.location.href);
@@ -91,8 +91,10 @@ class DialectRecorder {
             // 检查API密钥
             const apiKey = localStorage.getItem('apiKey');
             if (!apiKey) {
-                this.showToast('请先配置API密钥', 'error');
-                window.openKeyConfig();
+                showToast('请先配置API密钥', 'error');
+                if (window.KeyManager) {
+                    window.KeyManager.goToKeyConfig();
+                }
                 return;
             }
 
@@ -112,8 +114,6 @@ class DialectRecorder {
             if (!response.ok) {
                 // 根据HTTP状态码处理不同错误
                 if (response.status === 401 || response.status === 403) {
-                    // 清空密钥
-                    localStorage.removeItem('apiKey');
                     throw new Error('密钥已失效，请重新配置');
                 } else if (response.status === 429) {
                     throw new Error('请求过于频繁，请稍后重试');
@@ -133,7 +133,7 @@ class DialectRecorder {
         } catch (error) {
             console.error('获取文本失败:', error);
             const errorMessage = error.message || '获取新句子失败，请重试';
-            this.showToast(errorMessage, 'error');
+            showToast(errorMessage, 'error');
             this.updateStatus(errorMessage, 'error');
             this.elements.textDisplay.textContent = ''; // 清空显示屏
 
@@ -156,12 +156,12 @@ class DialectRecorder {
     async startRecording() {
         // 防止重复点击和状态冲突
         if (this.isRecording || this.isStartingRecording) {
-            this.showToast('正在录音或正在启动录音，请稍候...', 'warning');
+            showToast('正在录音或正在启动录音，请稍候...', 'warning');
             return;
         }
 
         if (!this.currentText) {
-            this.showToast('请先获取要朗读的文本', 'warning');
+            showToast('请先获取要朗读的文本', 'warning');
             return;
         }
 
@@ -212,7 +212,7 @@ class DialectRecorder {
             this.mediaRecorder.onstop = () => this.processRecording();
             this.mediaRecorder.onerror = (event) => {
                 console.error('录音错误:', event.error);
-                this.showToast('录音出错，请重试', 'error');
+                showToast('录音出错，请重试', 'error');
                 this.stopRecording();
             };
 
@@ -251,7 +251,7 @@ class DialectRecorder {
                 errorMessage = '请允许浏览器访问麦克风权限';
             }
 
-            this.showToast(errorMessage, 'error');
+            showToast(errorMessage, 'error');
             this.updateStatus('录音失败', 'error');
             this.elements.btnRecord.disabled = false;
         }
@@ -320,7 +320,7 @@ class DialectRecorder {
             this.updateStatus('录音完成', 'success');
         } catch (error) {
             console.error('停止录音失败:', error);
-            this.showToast('停止录音时出错', 'error');
+            showToast('停止录音时出错', 'error');
         }
     }
 
@@ -345,7 +345,7 @@ class DialectRecorder {
 
     processRecording() {
         if (this.audioChunks.length === 0) {
-            this.showToast('录音数据为空', 'error');
+            showToast('录音数据为空', 'error');
             return;
         }
 
@@ -423,7 +423,7 @@ class DialectRecorder {
 
         this.currentAudio.addEventListener('error', (error) => {
             console.error('播放失败:', error);
-            this.showToast('播放失败', 'error');
+            showToast('播放失败', 'error');
             this.stopPlayback();
         });
 
@@ -431,7 +431,7 @@ class DialectRecorder {
         this.currentAudio.play()
             .catch(error => {
                 console.error('播放失败:', error);
-                this.showToast('播放失败', 'error');
+                showToast('播放失败', 'error');
                 this.stopPlayback();
             });
 
@@ -577,12 +577,12 @@ class DialectRecorder {
     async uploadRecording() {
         // 检查是否正在上传中
         if (this.isUploading) {
-            this.showToast('正在上传中，请稍候...', 'warning');
+            showToast('正在上传中，请稍候...', 'warning');
             return;
         }
 
         if (!this.audioBlob || !this.currentText) {
-            this.showToast('没有可上传的录音', 'error');
+            showToast('没有可上传的录音', 'error');
             return;
         }
 
@@ -594,8 +594,10 @@ class DialectRecorder {
             // 检查API密钥
             const apiKey = localStorage.getItem('apiKey');
             if (!apiKey) {
-                this.showToast('请先配置API密钥', 'error');
-                window.openKeyConfig();
+                showToast('请先配置API密钥', 'error');
+                if (window.KeyManager) {
+                    window.KeyManager.goToKeyConfig();
+                }
                 return;
             }
 
@@ -625,7 +627,7 @@ class DialectRecorder {
             }
 
             const result = await response.json();
-            this.showToast(`录音上传成功！ID: ${result.id}`, 'success');
+            showToast(`录音上传成功！ID: ${result.id}`, 'success');
             this.updateStatus('上传成功', 'success');
             this.showTemporaryStatusMessages('继续录下一条音频吧~','info');
 
@@ -636,7 +638,7 @@ class DialectRecorder {
             // 如果是用户取消的错误，不显示错误信息
             if (error.name !== 'AbortError') {
                 console.error('上传失败:', error);
-                this.showToast(`上传失败: ${error.message}`, 'error');
+                showToast(`上传失败: ${error.message}`, 'error');
                 this.updateStatus('上传失败', 'error');
             }
         } finally {
@@ -798,7 +800,7 @@ class DialectRecorder {
                     this.recordingDuration > 3 &&
                     !this.hasDetectedSound) {
 
-                    this.showToast('检测不到麦克风声音，请检查麦克风是否已开启或权限是否允许', 'warning');
+                    showToast('检测不到麦克风声音，请检查麦克风是否已开启或权限是否允许', 'warning');
                     // 重置计数器，避免重复提醒
                     this.zeroVolumeCount = 0;
                 }
@@ -854,6 +856,26 @@ class DialectRecorder {
         this.elements.btnStop.disabled = disabled || !this.isRecording;   // 如果不在录音，停止按钮保持禁用
         this.elements.btnPlay.disabled = disabled || !this.audioBlob;      // 如果没有录音，播放按钮保持禁用
         this.elements.btnUpload.disabled = disabled || !this.audioBlob || this.isUploading;    // 如果没有录音或正在上传，上传按钮保持禁用
+    }
+
+    setPowerState(powerOn) {
+        if (!powerOn) {
+            // 关机状态（默认）
+            this.elements.textDisplay.textContent = '';
+            this.elements.textDisplay.classList.remove('power-on');
+            this.elements.timer.classList.remove('power-on');
+            document.body.classList.remove('power-on');
+            this.updateStatus('请先配置API密钥', 'error');
+            this.setAllButtonsDisabled(true);
+        } else {
+            // 开机状态
+            this.elements.textDisplay.textContent = '点击【刷新】按钮获取句子后开始录音跟读';
+            this.elements.textDisplay.classList.add('power-on');
+            this.elements.timer.classList.add('power-on');
+            document.body.classList.add('power-on');
+            this.updateStatus('准备就绪', 'success');
+            this.setAllButtonsDisabled(false);
+        }
     }
 
     setUploadButtonState(forceDisabled = null) {
@@ -947,8 +969,24 @@ class DialectRecorder {
 }
 
 // 页面加载完成后初始化录音机
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     window.recorder = new DialectRecorder();
+
+    // 默认关机状态
+    window.recorder.setPowerState(false);
+
+    // 验证密钥并更新按钮状态
+    if (window.KeyManager) {
+        const result = await window.KeyManager.validateApiKey();
+        window.KeyManager.updateKeyButtonState(result);
+
+        // 根据验证结果设置设备电源状态
+        if (result.valid === true) {
+            // 密钥有效 - 开机
+            window.recorder.setPowerState(true);
+        }
+        // 其他所有情况(密钥无效、已过期、不存在、网络错误等)都保持关机状态
+    }
 
     // 监听页面可见性变化，页面隐藏时停止录音和播放
     document.addEventListener('visibilitychange', () => {

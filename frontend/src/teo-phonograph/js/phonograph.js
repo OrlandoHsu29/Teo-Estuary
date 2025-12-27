@@ -7,11 +7,6 @@ let currentRotation = 0; // 当前旋转角度
 let lastAnimationTime = 0; // 上一次动画更新时间
 let emiliaServiceHealthy = false; // Emilia服务健康状态
 
-// API配置（根据环境动态选择）
-const API_BASE_URL = window.location.protocol === 'file:' || window.location.hostname === 'localhost'
-    ? 'http://localhost:5000'
-    : 'https://your-domain.com';
-
 // 旋转拖拽相关变量
 let isDragging = false;
 let isRotating = false;
@@ -27,12 +22,13 @@ const elements = {
     vinylRecord: null,
     tonearm: null,
     powerLight: null,
-    playLight: null,
+    serverLight: null,
     trackNumber: null,
     currentTime: null,
     totalTime: null,
     statusText: null,
     playBtn: null,
+    playBtnText: null,
     uploadBtn: null,
     submitBtn: null,
     audioFileInput: null,
@@ -42,7 +38,7 @@ const elements = {
 };
 
 // 初始化
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // 初始化 DOM 元素
     initializeElements();
 
@@ -52,30 +48,53 @@ document.addEventListener('DOMContentLoaded', function() {
     // 绑定事件
     bindEvents();
 
-    // 初始化状态灯
-    elements.powerLight.classList.add('on');
-    elements.statusText.textContent = 'READY';
+    // 默认关机状态
+    setPowerState(false);
 
-    // 初始化密钥按钮状态
-    updateKeyButtonState();
+    // 验证密钥并更新按钮状态
+    if (window.KeyManager) {
+        try {
+            const result = await window.KeyManager.validateApiKey();
+            window.KeyManager.updateKeyButtonState(result);
 
-    // 检查Emilia服务健康状态
-    checkEmiliaHealth();
-
-    // 定期检查Emilia服务状态（每30秒）
-    setInterval(checkEmiliaHealth, 30000);
+            // 根据验证结果设置设备电源状态
+            if (result.valid === true) {
+                // 密钥有效 - 开机
+                setPowerState(true);
+                // 开机时检查Emilia服务健康状态
+                elements.statusText.textContent = '正在查询服务启动状态...';
+                checkEmiliaHealth();
+            }
+            // 其他所有情况(密钥无效、已过期、不存在、网络错误等)都保持关机状态
+        } catch (error) {
+            console.error('密钥验证失败:', error);
+            // 验证出错时，根据是否有密钥来设置状态
+            const hasKey = window.KeyManager.getApiKeyStatus();
+            if (!hasKey) {
+                window.KeyManager.updateKeyButtonState({ exists: false });
+            } else {
+                // 有密钥但验证出错（可能是网络错误），先设为有效，后续使用时再验证
+                window.KeyManager.updateKeyButtonState({ valid: true, exists: true });
+                setPowerState(true);
+                // 开机时检查Emilia服务健康状态
+                elements.statusText.textContent = '正在查询服务启动状态...';
+                checkEmiliaHealth();
+            }
+        }
+    }
 });
 
 function initializeElements() {
     elements.vinylRecord = document.getElementById('vinylRecord');
     elements.tonearm = document.getElementById('tonearm');
     elements.powerLight = document.getElementById('powerLight');
-    elements.playLight = document.getElementById('playLight');
+    elements.serverLight = document.getElementById('serverLight');
     elements.trackNumber = document.getElementById('trackNumber');
     elements.currentTime = document.getElementById('currentTime');
     elements.totalTime = document.getElementById('totalTime');
     elements.statusText = document.getElementById('statusText');
     elements.playBtn = document.getElementById('playBtn');
+    elements.playBtnText = elements.playBtn?.querySelector('.btn-text');
     elements.uploadBtn = document.getElementById('uploadBtn');
     elements.submitBtn = document.getElementById('submitBtn');
     elements.audioFileInput = document.getElementById('audioFileInput');
@@ -94,6 +113,11 @@ function initializeElements() {
 
     // 初始化音量显示
     updateVolumeUI(currentVolume);
+
+    // 设置播放按钮默认文本
+    if (elements.playBtnText) {
+        elements.playBtnText.textContent = '播放';
+    }
 }
 
 function createBackgroundAnimations() {
@@ -178,7 +202,7 @@ function handleFileSelect(event) {
     audioFile = file;
 
     // 显示加载状态
-    elements.statusText.textContent = 'LOADING...';
+    elements.statusText.textContent = '正在加载...';
 
     // 创建音频元素
     if (audioElement) {
@@ -200,7 +224,7 @@ function handleFileSelect(event) {
         elements.playBtn.disabled = false;
         // 根据Emilia服务状态决定是否启用提交按钮
         elements.submitBtn.disabled = !emiliaServiceHealthy;
-        elements.statusText.textContent = 'LOADED';
+        elements.statusText.textContent = '加载完成';
 
         // 显示拖拽提示箭头
         if (elements.dragHint) {
@@ -226,10 +250,14 @@ function handlePlayPause() {
         isPlaying = false;
         elements.vinylRecord.classList.remove('playing');
         document.querySelector('.tonearm-arm').classList.remove('playing');
-        elements.playLight.classList.remove('active');
-        elements.statusText.textContent = 'PAUSED';
+        elements.statusText.textContent = '已暂停';
         elements.playIcon.style.display = 'block';
         elements.pauseIcon.style.display = 'none';
+
+        // 更新按钮文本为"播放"
+        if (elements.playBtnText) {
+            elements.playBtnText.textContent = '播放';
+        }
 
         // 停止手动动画
         if (animationId) {
@@ -242,10 +270,14 @@ function handlePlayPause() {
             .then(() => {
                 isPlaying = true;
                 document.querySelector('.tonearm-arm').classList.add('playing');
-                elements.playLight.classList.add('active');
-                elements.statusText.textContent = 'PLAYING';
+                elements.statusText.textContent = '正在播放';
                 elements.playIcon.style.display = 'none';
                 elements.pauseIcon.style.display = 'block';
+
+                // 更新按钮文本为"暂停"
+                if (elements.playBtnText) {
+                    elements.playBtnText.textContent = '暂停';
+                }
 
                 // 启动手动动画
                 lastAnimationTime = performance.now();
@@ -288,10 +320,14 @@ function handleAudioEnded() {
     isPlaying = false;
     elements.vinylRecord.classList.remove('playing');
     document.querySelector('.tonearm-arm').classList.remove('playing');
-    elements.playLight.classList.remove('active');
-    elements.statusText.textContent = 'COMPLETED';
+    elements.statusText.textContent = '播放完成';
     elements.playIcon.style.display = 'block';
     elements.pauseIcon.style.display = 'none';
+
+    // 更新按钮文本为"播放"
+    if (elements.playBtnText) {
+        elements.playBtnText.textContent = '播放';
+    }
 
     // 停止手动动画
     if (animationId) {
@@ -318,6 +354,8 @@ async function handleSubmit() {
     if (!emiliaServiceHealthy) {
         showToast('Emilia服务未启动，无法提交', 'error');
         elements.statusText.textContent = '服务未启动';
+        // 重新查询服务状态
+        checkEmiliaHealth();
         return;
     }
 
@@ -331,7 +369,7 @@ async function handleSubmit() {
     }
 
     // 显示提交状态
-    elements.statusText.textContent = 'SUBMITTING...';
+    elements.statusText.textContent = '正在提交...';
     elements.submitBtn.disabled = true;
 
     // 创建 FormData
@@ -340,7 +378,7 @@ async function handleSubmit() {
 
     try {
 
-        const response = await fetch(`${API_BASE_URL}/api/upload-material`, {
+        const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material`, {
             method: 'POST',
             headers: {
                 'X-API-Key': apiKey
@@ -350,9 +388,8 @@ async function handleSubmit() {
 
         // 处理401错误
         if (response.status === 401 || response.status === 403) {
-            localStorage.removeItem('apiKey');
             KeyManager.updateKeyButtonState();
-            elements.statusText.textContent = 'NEED KEY';
+            elements.statusText.textContent = '密钥已失效';
             elements.submitBtn.disabled = false;
             showToast('密钥已失效，请重新配置', 'error');
             return;
@@ -361,16 +398,20 @@ async function handleSubmit() {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            elements.statusText.textContent = 'COMPLETED';
+            elements.statusText.textContent = '提交完成';
             showToast(`音频素材上传成功！文件ID: ${result.id}`, 'success');
         } else {
-            elements.statusText.textContent = 'ERROR';
+            elements.statusText.textContent = '提交失败';
             showToast(`上传失败：${result.error || '未知错误'}`, 'error');
+            // 提交失败后重新查询服务状态
+            checkEmiliaHealth();
         }
     } catch (error) {
         console.error('Upload error:', error);
-        elements.statusText.textContent = 'ERROR';
+        elements.statusText.textContent = '提交失败';
         showToast(`上传失败：${error.message}`, 'error');
+        // 提交失败后重新查询服务状态
+        checkEmiliaHealth();
     } finally {
         elements.submitBtn.disabled = false;
     }
@@ -387,14 +428,18 @@ function resetPlayer() {
 
     elements.vinylRecord.classList.remove('playing');
     elements.tonearm.classList.remove('playing');
-    elements.playLight.classList.remove('active');
 
     elements.trackNumber.textContent = '--';
     elements.currentTime.textContent = '0:00';
     elements.totalTime.textContent = '0:00';
-    elements.statusText.textContent = 'READY';
+    elements.statusText.textContent = '准备就绪';
     elements.playIcon.style.display = 'block';
     elements.pauseIcon.style.display = 'none';
+
+    // 重置播放按钮文本
+    if (elements.playBtnText) {
+        elements.playBtnText.textContent = '播放';
+    }
 
     elements.playBtn.disabled = true;
     elements.submitBtn.disabled = true;
@@ -595,8 +640,12 @@ function showToast(message, type = 'info') {
 
 // 检查Emilia服务健康状态
 async function checkEmiliaHealth() {
+    // 发起查询前显示黄色（checking状态）
+    elements.serverLight.classList.remove('active', 'error');
+    elements.serverLight.classList.add('checking');
+
     try {
-        const response = await fetch(`${API_BASE_URL}/teo_emilia_health`, {
+        const response = await fetch(`${KeyManager.API_BASE_URL}/teo_emilia_health`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -622,10 +671,10 @@ async function checkEmiliaHealth() {
     }
 }
 
-// 更新Emilia服务状态UI
+// 更新Emilia服务状态UI - 现在更新 SERVER 灯
 function updateEmiliaStatus(isHealthy) {
-    // elements.powerLight 直接就是 light-indicator 元素
-    const lightIndicator = elements.powerLight;
+    // 使用 serverLight
+    const lightIndicator = elements.serverLight;
 
     console.log('Updating Emilia status, isHealthy:', isHealthy, 'lightIndicator:', lightIndicator);
 
@@ -637,7 +686,7 @@ function updateEmiliaStatus(isHealthy) {
 
         // 只有在没有上传文件时才显示READY状态
         if (!audioFile) {
-            elements.statusText.textContent = 'READY';
+            elements.statusText.textContent = '准备就绪';
         }
 
         // 启用提交按钮（如果有音频文件）
@@ -652,10 +701,34 @@ function updateEmiliaStatus(isHealthy) {
 
         // 显示服务未启动状态
         if (!audioFile) {
-            elements.statusText.textContent = 'OFFLINE';
+            elements.statusText.textContent = '服务离线，音频暂时无法提交';
         }
 
         // 禁用提交按钮
         elements.submitBtn.disabled = true;
+    }
+}
+
+// 设置电源状态
+function setPowerState(powerOn) {
+    if (!powerOn) {
+        // 关机状态（API key不通过）
+        document.body.classList.remove('power-on');
+        // powerLight 亮红色（error状态）
+        elements.powerLight.classList.remove('active');
+        elements.powerLight.classList.add('error');
+        // serverLight 暗色（移除所有状态）
+        elements.serverLight.classList.remove('active', 'error', 'checking');
+        elements.statusText.textContent = '请配置API密钥';
+        elements.uploadBtn.disabled = true;
+    } else {
+        // 开机状态（API key通过）
+        document.body.classList.add('power-on');
+        // powerLight 亮绿色（active状态）
+        elements.powerLight.classList.remove('error');
+        elements.powerLight.classList.add('active');
+        // serverLight 会在 checkEmiliaHealth 时更新状态
+        elements.statusText.textContent = '准备就绪';
+        elements.uploadBtn.disabled = false;
     }
 }

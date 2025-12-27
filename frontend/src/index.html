@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Olndio - Orlando's Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="./js/config.js"></script>
+    <link rel="stylesheet" href="./css/toast.css">
+
     <style>
         * {
             margin: 0;
@@ -352,6 +355,7 @@
         .key-icon {
             width: 24px;
             height: 24px;
+            color: #666677;
             transition: color 0.3s ease;
         }
 
@@ -802,8 +806,6 @@
         }
     </style>
 
-    <!-- 引入密钥管理模块 -->
-    <script src="./js/key-manager.js"></script>
 </head>
 <body>
     <!-- 背景网格 -->
@@ -890,7 +892,11 @@
         </div>
     </div>
 
+    <!-- 通用 Toast 提示消息 -->
+    <div class="toast-universal" id="toastUniversal"></div>
+
     <script>
+      
         // 密钥配置功能
         function openKeyConfig() {
             document.getElementById('keyConfigOverlay').style.display = 'flex';
@@ -909,14 +915,14 @@
                 localStorage.removeItem('apiKey');
                 document.getElementById('apiKey').value = '';
                 closeKeyConfig();
-                updateKeyButtonState();
+                updateKeyButtonState({ exists: false });
             }
         }
 
         function saveApiKey() {
             const apiKey = document.getElementById('apiKey').value.trim();
             if (!apiKey) {
-                alert('请输入API密钥');
+                showToast('请输入API密钥', 'warning');
                 return;
             }
 
@@ -925,7 +931,7 @@
         }
 
         function testApiKey(apiKey, shouldSave = false) {
-            fetch(`${API_BASE_URL}/api/apikey-verify`, {
+            fetch(`${KeyManager.API_BASE_URL}/api/apikey-verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -938,24 +944,25 @@
                     if (shouldSave) {
                         localStorage.setItem('apiKey', apiKey);
                     }
-                    updateKeyButtonState();
+                    updateKeyButtonState({ valid: true, exists: true });
                     closeKeyConfig();
-                    alert('API密钥配置成功！');
+                    showToast('API密钥配置成功！', 'success');
                 } else {
-                    alert('API密钥验证失败: ' + data.error);
+                    showToast('API密钥验证失败: ' + data.error, 'error');
                     if (shouldSave) {
                         localStorage.removeItem('apiKey');
                     }
-                    updateKeyButtonState();
+                    updateKeyButtonState({ valid: false, exists: true });
                 }
             })
             .catch(error => {
                 console.error('API密钥验证错误:', error);
-                alert('API密钥验证失败，请检查网络连接');
+                showToast('API密钥验证失败，请检查网络连接', 'error');
                 if (shouldSave) {
                     localStorage.removeItem('apiKey');
                 }
-                updateKeyButtonState();
+                // 网络错误时保持暗色
+                updateKeyButtonState({ valid: null, exists: false, networkError: true });
             });
         }
 
@@ -965,31 +972,16 @@
 
             if (!result.exists) {
                 // 没有密钥 - 按钮变红
-                updateKeyButtonState();
+                updateKeyButtonState(result);
             } else if (result.expired) {
-                // 密钥已过期 - 按钮变红并清空
-                localStorage.removeItem('apiKey');
-                updateKeyButtonState();
+                // 密钥已过期 - 按钮变红（不清空密钥）
+                updateKeyButtonState(result);
             } else if (result.valid === true) {
                 // 密钥有效 - 按钮正常
-                updateKeyButtonState();
+                updateKeyButtonState(result);
             } else {
                 // 验证失败（网络错误或其他）- 按钮正常
-                updateKeyButtonState();
-            }
-        }
-
-        // 更新密钥按钮状态
-        function updateKeyButtonState() {
-            const keyBtn = document.getElementById('keyConfigBtn');
-            const savedKey = localStorage.getItem('apiKey');
-
-            if (savedKey) {
-                keyBtn.classList.add('configured');
-                keyBtn.classList.remove('unconfigured');
-            } else {
-                keyBtn.classList.remove('configured');
-                keyBtn.classList.add('unconfigured');
+                updateKeyButtonState(result);
             }
         }
 
@@ -1023,9 +1015,6 @@
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', async () => {
             createParticles();
-
-            // 初始化密钥按钮状态
-            updateKeyButtonState();
 
             // 验证API密钥并显示状态
             await validateAndShowKeyStatus();

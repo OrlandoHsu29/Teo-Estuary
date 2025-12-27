@@ -5,14 +5,29 @@ class TeoTranslator {
         this.isTranslating = false;
         this.typewriterTimer = null; // 打字机效果定时器
         this.displayDebounceTimer = null; // 防抖定时器
+        this.elements = {}; // 存储DOM元素引用
         this.init();
     }
 
     init() {
+        this.initElements();
         this.bindEvents();
         this.updateUI();
         this.startAnimations();
+        // 不再在初始化时调用simulateStartup
+        // 改为在密钥验证成功（开机）时调用
         console.log('Teo Translater 初始化完成');
+    }
+
+    initElements() {
+        // 获取所有DOM元素
+        this.elements = {
+            lcdGlass: document.querySelector('.lcd-glass'),
+            displayText: document.getElementById('displayText'),
+            textInput: document.getElementById('textInput'),
+            translateBtn: document.getElementById('translateBtn'),
+            toggleBtn: document.querySelector('.toggle-btn')
+        };
     }
 
     bindEvents() {
@@ -25,15 +40,13 @@ class TeoTranslator {
             textInput.addEventListener('paste', (e) => this.handlePaste(e));
         }
 
-        // 页面加载完成后初始化
+        // 页面加载完成后初始化字符计数器
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.updateCharCounter();
-                this.simulateStartup();
             });
         } else {
             this.updateCharCounter();
-            this.simulateStartup();
         }
     }
 
@@ -359,7 +372,7 @@ class TeoTranslator {
 
     // 模拟启动过程
     simulateStartup() {
-        // 显示启动消息
+        // 显示启动消息（只在开机时调用）
         setTimeout(() => {
             this.updateDisplay('系统就绪');
         }, 1000);
@@ -380,6 +393,49 @@ class TeoTranslator {
         if (!document.querySelector('style[data-translator-animations]')) {
             style.setAttribute('data-translator-animations', 'true');
             document.head.appendChild(style);
+        }
+    }
+
+    // 设置电源状态
+    setPowerState(powerOn) {
+        if (!powerOn) {
+            // 关机状态（默认）
+            if (this.elements.lcdGlass) {
+                this.elements.lcdGlass.classList.remove('power-on');
+            }
+            document.body.classList.remove('power-on');
+            this.setAllButtonsDisabled(true);
+            if (this.elements.displayText) {
+                this.elements.displayText.textContent = '';
+            }
+            if (this.elements.textInput) {
+                this.elements.textInput.placeholder = '请先配置API密钥';
+            }
+        } else {
+            // 开机状态
+            if (this.elements.lcdGlass) {
+                this.elements.lcdGlass.classList.add('power-on');
+            }
+            document.body.classList.add('power-on');
+            this.setAllButtonsDisabled(false);
+            if (this.elements.textInput) {
+                this.elements.textInput.placeholder = '输入普通话文本...';
+            }
+            // 显示系统就绪
+            this.simulateStartup();
+        }
+    }
+
+    // 设置所有按钮的禁用状态
+    setAllButtonsDisabled(disabled) {
+        if (this.elements.textInput) {
+            this.elements.textInput.disabled = disabled;
+        }
+        if (this.elements.translateBtn) {
+            this.elements.translateBtn.disabled = disabled;
+        }
+        if (this.elements.toggleBtn) {
+            this.elements.toggleBtn.disabled = disabled;
         }
     }
 }
@@ -411,8 +467,37 @@ function goBack() {
 }
 
 // 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     window.translator = new TeoTranslator();
+
+    // 默认关机状态
+    window.translator.setPowerState(false);
+
+    // 验证密钥并更新按钮状态
+    if (window.KeyManager) {
+        try {
+            const result = await window.KeyManager.validateApiKey();
+            window.KeyManager.updateKeyButtonState(result);
+
+            // 根据验证结果设置设备电源状态
+            if (result.valid === true) {
+                // 密钥有效 - 开机
+                window.translator.setPowerState(true);
+            }
+            // 其他所有情况(密钥无效、已过期、不存在、网络错误等)都保持关机状态
+        } catch (error) {
+            console.error('密钥验证失败:', error);
+            // 验证出错时，根据是否有密钥来设置状态
+            const hasKey = window.KeyManager.getApiKeyStatus();
+            if (!hasKey) {
+                window.KeyManager.updateKeyButtonState({ exists: false });
+            } else {
+                // 有密钥但验证出错（可能是网络错误），先设为有效，后续使用时再验证
+                window.KeyManager.updateKeyButtonState({ valid: true, exists: true });
+                window.translator.setPowerState(true);
+            }
+        }
+    }
 
     // 添加键盘快捷键提示
     console.log('Teo Translater 快捷键:');

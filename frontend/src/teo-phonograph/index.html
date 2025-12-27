@@ -6,6 +6,10 @@
     <title>Teo Phonograph - CD播放器</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="../css/key-config.css">
+    <link rel="stylesheet" href="../css/toast.css">
+    <script src="../js/config.js"></script>
+
 </head>
 <body>
     <!-- 背景动画元素 -->
@@ -66,12 +70,12 @@
                     <div class="status-lights">
                         <div class="light-strip">
                             <div class="light-bar power-light">
-                                <span class="light-label">PWR</span>
+                                <span class="light-label">POWER</span>
                                 <div class="light-indicator" id="powerLight"></div>
                             </div>
-                            <div class="light-bar play-light">
-                                <span class="light-label">PLAY</span>
-                                <div class="light-indicator" id="playLight"></div>
+                            <div class="light-bar server-light">
+                                <span class="light-label">SERVER</span>
+                                <div class="light-indicator" id="serverLight"></div>
                             </div>
                             <div class="volume-bar">
                                 <span class="light-label">VOLUME</span>
@@ -107,7 +111,7 @@
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
                             </svg>
-                            <span class="btn-text">UPLOAD</span>
+                            <span class="btn-text">上传</span>
                         </button>
 
                         <button class="control-btn play-btn" id="playBtn" title="播放/暂停">
@@ -118,14 +122,14 @@
                                 <rect x="6" y="4" width="4" height="16"></rect>
                                 <rect x="14" y="4" width="4" height="16"></rect>
                             </svg>
-                            <span class="btn-text">PLAY</span>
+                            <span class="btn-text">播放</span>
                         </button>
 
-                        <button class="control-btn submit-btn" id="submitBtn" title="提交数据">
+                        <button class="control-btn submit-btn" id="submitBtn" title="提交音频">
                             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
-                            <span class="btn-text">SUBMIT</span>
+                            <span class="btn-text">提交</span>
                         </button>
                     </div>
                 </div>
@@ -179,7 +183,7 @@
                         <div class="step-text">播放核对无误后即可点击 SUBMIT 提交潮汕话音频素材到服务器</div>
                     </div>
                     <div class="step-item">
-                        <p style="font-size: small;font-weight: bolder;color: #0068DF;line-height: 25px;">Tips：由于音频素材批量转录服务需要的性能较高，需要调用个人电脑的算力，因此服务不定时开启（当然也可以联系我开启）（开启状态见PWR状态灯）</p>
+                        <p style="font-size: small;font-weight: bolder;color: #0068DF;line-height: 25px;">Tips：由于音频素材批量转录服务需要的性能较高，需要调用个人电脑的算力，因此服务不定时开启（开启状态见SERVER状态灯）</p>
                     </div>
                 </div>
             </div>
@@ -204,6 +208,5 @@
 <div class="toast-universal" id="toastUniversal"></div>
 
 <script src="./js/phonograph.js"></script>
-<script src="../js/key-manager.js"></script>
 </body>
 </html>

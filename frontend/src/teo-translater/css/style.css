@@ -16,6 +16,9 @@ body {
     overflow-x: hidden;
     padding: 40px 20px;
     position: relative;
+    /* 默认关机状态 - 停止所有动画 */
+    animation: none !important;
+    transition: none !important;
 }
 
 /* 数据包传输动画 */
@@ -28,8 +31,14 @@ body {
     pointer-events: none;
     z-index: 0;
     box-shadow: 0 0 10px rgba(154, 205, 50, 0.5);
-    animation: packetTravel 12s linear infinite;
+    /* 默认关机状态 - 不播放动画 */
+    animation: none;
     opacity: 0;
+}
+
+/* 开机状态 - 激活数据包动画 */
+.power-on .data-packet {
+    animation: packetTravel 12s linear infinite;
 }
 
 @keyframes packetTravel {
@@ -62,6 +71,13 @@ body {
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
+    /* 默认低透明度（关机状态） */
+    opacity: 0.2;
+}
+
+/* 开机状态 - 正常透明度 */
+.power-on .grid-overlay {
+    opacity: 1;
 }
 
 .container {
@@ -191,7 +207,6 @@ body {
 }
 
 .lcd-glass {
-    background: #9ACD32;
     border-radius: 10px;
     padding: 18px;
     padding-bottom: 0px;
@@ -200,9 +215,17 @@ body {
     position: relative;
     font-family: 'Courier New', monospace;
     font-size: 14px;
-    color: #000000;
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2);
     overflow: hidden;
+    /* 默认关机状态 - 屏幕暗 */
+    background: #2a2a2a;
+    color: #4a4a4a;
+}
+
+/* 开机状态 - 激活屏幕 */
+.power-on .lcd-glass {
+    background: #9ACD32;
+    color: #000000;
 }
 
 /* 状态栏 */
@@ -252,7 +275,7 @@ body {
     font-size: 14px;
     line-height: 1.4;
     word-wrap: break-word;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(2, 2, 2, 0.15);
     padding: 8px;
     border-radius: 4px;
     min-height: 36px;
@@ -263,13 +286,22 @@ body {
     text-align: center;
     font-size: 10px;
     font-family: 'Courier New', monospace;
-    color: #333333;
-    background: rgba(154, 205, 50, 0.2);
     padding: 2px 8px;
     border-radius: 3px;
     margin-top: 8px;
     align-self: center;
     font-weight: bold;
+    /* 默认关机状态 - 隐藏 */
+    visibility: hidden;
+    opacity: 0;
+}
+
+/* 开机状态 - 显示字符计数器 */
+.power-on .char-counter {
+    visibility: visible;
+    opacity: 1;
+    color: #333333;
+    background: rgba(154, 205, 50, 0.2);
 }
 
 /* 光标 */
@@ -279,8 +311,16 @@ body {
     right: 14px;
     font-size: 12px;
     color: #000000;
-    animation: cursorBlink 1s infinite;
     font-weight: bold;
+    /* 默认关机状态 - 不播放动画 */
+    animation: none;
+    opacity: 0.3;
+}
+
+/* 开机状态 - 激活光标闪烁 */
+.power-on .cursor-block {
+    animation: cursorBlink 1s infinite;
+    opacity: 1;
 }
 
 @keyframes cursorBlink {
@@ -430,60 +470,13 @@ body {
 
 /* 密钥配置按钮 */
 .key-config-btn {
-    width: 50px;
-    height: 50px;
     background: linear-gradient(145deg, #3a3a3e, #2a2a2e);
-    border: 2px solid #444455;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
+        4px 4px 8px rgba(0, 0, 0, 0.4),
         -2px -2px 6px rgba(255, 255, 255, 0.05),
         inset 1px 1px 2px rgba(255, 255, 255, 0.1);
 }
 
-.key-config-btn.unconfigured {
-    border: 2px solid #cf1616;
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
-        -2px -2px 6px rgba(255, 255, 255, 0.05),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.1);
-}
-
-.key-config-btn.configured {
-    border: 2px solid #00ff88;
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
-        -2px -2px 6px rgba(58, 58, 78, 0.5),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.1),
-        0 0 0 1px rgba(0, 255, 136, 0.3);
-}
-
-.key-config-btn:hover {
-    transform: translateY(-1px);
-}
-
-.key-config-btn:active {
-    transform: translateY(0);
-}
-
-.key-icon {
-    width: 24px;
-    height: 24px;
-    transition: color 0.3s ease;
-}
-
-.key-config-btn.unconfigured .key-icon {
-    color: #cf1616;
-}
-
-.key-config-btn.configured .key-icon {
-    color: #00ff88;
-}
 
 .manual-toggle {
     flex: 1;

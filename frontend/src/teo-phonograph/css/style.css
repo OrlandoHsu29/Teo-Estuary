@@ -18,6 +18,9 @@ body {
     padding: 40px 20px;
     gap:20px;
     position: relative;
+    /* 默认关机状态 - 停止所有动画 */
+    animation: none !important;
+    transition: none !important;
 }
 
 /* 音乐粒子效果 */
@@ -37,7 +40,13 @@ body {
     height: 4px;
     background: rgba(0, 136, 255, 0.6);
     border-radius: 50%;
+    /* 默认关机状态 - 不播放动画 */
     opacity: 0;
+    animation: none;
+}
+
+/* 开机状态 - 激活粒子动画 */
+.power-on .music-particle {
     animation: particleFloat 6s linear infinite;
 }
 
@@ -72,6 +81,13 @@ body {
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
+    /* 默认低透明度（关机状态） */
+    opacity: 0.2;
+}
+
+/* 开机状态 - 正常透明度 */
+.power-on .grid-overlay {
+    opacity: 1;
 }
 
 .container {
@@ -92,13 +108,17 @@ body {
     border-radius: 50%;
     pointer-events: none;
     z-index: 0;
-    animation: rippleExpand 12s ease-out infinite;
+    /* 默认关机状态 - 不播放动画 */
+    width: 0 !important;
+    height: 0 !important;
+    animation: none;
 }
 
-.signal-ripple:nth-child(1) { animation-delay: 0s; }
-.signal-ripple:nth-child(2) { animation-delay: 3s; }
-.signal-ripple:nth-child(3) { animation-delay: 6s; }
-.signal-ripple:nth-child(4) { animation-delay: 9s; }
+/* 开机状态 - 激活波纹动画 */
+.power-on .signal-ripple:nth-child(1) { animation: rippleExpand 12s ease-out infinite; animation-delay: 0s; }
+.power-on .signal-ripple:nth-child(2) { animation: rippleExpand 12s ease-out infinite; animation-delay: 3s; }
+.power-on .signal-ripple:nth-child(3) { animation: rippleExpand 12s ease-out infinite; animation-delay: 6s; }
+.power-on .signal-ripple:nth-child(4) { animation: rippleExpand 12s ease-out infinite; animation-delay: 9s; }
 
 @keyframes rippleExpand {
     0% {
@@ -501,9 +521,20 @@ body {
     box-shadow: 0 0 10px #ffcc00, inset 0 1px 3px rgba(255, 255, 255, 0.3);
 }
 
-.play-light .light-indicator.active {
-    background: #0088ff;
-    box-shadow: 0 0 10px #0088ff, inset 0 1px 3px rgba(255, 255, 255, 0.3);
+/* SERVER 灯 - 显示 Emilia 服务状态 */
+.server-light .light-indicator.active {
+    background: #00ff88;
+    box-shadow: 0 0 10px #00ff88, inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.server-light .light-indicator.error {
+    background: #ff3333;
+    box-shadow: 0 0 10px #ff3333, inset 0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.server-light .light-indicator.checking {
+    background: #ffcc00;
+    box-shadow: 0 0 10px #ffcc00, inset 0 1px 3px rgba(255, 255, 255, 0.3);
 }
 
 /* 音量控制条 */
@@ -596,14 +627,27 @@ body {
 .info-label {
     font-family: 'Orbitron', monospace;
     font-size: 9px;
-    color: #4466aa;
     letter-spacing: 1px;
+    /* 默认关机状态 */
+    color: #2a2a3a;
+}
+
+/* 开机状态 - 激活标签颜色 */
+.power-on .info-label {
+    color: #4466aa;
 }
 
 .info-value {
     font-family: 'Orbitron', monospace;
     font-size: 16px;
     font-weight: 700;
+    /* 默认关机状态 */
+    color: #2a3a4a;
+    text-shadow: none;
+}
+
+/* 开机状态 - 激活值颜色 */
+.power-on .info-value {
     color: #0088ff;
     text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
 }
@@ -619,20 +663,34 @@ body {
     font-family: 'Orbitron', monospace;
     font-size: 18px;
     font-weight: 700;
+    /* 默认关机状态 */
+    color: #2a3a4a;
+}
+
+/* 开机状态 - 激活时间颜色 */
+.power-on .time-current,
+.power-on .time-total {
     color: #0088ff;
 }
 
 .time-divider {
-    color: #4466aa;
     font-size: 14px;
+    /* 默认关机状态 */
+    color: #2a2a3a;
+}
+
+/* 开机状态 - 激活分隔符颜色 */
+.power-on .time-divider {
+    color: #4466aa;
 }
 
 .status-text {
-    font-family: 'Orbitron', monospace;
     font-size: 11px;
-    font-weight: 700;
-    color: #6688aa;
+    font-weight: 500;
     letter-spacing: 2px;
+    /* 保持亮色 - 不受关机状态影响 */
+    color: #0088ff;
+    text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
 }
 
 /* 按钮区域 */
@@ -689,7 +747,6 @@ body {
 }
 
 .btn-text {
-    font-family: 'Orbitron', monospace;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -737,60 +794,13 @@ body {
 
 /* 密钥配置按钮 */
 .key-config-btn {
-    width: 50px;
-    height: 50px;
     background: linear-gradient(145deg, #2a2a3a, #1a1a2a);
-    border: 2px solid #3a3a4a;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     box-shadow:
         4px 4px 8px rgba(0, 0, 0, 0.3),
         -2px -2px 6px rgba(255, 255, 255, 0.05),
         inset 1px 1px 2px rgba(255, 255, 255, 0.05);
 }
 
-.key-config-btn.unconfigured {
-    border: 2px solid #cf1616;
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
-        -2px -2px 6px rgba(255, 255, 255, 0.05),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.05);
-}
-
-.key-config-btn.configured {
-    border: 2px solid #00ff88;
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
-        -2px -2px 6px rgba(58, 58, 78, 0.5),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.1),
-        0 0 0 1px rgba(0, 255, 136, 0.3);
-}
-
-.key-config-btn:hover {
-    transform: translateY(-1px);
-}
-
-.key-config-btn:active {
-    transform: translateY(0);
-}
-
-.key-icon {
-    width: 24px;
-    height: 24px;
-    transition: color 0.3s ease;
-}
-
-.key-config-btn.unconfigured .key-icon {
-    color: #cf1616;
-}
-
-.key-config-btn.configured .key-icon {
-    color: #00ff88;
-}
 
 .manual-toggle {
     flex: 1;
@@ -1173,74 +1183,3 @@ body {
     background: linear-gradient(135deg, #00bb66, #00aa55);
     box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
 }
-
-/* 通用透明 Toast 样式 - 适配所有主题 */
-.toast-universal {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 14px 22px;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: #ffffff;
-    border-radius: 10px;
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    opacity: 0;
-    transform: translateX(120%);
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    z-index: 2000;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.3px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    max-width: 400px;
-    word-wrap: break-word;
-}
-
-.toast-universal.show {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-/* 通用 Toast 的不同类型 */
-.toast-universal.success {
-    background: rgba(0, 150, 80, 0.85);
-    border-color: rgba(0, 255, 136, 0.4);
-    box-shadow:
-        0 8px 32px rgba(0, 150, 80, 0.3),
-        0 0 0 1px rgba(0, 255, 136, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.toast-universal.error {
-    background: rgba(200, 50, 50, 0.85);
-    border-color: rgba(255, 80, 80, 0.4);
-    box-shadow:
-        0 8px 32px rgba(200, 50, 50, 0.3),
-        0 0 0 1px rgba(255, 80, 80, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.toast-universal.warning {
-    background: rgba(200, 140, 0, 0.85);
-    border-color: rgba(255, 200, 0, 0.4);
-    box-shadow:
-        0 8px 32px rgba(200, 140, 0, 0.3),
-        0 0 0 1px rgba(255, 200, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.toast-universal.info {
-    background: rgba(50, 100, 200, 0.85);
-    border-color: rgba(80, 150, 255, 0.4);
-    box-shadow:
-        0 8px 32px rgba(50, 100, 200, 0.3),
-        0 0 0 1px rgba(80, 150, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-

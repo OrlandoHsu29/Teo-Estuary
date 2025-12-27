@@ -1,10 +1,13 @@
 /**
- * 密钥管理共享模块
  * 提供统一的密钥配置弹窗和状态管理
  */
 
-// API配置（统一的API地址）
-const API_BASE_URL = 'https://your-domain.com';
+// API配置（根据环境动态选择）
+const API_BASE_URL = window.location.protocol === 'file:' || window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : 'https://your-domain.com';
+
+
 
 // 获取密钥状态
 function getApiKeyStatus() {
@@ -35,24 +38,41 @@ async function validateApiKey() {
         }
     } catch (error) {
         console.warn('无法验证密钥:', error);
-        // 网络错误时返回未知状态，但不阻止使用
-        return { valid: null, exists: true, networkError: true };
+        // 网络错误时返回无效状态，显示红色
+        return { valid: false, exists: true, networkError: true };
     }
 }
 
 // 更新密钥按钮状态
-function updateKeyButtonState() {
+function updateKeyButtonState(validationResult = null) {
     const keyBtn = document.getElementById('keyConfigBtn');
     if (!keyBtn) return;
 
     const savedKey = getApiKeyStatus();
 
-    if (savedKey) {
-        keyBtn.classList.add('configured');
-        keyBtn.classList.remove('unconfigured');
+    // 如果提供了验证结果，根据验证结果设置状态
+    if (validationResult) {
+        if (!validationResult.exists) {
+            // 没有密钥 - 红色
+            keyBtn.classList.remove('configured');
+            keyBtn.classList.add('unconfigured');
+        } else if (validationResult.expired || validationResult.valid === false) {
+            // 密钥已失效或无效 - 红色
+            keyBtn.classList.remove('configured');
+            keyBtn.classList.add('unconfigured');
+        } else if (validationResult.valid === true) {
+            // 密钥有效 - 绿色
+            keyBtn.classList.add('configured');
+            keyBtn.classList.remove('unconfigured');
+        } else {
+            // 网络错误或其他未知状态 - 保持默认暗色（不添加class）
+            keyBtn.classList.remove('configured');
+            keyBtn.classList.remove('unconfigured');
+        }
     } else {
+        // 没有提供验证结果，保持默认暗色（不添加任何class）
         keyBtn.classList.remove('configured');
-        keyBtn.classList.add('unconfigured');
+        keyBtn.classList.remove('unconfigured');
     }
 }
 
@@ -123,13 +143,43 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+  // 通用 Toast 提示函数
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toastUniversal');
+    if (!toast) return;
+
+    // 移除所有类型类
+    toast.classList.remove('success', 'error', 'warning', 'info', 'show');
+
+    // 设置消息内容
+    toast.textContent = message;
+
+    // 添加新类型类
+    toast.classList.add(type);
+
+    // 触发动画
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // 3秒后自动隐藏
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+
 // 导出函数供全局使用
 window.KeyManager = {
+    API_BASE_URL,
+    
     getApiKeyStatus,
     validateApiKey,
     updateKeyButtonState,
     showKeyConfigPrompt,
     closeKeyConfigPrompt,
     confirmGoToKeyConfig,
-    goToKeyConfig
+    goToKeyConfig,
+    
+    showToast
 };
