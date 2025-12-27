@@ -44,7 +44,7 @@ def api_generate_text(key_obj):
 
 
 @text_bp.route('/api/validate-key', methods=['GET'])
-@api_key_required_with_rate_limit(hourly_limit=100, daily_limit=1000)
+@api_key_required_with_rate_limit(hourly_limit=500, daily_limit=5000)
 def api_validate_key(key_obj):
     """验证API密钥是否有效"""
     try:
