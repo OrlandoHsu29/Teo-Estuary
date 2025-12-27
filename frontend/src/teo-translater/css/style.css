@@ -14,7 +14,6 @@ body {
     justify-content: center;
     color: #ffffff;
     overflow-x: hidden;
-    padding: 40px 20px;
     position: relative;
     /* 平滑过渡 */
     transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
@@ -80,8 +79,9 @@ body {
     flex-direction: column;
     gap: 30px;
     align-items: center;
-    max-width: 1200px;
     width: 100%;
+    max-width: 1200px;
+    padding: 100px 15px 15px 15px;
 }
 
 /* 寻呼机容器 */
@@ -89,11 +89,13 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
+    width: 100%;
+    max-width: 780px;
 }
 
 /* 寻呼机主体 */
 .pager-body {
-    width: 780px;
+    width: 100%;
     background: linear-gradient(145deg, #3a3a3e, #2a2a2e);
     border-radius: 20px;
     position: relative;
@@ -675,16 +677,11 @@ body {
 /* 响应式设计 */
 @media (max-width: 768px) {
     .container {
-        flex-direction: column;
-        gap: 30px;
-        padding: 15px;
+        padding: 100px 15px 15px 15px;
     }
 
     .pager-body {
-        width: 100%;
-        max-width: 450px;
         padding: 20px;
-        
     }
 
     .manual-container {
@@ -732,8 +729,11 @@ body {
 }
 
 @media (max-width: 480px) {
+    .container {
+        padding: 100px 10px 10px 10px;
+    }
+
     .pager-body {
-        max-width: 100%;
         padding: 15px;
     }
 
