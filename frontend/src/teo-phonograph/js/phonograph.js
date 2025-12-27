@@ -42,9 +42,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 初始化 DOM 元素
     initializeElements();
 
-    // 创建背景动画
-    createBackgroundAnimations();
-
     // 绑定事件
     bindEvents();
 
@@ -117,21 +114,6 @@ function initializeElements() {
     // 设置播放按钮默认文本
     if (elements.playBtnText) {
         elements.playBtnText.textContent = '播放';
-    }
-}
-
-function createBackgroundAnimations() {
-    // 创建漂浮粒子
-    const particlesContainer = document.getElementById('musicParticles');
-    const particleCount = 12;
-
-    for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'music-particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDelay = (Math.random() * 6) + 's';
-        particle.style.animationDuration = (4 + Math.random() * 4) + 's';
-        particlesContainer.appendChild(particle);
     }
 }
 
