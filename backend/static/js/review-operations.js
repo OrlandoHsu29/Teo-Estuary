@@ -422,81 +422,99 @@ async function approveCurrent() {
         autoMergeAllTextsOnApprove();
     }
 
-    // 短暂延迟后同时开始进度条动画
-    setTimeout(async () => {
-        // 显示进度条动画
-        showProgressAnimation('approved');
-        // 更新内容（如果需要）然后更新状态
-        try {
-            // 使用可能已经合并的最新数据
-            const teochewText = record.teochew_text || record.mandarin_text;
+    // 显示进度条动画
+    showProgressAnimation('approved');
 
-            const response = await fetch(`/api/recording/${record.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    status: 'approved',
-                    teochew_text: teochewText
-                })
-            });
+    // 使用可能已经合并的最新数据
+    const teochewText = record.teochew_text || record.mandarin_text;
 
+    // 用于标记API请求是否成功
+    let apiSuccess = false;
+    let apiError = null;
+
+    // 并行执行：API请求 + 300ms延迟
+    // 1. 启动API请求（异步，不等待）
+    const apiPromise = fetch(`/api/recording/${record.id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            status: 'approved',
+            teochew_text: teochewText
+        })
+    })
+    .then(async response => {
         // 检查响应类型
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
             console.error('API返回HTML而非JSON:', text.substring(0, 200));
-            showToast('服务器错误，请检查API配置', 'error');
-            return;
+            throw new Error('服务器错误，请检查API配置');
         }
 
         const data = await response.json();
-
-        if (data.success) {
-                // 显示绿色通过动画（与气泡动画同时开始）
-                showProgressAnimation('approved');
-
-                // 等待气泡动画完成后立即移除记录（200ms后）
-                setTimeout(() => {
-                    // 从本地数据中移除已审核的记录
-                    recordingsData.splice(currentRecordIndex, 1);
-
-                    // 注意：currentRecordIndex保持不变，因为数组删除后下一个元素自动补位到当前索引
-                    // absoluteRecordIndex也保持不变，因为我们在全局位置中的位置没有变化
-
-                // 更新当前索引
-                if (recordingsData.length === 0) {
-                    // 没有更多记录，重新加载
-                    loadRecordings();
-                } else if (currentRecordIndex >= recordingsData.length) {
-                    // 当前索引超出范围，回到最后一条
-                    currentRecordIndex = recordingsData.length - 1;
-                    displayCurrentRecord();
-                    updateNavigationButtons();
-                } else {
-                    // 显示当前索引的记录
-                    displayCurrentRecord();
-                    updateNavigationButtons();
-                }
-
-                // 立即更新当前筛选状态的总数和计数器
-                if (window.totalDataCount && window.totalDataCount > 0) {
-                    window.totalDataCount--;
-                }
-                updateReviewCounter(); // 立即更新计数器显示
-
-                // 异步更新统计面板（不影响当前的计数器显示）
-                loadStats();
-            }); // 立即执行，不等待进度条动画
-            } else {
-                showToast(data.error || '审核失败', 'error');
-            }
-        } catch (error) {
-            console.error('审核失败:', error);
-            showToast('审核失败: ' + error.message, 'error');
+        if (!data.success) {
+            throw new Error(data.error || '审核失败');
         }
-    }, 0); // 立即启动动画
+
+        apiSuccess = true;
+        return data;
+    })
+    .catch(error => {
+        apiError = error;
+        console.error('审核失败:', error);
+        apiSuccess = false;
+    });
+
+    // 2. 启动300ms定时器（与API请求并行）
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // 3. 300ms到了，等待API请求完成（如果还没完成的话）
+    await apiPromise;
+
+    // 4. 检查API结果并切页
+    if (apiSuccess) {
+        // 从本地数据中移除已审核的记录
+        recordingsData.splice(currentRecordIndex, 1);
+
+        // 注意：currentRecordIndex和absoluteRecordIndex保持不变
+        // 因为数组删除后下一个元素自动补位到当前索引位置
+
+        // 更新当前索引
+        if (recordingsData.length === 0) {
+            // 没有更多记录，重新加载
+            loadRecordings();
+        } else if (currentRecordIndex >= recordingsData.length) {
+            // 当前索引超出范围，回到最后一条
+            currentRecordIndex = recordingsData.length - 1;
+            // 同步更新absoluteRecordIndex
+            absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
+            displayCurrentRecord();
+            updateNavigationButtons();
+        } else {
+            // 显示当前索引的记录
+            displayCurrentRecord();
+            updateNavigationButtons();
+        }
+
+        // 立即更新当前筛选状态的总数和计数器
+        if (window.totalDataCount && window.totalDataCount > 0) {
+            window.totalDataCount--;
+            // 如果删除的是最后一条，需要调整absoluteRecordIndex
+            if (absoluteRecordIndex >= window.totalDataCount) {
+                absoluteRecordIndex = window.totalDataCount - 1;
+            }
+        }
+        updateReviewCounter(); // 立即更新计数器显示
+        updateNavigationButtons(); // 再次更新导航按钮状态
+
+        // 异步更新统计面板（不影响当前的计数器显示）
+        loadStats();
+    } else {
+        // API失败，显示错误
+        showToast(apiError?.message || '审核失败', 'error');
+    }
 }
 
 // 审核拒绝
@@ -543,8 +561,8 @@ async function rejectCurrent() {
             // 从本地数据中移除已审核的记录
             recordingsData.splice(currentRecordIndex, 1);
 
-            // 注意：currentRecordIndex保持不变，因为数组删除后下一个元素自动补位到当前索引
-            // absoluteRecordIndex也保持不变，因为我们在全局位置中的位置没有变化
+            // 注意：currentRecordIndex和absoluteRecordIndex保持不变
+            // 因为数组删除后下一个元素自动补位到当前索引位置
 
             // 更新当前索引
             if (recordingsData.length === 0) {
@@ -553,6 +571,8 @@ async function rejectCurrent() {
             } else if (currentRecordIndex >= recordingsData.length) {
                 // 当前索引超出范围，回到最后一条
                 currentRecordIndex = recordingsData.length - 1;
+                // 同步更新absoluteRecordIndex
+                absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
                 displayCurrentRecord();
                 updateNavigationButtons();
             } else {
@@ -564,8 +584,13 @@ async function rejectCurrent() {
             // 立即更新当前筛选状态的总数和计数器
             if (window.totalDataCount && window.totalDataCount > 0) {
                 window.totalDataCount--;
+                // 如果删除的是最后一条，需要调整absoluteRecordIndex
+                if (absoluteRecordIndex >= window.totalDataCount) {
+                    absoluteRecordIndex = window.totalDataCount - 1;
+                }
             }
             updateReviewCounter(); // 立即更新计数器显示
+            updateNavigationButtons(); // 再次更新导航按钮状态
 
             // 异步更新统计面板（不影响当前的计数器显示）
             loadStats();
@@ -647,20 +672,39 @@ async function deleteFromList(id, isCurrent) {
         if (data.success) {
             showToast('删除成功', 'success');
             if (isCurrent && currentView === 'device') {
+                // 从本地数据中移除已删除的记录
                 recordingsData.splice(currentRecordIndex, 1);
 
-                // 注意：currentRecordIndex和absoluteRecordIndex都保持不变
-                // 因为删除后后面的元素自动补位到当前索引位置
+                // 注意：currentRecordIndex和absoluteRecordIndex保持不变
+                // 因为数组删除后下一个元素自动补位到当前索引位置
 
+                // 更新当前索引
                 if (recordingsData.length === 0) {
+                    // 没有更多记录，重新加载
                     loadRecordings();
                 } else if (currentRecordIndex >= recordingsData.length) {
+                    // 当前索引超出范围，回到最后一条
                     currentRecordIndex = recordingsData.length - 1;
+                    // 同步更新absoluteRecordIndex
+                    absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
                     displayCurrentRecord();
+                    updateNavigationButtons();
                 } else {
+                    // 显示当前索引的记录
                     displayCurrentRecord();
+                    updateNavigationButtons();
                 }
-                updateNavigationButtons();
+
+                // 立即更新当前筛选状态的总数和计数器
+                if (window.totalDataCount && window.totalDataCount > 0) {
+                    window.totalDataCount--;
+                    // 如果删除的是最后一条，需要调整absoluteRecordIndex
+                    if (absoluteRecordIndex >= window.totalDataCount) {
+                        absoluteRecordIndex = window.totalDataCount - 1;
+                    }
+                }
+                updateReviewCounter(); // 立即更新计数器显示
+                updateNavigationButtons(); // 再次更新导航按钮状态
             }
             loadListView();
             loadStats();

@@ -154,14 +154,39 @@ function deleteCurrentRecording() {
                 // 从数组中移除
                 recordingsData.splice(currentRecordIndex, 1);
 
+                // 注意：currentRecordIndex和absoluteRecordIndex保持不变
+                // 因为数组删除后下一个元素自动补位到当前索引位置
+
                 // 调整索引
-                if (currentRecordIndex >= recordingsData.length && currentRecordIndex > 0) {
-                    currentRecordIndex--;
+                if (recordingsData.length === 0) {
+                    // 没有更多记录，重新加载
+                    loadRecordings();
+                } else if (currentRecordIndex >= recordingsData.length) {
+                    // 当前索引超出范围，回到最后一条
+                    currentRecordIndex = recordingsData.length - 1;
+                    // 同步更新absoluteRecordIndex
+                    absoluteRecordIndex = (windowStartPage - 1) * 50 + currentRecordIndex;
+                    displayCurrentRecord();
+                    updateNavigationButtons();
+                } else {
+                    // 显示当前索引的记录
+                    displayCurrentRecord();
+                    updateNavigationButtons();
                 }
 
-                // 刷新显示
-                displayCurrentRecord();
-                updateNavigationButtons();
+                // 立即更新当前筛选状态的总数和计数器
+                if (window.totalDataCount && window.totalDataCount > 0) {
+                    window.totalDataCount--;
+                    // 如果删除的是最后一条，需要调整absoluteRecordIndex
+                    if (absoluteRecordIndex >= window.totalDataCount) {
+                        absoluteRecordIndex = window.totalDataCount - 1;
+                    }
+                }
+                updateReviewCounter(); // 立即更新计数器显示
+                updateNavigationButtons(); // 再次更新导航按钮状态
+
+                // 异步更新统计面板（不影响当前的计数器显示）
+                loadStats();
             } else {
                 showToast('删除失败: ' + (data.error || '未知错误'), 'error');
             }

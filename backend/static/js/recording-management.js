@@ -622,10 +622,31 @@ function createWordButton(word, index) {
         button.dataset.isVariant = 'true';
         button.dataset.baseWord = baseWord;
         button.dataset.currentVariant = 1; // 当前变体编号
-        // 为多变体词添加点击事件（切换变体）
+
+        // 为变体词添加点击事件（切换变体），但延迟执行以等待双击
+        let clickTimer = null;
         button.addEventListener('click', (e) => {
             e.stopPropagation();
-            handleVariantClick(button);
+            // 如果已经有定时器，说明在等待双击，不执行单击
+            if (clickTimer) return;
+
+            // 延迟300ms执行单击，等待双击
+            clickTimer = setTimeout(() => {
+                handleVariantClick(button);
+                clickTimer = null;
+            }, 300);
+        });
+
+        // 双击进入编辑模式（针对变体词）
+        button.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            // 取消单击事件
+            if (clickTimer) {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+            }
+            // 进入编辑模式
+            handleWordEdit(button);
         });
     } else if (word.endsWith('#')) {
         button.classList.add('completed');
@@ -647,11 +668,13 @@ function createWordButton(word, index) {
         });
     }
 
-    // 双击进入编辑模式（针对所有词）
-    button.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        handleWordEdit(button);
-    });
+    // 双击进入编辑模式（针对非变体词）
+    if (!isVariant) {
+        button.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            handleWordEdit(button);
+        });
+    }
 
     return button;
 }
@@ -1076,12 +1099,6 @@ function autoMergeAllTextsOnApprove() {
 
             // 异步更新数据库（不影响动画）
             updateRecordingOriginalText(record.id, mergedText);
-
-            // 短暂延迟后清理动画类，确保动画完成
-            setTimeout(() => {
-                originalContainer.classList.remove('merging');
-                wordButtons.forEach(btn => btn.classList.remove('merging'));
-            }, 350); // 气泡动画完成后清理
         }
     }
 
@@ -1104,12 +1121,6 @@ function autoMergeAllTextsOnApprove() {
 
             // 异步更新数据库（不影响动画）
             updateRecordingContent(record.id, mergedText);
-
-            // 短暂延迟后清理动画类，确保动画完成
-            setTimeout(() => {
-                convertedContainer.classList.remove('merging');
-                wordButtons.forEach(btn => btn.classList.remove('merging'));
-            }, 350); // 气泡动画完成后清理
         }
     }
 
