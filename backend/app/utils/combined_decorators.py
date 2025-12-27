@@ -15,10 +15,14 @@ def api_key_required_with_rate_limit(hourly_limit=300, daily_limit=750):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            from flask import request
             from app import db
 
+            # 跳过 OPTIONS 请求（CORS 预检），让 Flask-CORS 自动处理
+            if request.method == 'OPTIONS':
+                return f(*args, **kwargs)
+
             # 1. 验证API密钥
-            from flask import request
             key_obj, error = verify_api_key(request)
             if error:
                 return jsonify({'success': False, 'error': error['error']}), 401

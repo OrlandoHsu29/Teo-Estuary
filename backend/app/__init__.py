@@ -1,5 +1,5 @@
 """应用初始化模块"""
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_limiter import Limiter
@@ -107,7 +107,8 @@ def create_app():
         key_func=get_remote_address,
         default_limits=default_limits,
         storage_uri=rate_limit_storage,
-        headers_enabled=True
+        headers_enabled=True,
+        exempt_when=lambda: request.method == 'OPTIONS'
     )
 
     # 将 limiter 附加到 app 对象，以便其他模块可以使用
