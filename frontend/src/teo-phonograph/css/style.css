@@ -194,7 +194,7 @@ body {
 /* 黑胶唱片 */
 .vinyl-record {
     width: calc(100% - 40px);
-    height: calc(100% - 40px);
+    aspect-ratio: 1 / 1; /* 使用 aspect-ratio 保持正方形 */
     position: absolute;
     top: 50%;
     left: 50%;
@@ -215,6 +215,11 @@ body {
 
 .vinyl-record:active {
     cursor: grabbing;
+}
+
+.vinyl-record.dragging {
+    /* 拖拽时禁用过渡效果，使响应更灵敏 */
+    transition: none;
 }
 
 .vinyl-record:has(~ .drag-hint) {
@@ -274,20 +279,6 @@ body {
         transform: translateY(10px);
         opacity: 1;
     }
-}
-
-.vinyl-record {
-    /* 动画由 JavaScript 手动控制 */
-}
-
-.vinyl-record.dragging {
-    /* 拖拽时禁用过渡效果，使响应更灵敏 */
-    transition: none;
-}
-
-@keyframes vinylSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
 }
 
 .vinyl-grooves {

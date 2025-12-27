@@ -21,13 +21,20 @@ async function validateApiKey() {
         return { valid: false, exists: false };
     }
 
+    // 创建超时控制器
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/validate-key`, {
             method: 'GET',
             headers: {
                 'X-API-Key': apiKey
-            }
+            },
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
             return { valid: true, exists: true };
@@ -37,7 +44,16 @@ async function validateApiKey() {
             return { valid: false, exists: true };
         }
     } catch (error) {
+        clearTimeout(timeoutId);
         console.warn('无法验证密钥:', error);
+
+        // 判断是超时还是其他网络错误
+        if (error.name === 'AbortError') {
+            showToast('连接超时，无法连接到服务器', 'error');
+        } else {
+            showToast('网络错误，无法连接到服务器', 'error');
+        }
+
         // 网络错误时返回无效状态，显示红色
         return { valid: false, exists: true, networkError: true };
     }
@@ -48,16 +64,14 @@ function updateKeyButtonState(validationResult = null) {
     const keyBtn = document.getElementById('keyConfigBtn');
     if (!keyBtn) return;
 
-    const savedKey = getApiKeyStatus();
-
     // 如果提供了验证结果，根据验证结果设置状态
     if (validationResult) {
         if (!validationResult.exists) {
             // 没有密钥 - 红色
             keyBtn.classList.remove('configured');
             keyBtn.classList.add('unconfigured');
-        } else if (validationResult.expired || validationResult.valid === false) {
-            // 密钥已失效或无效 - 红色
+        } else if (validationResult.expired || validationResult.valid === false || validationResult.networkError) {
+            // 密钥已失效、无效或网络错误 - 红色
             keyBtn.classList.remove('configured');
             keyBtn.classList.add('unconfigured');
         } else if (validationResult.valid === true) {
@@ -65,14 +79,29 @@ function updateKeyButtonState(validationResult = null) {
             keyBtn.classList.add('configured');
             keyBtn.classList.remove('unconfigured');
         } else {
-            // 网络错误或其他未知状态 - 保持默认暗色（不添加class）
+            // 其他未知状态 - 检查本地是否有密钥
+            const savedKey = getApiKeyStatus();
+            if (!savedKey) {
+                keyBtn.classList.remove('configured');
+                keyBtn.classList.add('unconfigured');
+            } else {
+                // 有密钥但验证出错，保持默认暗色
+                keyBtn.classList.remove('configured');
+                keyBtn.classList.remove('unconfigured');
+            }
+        }
+    } else {
+        // 没有提供验证结果，检查本地是否有密钥
+        const savedKey = getApiKeyStatus();
+        if (!savedKey) {
+            // 没有密钥 - 红色
+            keyBtn.classList.remove('configured');
+            keyBtn.classList.add('unconfigured');
+        } else {
+            // 有密钥但还未验证，保持默认暗色
             keyBtn.classList.remove('configured');
             keyBtn.classList.remove('unconfigured');
         }
-    } else {
-        // 没有提供验证结果，保持默认暗色（不添加任何class）
-        keyBtn.classList.remove('configured');
-        keyBtn.classList.remove('unconfigured');
     }
 }
 

@@ -302,8 +302,8 @@ function animateVinyl() {
     const rotationSpeed = 180; // 度/秒
     currentRotation += (rotationSpeed * deltaTime) / 1000;
 
-    // 应用旋转
-    elements.vinylRecord.style.transform = `rotate(${currentRotation}deg)`;
+    // 应用旋转（保持居中）
+    elements.vinylRecord.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
 
     // 继续动画
     animationId = requestAnimationFrame(animateVinyl);
@@ -340,7 +340,7 @@ function handleAudioEnded() {
         audioElement.currentTime = 0;
         elements.currentTime.textContent = '0:00';
         currentRotation = 0;
-        elements.vinylRecord.style.transform = 'rotate(0deg)';
+        elements.vinylRecord.style.transform = 'translate(-50%, -50%) rotate(0deg)';
     }
 }
 
@@ -521,7 +521,7 @@ function handleRotateMove(event) {
     // 计算新角度
     const newRotation = startRotation + angleDelta;
     currentRotation = newRotation;
-    elements.vinylRecord.style.transform = `rotate(${newRotation}deg)`;
+    elements.vinylRecord.style.transform = `translate(-50%, -50%) rotate(${newRotation}deg)`;
 
     // 将角度转换为播放进度（0-1）
     let normalizedRotation = newRotation % 360;
