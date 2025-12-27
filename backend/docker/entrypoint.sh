@@ -25,9 +25,7 @@ else
                   --workers ${GUNICORN_WORKERS:-2} \
                   --threads ${GUNICORN_THREADS:-4} \
                   --timeout ${GUNICORN_TIMEOUT:-120} \
-                  --access-logfile /app/logs/gunicorn_access.log \
-                  --error-logfile /app/logs/gunicorn_error.log \
                   --log-level ${GUNICORN_LOG_LEVEL:-info} \
-                  --reload \
+                  --capture-output \
                   run:app
 fi

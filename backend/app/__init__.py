@@ -107,8 +107,7 @@ def create_app():
         key_func=get_remote_address,
         default_limits=default_limits,
         storage_uri=rate_limit_storage,
-        headers_enabled=True,
-        exempt_when=lambda: request.method == 'OPTIONS'
+        headers_enabled=True
     )
 
     # 将 limiter 附加到 app 对象，以便其他模块可以使用
@@ -133,9 +132,11 @@ def create_app():
 
     # 豁免特定路由的速率限制
     # Emilia 健康检查路由和统计路由会被前端频繁调用，需要豁免
+    # validate-key 接口有自己的API密钥限流机制，不需要Flask-Limiter再限制
     # 注意：蓝图路由注册后，视图函数名格式为 {蓝图名}.{函数名}
     limiter.exempt(app.view_functions['recordings.teo_emilia_health'])
     limiter.exempt(app.view_functions['recordings.api_stats'])
+    limiter.exempt(app.view_functions['text.api_validate_key'])
 
     # 注册错误处理器
     register_error_handlers(app)

@@ -47,7 +47,11 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 # 复制数据库初始化脚本和启动脚本
 COPY docker/init_db.py /tmp/init_db.py
 COPY docker/entrypoint.sh /app/docker/entrypoint.sh
-RUN chmod +x /app/docker/entrypoint.sh
+
+# 转换换行符（CRLF -> LF）并设置执行权限
+RUN sed -i 's/\r$//' /app/docker/entrypoint.sh && \
+    chmod +x /app/docker/entrypoint.sh && \
+    sed -i 's/\r$//' /tmp/init_db.py
 
 # 设置entrypoint
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
