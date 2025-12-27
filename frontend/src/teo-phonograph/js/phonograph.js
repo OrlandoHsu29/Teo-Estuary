@@ -70,12 +70,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!hasKey) {
                 window.KeyManager.updateKeyButtonState({ exists: false });
             } else {
-                // 有密钥但验证出错（可能是网络错误），先设为有效，后续使用时再验证
-                window.KeyManager.updateKeyButtonState({ valid: true, exists: true });
-                setPowerState(true);
-                // 开机时检查Emilia服务健康状态
-                elements.statusText.textContent = '正在查询服务启动状态...';
-                checkEmiliaHealth();
+                // 有密钥但验证出错（可能是网络错误或密钥失效）- 显示红色
+                window.KeyManager.updateKeyButtonState({ valid: false, exists: true, networkError: true });
             }
         }
     }
@@ -368,9 +364,12 @@ async function handleSubmit() {
             body: formData
         });
 
-        // 处理401错误
+        // 处理401/403未授权错误
+        if (KeyManager && typeof KeyManager.handleApiResponse === 'function') {
+            await KeyManager.handleApiResponse(response);
+        }
+
         if (response.status === 401 || response.status === 403) {
-            KeyManager.updateKeyButtonState();
             elements.statusText.textContent = '密钥已失效';
             elements.submitBtn.disabled = false;
             showToast('密钥已失效，请重新配置', 'error');

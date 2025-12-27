@@ -492,9 +492,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!hasKey) {
                 window.KeyManager.updateKeyButtonState({ exists: false });
             } else {
-                // 有密钥但验证出错（可能是网络错误），先设为有效，后续使用时再验证
-                window.KeyManager.updateKeyButtonState({ valid: true, exists: true });
-                window.translator.setPowerState(true);
+                // 有密钥但验证出错（可能是网络错误或密钥失效）- 显示红色
+                window.KeyManager.updateKeyButtonState({ valid: false, exists: true, networkError: true });
             }
         }
     }

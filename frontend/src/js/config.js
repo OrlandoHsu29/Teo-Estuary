@@ -85,7 +85,7 @@ function updateKeyButtonState(validationResult = null) {
                 keyBtn.classList.remove('configured');
                 keyBtn.classList.add('unconfigured');
             } else {
-                // 有密钥但验证出错，保持默认暗色
+                // 有密钥但状态未知 - 保持默认暗色
                 keyBtn.classList.remove('configured');
                 keyBtn.classList.remove('unconfigured');
             }
@@ -98,7 +98,7 @@ function updateKeyButtonState(validationResult = null) {
             keyBtn.classList.remove('configured');
             keyBtn.classList.add('unconfigured');
         } else {
-            // 有密钥但还未验证，保持默认暗色
+            // 有密钥但还未验证 - 保持默认暗色
             keyBtn.classList.remove('configured');
             keyBtn.classList.remove('unconfigured');
         }
@@ -198,10 +198,20 @@ function showToast(message, type = 'info') {
 }
 
 
+// 处理API响应中的401/403错误，自动更新密钥按钮状态
+async function handleApiResponse(response) {
+    // 处理401/403未授权错误
+    if (response.status === 401 || response.status === 403) {
+        // 密钥已失效，更新按钮状态为红色
+        updateKeyButtonState({ valid: false, exists: true, expired: true });
+    }
+    return response;
+}
+
 // 导出函数供全局使用
 window.KeyManager = {
     API_BASE_URL,
-    
+
     getApiKeyStatus,
     validateApiKey,
     updateKeyButtonState,
@@ -209,6 +219,7 @@ window.KeyManager = {
     closeKeyConfigPrompt,
     confirmGoToKeyConfig,
     goToKeyConfig,
-    
+    handleApiResponse,
+
     showToast
 };

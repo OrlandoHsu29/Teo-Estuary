@@ -111,6 +111,11 @@ class DialectRecorder {
                 }
             });
 
+            // 处理401/403未授权错误
+            if (window.KeyManager && typeof window.KeyManager.handleApiResponse === 'function') {
+                await window.KeyManager.handleApiResponse(response);
+            }
+
             if (!response.ok) {
                 // 根据HTTP状态码处理不同错误
                 if (response.status === 401 || response.status === 403) {
@@ -136,13 +141,8 @@ class DialectRecorder {
             showToast(errorMessage, 'error');
             this.updateStatus(errorMessage, 'error');
             this.elements.textDisplay.textContent = ''; // 清空显示屏
+            // 注意：密钥失效的状态已经在handleApiResponse中处理，无需重复更新
 
-            // 如果是密钥失效，更新按钮状态
-            if (errorMessage.includes('密钥已失效')) {
-                if (window.KeyManager) {
-                    window.KeyManager.updateKeyButtonState();
-                }
-            }
         } finally {
             // 恢复按钮状态
             this.setAllButtonsDisabled(false);
@@ -620,6 +620,11 @@ class DialectRecorder {
                 body: formData,
                 signal: this.uploadAbortController.signal
             });
+
+            // 处理401/403未授权错误
+            if (window.KeyManager && typeof window.KeyManager.handleApiResponse === 'function') {
+                await window.KeyManager.handleApiResponse(response);
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();
