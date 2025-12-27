@@ -6,6 +6,12 @@
     <title>管理员登录 - TEO RECORDER</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <style>
+        
+        @font-face {
+            font-family: 'DottedSongtiSquareRegular';
+            src: url('../static/fonts/dotted_songti_subset/DottedSongtiSquareRegular.woff') format('woff');
+        }
+        
         body {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
@@ -14,10 +20,6 @@
             font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        @font-face {
-            font-family: 'DottedSongtiSquareRegular';
-            src: url('../fonts/dotted_songti_v_0_1/DottedSongtiSquareRegular.otf') format('opentype');
-        }
 
         .login-container {
             display: flex;
