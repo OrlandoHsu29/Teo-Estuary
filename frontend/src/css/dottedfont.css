@@ -1,8 +1,7 @@
 /* 本地字体定义 - 优化加载 */
 @font-face {
     font-family: 'DottedSongtiSquareRegular';
-    src: url('../fonts/DottedSongtiSquareRegular.woff2') format('woff2'),
-         url('../fonts/DottedSongtiSquareRegular.woff') format('woff');
+    src: url('../fonts/DottedSongtiSquareRegular.woff2') format('woff2');
     font-display: swap; /* 优化字体加载体验 */
     font-weight: normal;
     font-style: normal;
