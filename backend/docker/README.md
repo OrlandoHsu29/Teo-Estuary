@@ -14,6 +14,27 @@
 - Docker
 - Docker Compose
 
+### 1.5 首次部署（数据迁移）
+
+如果你之前有本地数据，需要先迁移到Docker目录：
+
+```bash
+cd backend/docker
+
+# 创建数据目录
+mkdir -p instance data/data data/logs
+
+# 如果你有旧的 dialect_recorder.db，容器启动后会自动创建新的 recorder_manager.db
+# 并导入旧数据。或者你可以手动迁移：
+# (注意：这需要手动操作，建议直接启动新容器让系统自动创建表)
+```
+
+**注意**：
+- 现在使用统一的 `recorder_manager.db` 数据库
+- 旧的 `dialect_recorder.db` 和 `teo_g2p.db` 已合并
+- 容器首次启动时会自动创建新数据库和所有表
+- 如需迁移旧数据，请使用数据库迁移工具
+
 ### 2. 配置环境变量
 
 复制环境变量配置文件：
@@ -62,11 +83,22 @@ curl http://localhost:5001/health
 
 - **端口**: 5001:5000 (主机:容器)
 - **健康检查**: 每30秒检查一次
-- **挂载卷**: 数据目录持久化
-  - `./data/data:/app/data` - 音频文件
-  - `./data/logs:/app/logs` - 日志文件
-  - `./data/db:/app/instance` - 数据库文件
+- **挂载卷**: 数据目录挂载到宿主机，便于访问和备份
+  - `./instance:/app/instance` - 统一数据库文件
+    - `recorder_manager.db` - 主数据库（包含所有表：录音、API密钥、潮州话翻译字典等）
+  - `./data/data:/app/data` - 用户上传的音频文件
+  - `./data/logs:/app/logs` - 应用日志文件
 - **依赖**: redis服务
+- **自动初始化**: 启动时自动创建数据库表（如果不存在）
+
+**数据库说明**：
+- 使用统一的 `recorder_manager.db` 数据库文件
+- 包含以下表：
+  - `recording` - 录音记录
+  - `api_key` - API密钥
+  - `translation_dict` - 潮州话翻译字典
+  - `change_log` - 数据库修改日志
+- 简化了部署和备份流程
 
 ### Redis服务 (redis)
 
@@ -143,17 +175,32 @@ SECRET_KEY=$(openssl rand -hex 32)
 # 设置强管理员密码
 ADMIN_PASSWORD=your-complex-password-here
 
-# 关闭调试模式
+# 关闭调试模式（使用 Gunicorn）
 DEBUG=False
 ```
 
-### 2. 性能优化
+### 2. 运行模式
+
+项目根据 `DEBUG` 环境变量自动选择运行模式：
+
+- **开发模式** (`DEBUG=True`): 使用 Flask 开发服务器，支持热重载
+- **生产模式** (`DEBUG=False`): 使用 Gunicorn WSGI 服务器，性能更好
+
+Gunicorn 配置（可通过环境变量调整）：
+```env
+GUNICORN_WORKERS=2        # 工作进程数
+GUNICORN_THREADS=4        # 每个进程的线程数
+GUNICORN_TIMEOUT=120      # 请求超时时间（秒）
+GUNICORN_LOG_LEVEL=info   # 日志级别
+```
+
+### 3. 性能优化
 
 - **使用Redis存储**: 相比内存存储，Redis支持多实例共享和持久化
 - **监控资源使用**: 监控CPU、内存和Redis连接数
 - **日志轮转**: 配置日志轮转避免磁盘空间不足
 
-### 3. 监控
+### 4. 监控
 
 检查服务状态：
 ```bash
@@ -167,16 +214,32 @@ docker-compose logs teorecord-backend
 docker-compose logs redis
 ```
 
-### 4. 备份
+### 5. 备份
 
-备份重要数据：
+由于数据目录已挂载到宿主机，备份非常简单：
+
 ```bash
-# 备份数据库文件
-docker cp teorecord-backend:/app/instance/dialect_recorder.db ./backup/
+# 进入 docker 目录
+cd backend/docker
 
-# 备份Redis数据
+# 备份统一数据库文件（包含所有数据）
+cp instance/recorder_manager.db ./backup/recorder_manager-$(date +%Y%m%d).db
+
+# 备份用户上传的音频文件
+tar -czf ./backup/data-$(date +%Y%m%d).tar.gz data/data/
+
+# 备份Redis数据（Redis仍使用Docker卷）
 docker exec teorecord-redis redis-cli BGSAVE
-docker cp teorecord-redis:/data ./redis-backup/
+docker cp teorecord-redis:/data/dump.rdb ./backup/
+```
+
+**恢复数据**：
+```bash
+# 恢复数据库
+cp ./backup/recorder_manager-20231226.db instance/recorder_manager.db
+
+# 恢复音频文件
+tar -xzf ./backup/data-20231226.tar.gz
 ```
 
 ## 故障排除
@@ -256,10 +319,23 @@ curl http://localhost:5001/health
 
 ## 数据持久化
 
-- **数据库文件**: `./data/db/dialect_recorder.db`
+- **数据库文件**: Docker卷 `db_data` (自动初始化表结构)
 - **日志文件**: `./data/logs/app.log`
 - **音频文件**: `./data/data/uploads/`, `./data/data/good/`, `./data/data/bad/`
 - **Redis数据**: Docker卷 `redis_data`
+
+### 备份数据库
+
+```bash
+# 查看数据库卷
+docker volume inspect docker_db_data
+
+# 从容器备份数据库文件
+docker cp teorecord-backend:/app/instance/dialect_recorder.db ./backup/
+
+# 备份整个卷
+docker run --rm -v docker_db_data:/data -v $(pwd):/backup alpine tar czf /backup/db_backup.tar.gz /data
+```
 
 ## 环境变量参考
 
