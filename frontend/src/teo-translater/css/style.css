@@ -16,9 +16,8 @@ body {
     overflow-x: hidden;
     padding: 40px 20px;
     position: relative;
-    /* 默认关机状态 - 停止所有动画 */
-    animation: none !important;
-    transition: none !important;
+    /* 平滑过渡 */
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 数据包传输动画 */
@@ -34,6 +33,7 @@ body {
     /* 默认关机状态 - 不播放动画 */
     animation: none;
     opacity: 0;
+    transition: opacity 0.6s ease;
 }
 
 /* 开机状态 - 激活数据包动画 */
@@ -71,13 +71,7 @@ body {
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
-    /* 默认低透明度（关机状态） */
-    opacity: 0.2;
-}
-
-/* 开机状态 - 正常透明度 */
-.power-on .grid-overlay {
-    opacity: 1;
+    opacity: 0.85;
 }
 
 .container {
@@ -153,7 +147,7 @@ body {
 /* 返回按钮 - 设备上方居中 */
 .back-btn {
     position: absolute;
-    bottom: calc(100% + 15px);
+    bottom: calc(100% + 25px);
     left: 50%;
     transform: translateX(-50%);
     width: 40px;
@@ -220,6 +214,7 @@ body {
     /* 默认关机状态 - 屏幕暗 */
     background: #2a2a2a;
     color: #4a4a4a;
+    transition: background 0.6s ease, color 0.6s ease;
 }
 
 /* 开机状态 - 激活屏幕 */
@@ -294,6 +289,7 @@ body {
     /* 默认关机状态 - 隐藏 */
     visibility: hidden;
     opacity: 0;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 
 /* 开机状态 - 显示字符计数器 */
@@ -315,6 +311,7 @@ body {
     /* 默认关机状态 - 不播放动画 */
     animation: none;
     opacity: 0.3;
+    transition: opacity 0.6s ease;
 }
 
 /* 开机状态 - 激活光标闪烁 */
@@ -349,7 +346,7 @@ body {
 
 .input-field {
     width: 100%;
-    background: #2a2a2a;
+    background: #1f1f1f;
     border: none;
     border-radius: 6px;
     padding: 10px;
@@ -363,7 +360,6 @@ body {
 
 .input-field:focus {
     outline: none;
-    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(154, 205, 50, 0.4);
 }
 
 .input-field::placeholder {
@@ -443,7 +439,7 @@ body {
 .btn-text {
     font-family: 'Noto Sans SC', sans-serif;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 300;
     color: #ffffff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }

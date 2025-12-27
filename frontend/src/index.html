@@ -7,805 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="./js/config.js"></script>
     <link rel="stylesheet" href="./css/toast.css">
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 25%, #0f1f3a 50%, #16213e 75%, #0d0d1a 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* 动态背景网格 */
-        .grid-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image:
-                linear-gradient(rgba(0, 255, 255, 0.045) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 255, 0.045) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* 光晕效果 */
-        .glow-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 0;
-            animation: floatOrb 20s ease-in-out infinite;
-        }
-
-        .glow-orb-1 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(0, 255, 255, 0.4) 0%, transparent 70%);
-            top: -100px;
-            right: -100px;
-            animation-delay: 0s;
-        }
-
-        .glow-orb-2 {
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255, 107, 107, 0.3) 0%, transparent 70%);
-            bottom: -50px;
-            left: -50px;
-            animation-delay: -7s;
-        }
-
-        .glow-orb-3 {
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(255, 215, 61, 0.25) 0%, transparent 70%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-        }
-
-        @keyframes floatOrb {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(30px, -30px) scale(1.1); }
-            50% { transform: translate(-20px, 20px) scale(0.9); }
-            75% { transform: translate(20px, 30px) scale(1.05); }
-        }
-
-        .main-container {
-            text-align: center;
-            max-width: 1200px;
-            animation: fadeIn 1.2s ease-out;
-            position: relative;
-            z-index: 1;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* 标题区域 */
-        .title-section {
-            margin-bottom: 100px;
-        }
-
-        .main-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 8rem;
-            font-weight: 900;
-            margin-bottom: 15px;
-            margin-top: 100px;
-            background: linear-gradient(135deg, #1e00ff 0%, #00fff7 50%, #005ab5 100%);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientFlow 6s ease-in-out infinite;
-            text-shadow: 0 0 60px rgba(0, 255, 255, 0.3);
-            letter-spacing: 8px;
-        }
-
-        @keyframes gradientFlow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .main-subtitle {
-            font-size: 1.1rem;
-            opacity: 0.85;
-            letter-spacing: 3px;
-            font-weight: 300;
-            color: #aabbee;
-        }
-
-
-        /* 项目卡片容器 */
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 35px;
-            margin-bottom: 50px;
-        }
-
-        .option-card {
-            background: linear-gradient(145deg, rgba(42, 42, 62, 0.8), rgba(26, 26, 46, 0.9));
-            border-radius: 24px;
-            padding: 40px 30px;
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: #ffffff;
-            border: 2px solid rgba(68, 68, 85, 0.5);
-            box-shadow:
-                0 20px 40px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-
-
-        .option-card:hover {
-            transform: translateY(-15px) scale(1.02);
-            border-color: rgba(0, 255, 255, 0.3);
-            box-shadow:
-                0 30px 60px rgba(0, 0, 0, 0.5),
-                0 0 40px rgba(0, 255, 255, 0.15),
-                0 0 0 1px rgba(0, 255, 255, 0.2) inset;
-        }
-
-        .option-card:hover::before {
-            left: 100%;
-        }
-
-        .option-card:hover::after {
-            opacity: 1;
-        }
-
-        /* 项目图标 */
-        .option-icon {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 700;
-            border-radius: 50%;
-            position: relative;
-            z-index: 1;
-            font-family: 'Orbitron', monospace;
-        }
-
-        .option-card:nth-child(1) .option-icon {
-            background: linear-gradient(135deg, #ff6b6b, #cc3333);
-            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
-            animation: iconFloat 4s ease-in-out infinite;
-        }
-
-        .option-card:nth-child(2) .option-icon {
-            background: linear-gradient(135deg, #00cc66, #00aa44);
-            box-shadow: 0 10px 30px rgba(0, 204, 102, 0.4);
-            animation: iconFloat 4s ease-in-out infinite 0.5s;
-        }
-
-        .option-card:nth-child(3) .option-icon {
-            background: linear-gradient(135deg, #0088ff, #0066cc);
-            box-shadow: 0 10px 30px rgba(0, 136, 255, 0.4);
-            animation: iconFloat 4s ease-in-out infinite 1s;
-        }
-
-        @keyframes iconFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
-        }
-
-        .option-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #ffffff;
-            letter-spacing: 1px;
-        }
-
-        .option-description {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            line-height: 2;
-            max-width: 200px;
-            text-align: center;
-        }
-
-        /* 状态指示点 */
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #00ff88;
-            border-radius: 50%;
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            box-shadow: 0 0 10px #00ff88;
-            animation: statusPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { box-shadow: 0 0 10px #00ff88; }
-            50% { box-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88; }
-        }
-
-        /* 底部信息 */
-        .footer-info {
-            width: 100%;
-            max-width: 500px;
-            margin: 30px auto 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .footer-divider {
-            width: 300px;
-            height: 1px;
-            background: linear-gradient(90deg,
-                transparent,
-                rgba(102, 119, 136, 0.6),
-                transparent
-            );
-            margin-bottom: 10px;
-        }
-
-        .footer-line {
-            text-align: center;
-            opacity: 0.6;
-            transition: opacity 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0;
-        }
-
-        .footer-line:hover {
-            opacity: 1;
-        }
-
-        .icp-link {
-            font-family: 'Noto Sans SC', sans-serif;
-            font-size: 11px;
-            color: #667788;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .icp-link:hover {
-            color: #88aacc;
-        }
-
-        .icp-separator {
-            color: #667788;
-            font-size: 12px;
-            margin: 0 8px;
-        }
-
-        /* 密钥配置按钮 */
-        .key-config-btn {
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-            border: 2px solid;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow:
-                4px 4px 10px rgba(0, 0, 0, 0.3),
-                -2px -2px 6px rgba(255, 255, 255, 0.05);
-            z-index: 100;
-        }
-
-        .key-config-btn.unconfigured {
-            border-color: rgba(255, 80, 80, 0.6);
-            background: rgba(255, 80, 80, 0.1);
-        }
-
-        .key-config-btn.configured {
-            border-color: rgba(0, 255, 136, 0.6);
-            background: rgba(0, 255, 136, 0.1);
-        }
-
-        .key-config-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .key-config-btn:active {
-            transform: scale(1.05);
-        }
-
-        .key-icon {
-            width: 24px;
-            height: 24px;
-            color: #666677;
-            transition: color 0.3s ease;
-        }
-
-        .key-config-btn.unconfigured .key-icon {
-            color: #ff5050;
-        }
-
-        .key-config-btn.configured .key-icon {
-            color: #00ff88;
-        }
-
-        /* 密钥配置弹窗 */
-        .key-config-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .key-config-modal {
-            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-            border: 2px solid #3a3a4e;
-            border-radius: 20px;
-            padding: 30px;
-            min-width: 400px;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .key-config-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #3a3a4e;
-        }
-
-        .key-config-header h3 {
-            font-size: 1.2rem;
-            color: #ffffff;
-            margin: 0;
-        }
-
-        .key-config-header .close-btn {
-            background: transparent;
-            border: none;
-            color: #888899;
-            font-size: 28px;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .key-config-header .close-btn:hover {
-            background: rgba(255, 80, 80, 0.2);
-            color: #ff5050;
-        }
-
-        .key-config-content {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-size: 0.9rem;
-            color: #ccccdd;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            background: #1a1a2e;
-            border: 1px solid #3a3a4e;
-            border-radius: 8px;
-            padding: 12px 15px;
-            color: #ffffff;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #00ffff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-        }
-
-        .form-group input::placeholder {
-            color: #666677;
-        }
-
-        .form-help {
-            font-size: 0.8rem;
-            color: #888899;
-            line-height: 1.4;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .form-actions button {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Noto Sans SC', sans-serif;
-        }
-
-        .btn-cancel {
-            background: #3a3a4e;
-            color: #ccccdd;
-        }
-
-        .btn-cancel:hover {
-            background: #4a4a5e;
-        }
-
-        .btn-clear {
-            background: rgba(255, 80, 80, 0.2);
-            color: #ff5050;
-            border: 1px solid rgba(255, 80, 80, 0.3);
-        }
-
-        .btn-clear:hover {
-            background: rgba(255, 80, 80, 0.3);
-            border-color: rgba(255, 80, 80, 0.5);
-        }
-
-        .btn-confirm {
-            background: linear-gradient(135deg, #00aa55, #009944);
-            color: #ffffff;
-        }
-
-        .btn-confirm:hover {
-            background: linear-gradient(135deg, #00bb66, #00aa55);
-            box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
-        }
-
-        /* 密钥配置询问弹窗（共享样式） */
-        .key-config-prompt-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .key-config-prompt-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .key-config-prompt-modal {
-            background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-            border: 2px solid #3a3a4e;
-            border-radius: 20px;
-            padding: 30px;
-            min-width: 320px;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        .key-config-prompt-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .key-config-prompt-header h3 {
-            font-size: 1.2rem;
-            margin: 0;
-        }
-
-        .key-config-prompt-content {
-            text-align: center;
-        }
-
-        .key-config-prompt-content p {
-            color: #ccccdd;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
-        .key-config-prompt-content .prompt-detail {
-            color: #888899;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-        }
-
-        .key-config-prompt-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .key-config-prompt-actions button {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Noto Sans SC', sans-serif;
-        }
-
-        .key-config-prompt-actions .btn-cancel {
-            background: #3a3a4e;
-            color: #ccccdd;
-        }
-
-        .key-config-prompt-actions .btn-cancel:hover {
-            background: #4a4a5e;
-        }
-
-        .key-config-prompt-actions .btn-confirm {
-            background: linear-gradient(135deg, #00aa55, #009944);
-            color: #ffffff;
-        }
-
-        .key-config-prompt-actions .btn-confirm:hover {
-            background: linear-gradient(135deg, #00bb66, #00aa55);
-            box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 1024px) {
-            .main-title {
-                font-size: 5.5rem;
-                letter-spacing: 4px;
-                margin-top: 200px;
-
-            }
-
-            .key-config-btn {
-                position: absolute;
-                top: 140px;
-                right: 0px;
-                width: 50px;
-                height: 50px;
-            }
-
-
-            .main-subtitle {
-                margin-bottom: 150px;
-
-            }
-            .projects-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 30px;
-            }
-
-            .projects-grid .option-card:last-child {
-                grid-column: span 2;
-                max-width: 50%;
-                margin: 0 auto;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-title {
-                font-size: 3.5rem;
-                letter-spacing: 4px;
-                margin-top: 120px;
-            }
-
-            
-            .key-config-btn {
-                position: absolute;
-                top: 80px;
-                right: 0px;
-                width: 50px;
-                height: 50px;
-            }
-
-            .main-subtitle {
-                font-size: 1rem;
-                letter-spacing: 2px;
-                margin-bottom: 100px;
-
-            }
-
-            .projects-grid {
-                grid-template-columns: 1fr;
-                gap: 25px;
-            }
-
-            .projects-grid .option-card:last-child {
-                grid-column: span 1;
-                min-width: 100%;
-                max-width: 100%;
-            }
-
-            .option-card {
-                padding: 35px 25px;
-                min-height: 260px;
-            }
-
-            .option-icon {
-                width: 70px;
-                height: 70px;
-                font-size: 1.8rem;
-            }
-
-            .option-title {
-                font-size: 1.2rem;
-            }
-
-            .option-description {
-                font-size: 0.9rem;
-            }
-
-            .footer-divider {
-                width: 260px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .main-title {
-                font-size: 2.5rem;
-                letter-spacing: 2px;
-            }
-
-            .key-config-btn {
-                position: absolute;
-                top: 80px;
-                right: 5px;
-                width: 45px;
-                height: 45px;
-            }
-
-            .main-subtitle {
-                font-size: 0.9rem;
-                letter-spacing: 1px;
-            }
-
-            .title-section {
-                margin-bottom: 35px;
-            }
-
-            .option-card {
-                padding: 30px 20px;
-                min-height: 240px;
-            }
-
-            .option-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
-            }
-
-            .footer-divider {
-                width: 220px;
-            }
-
-            .icp-link {
-                font-size: 10px;
-            }
-
-            .icp-separator {
-                font-size: 10px;
-                margin: 0 6px;
-            }
-        }
-
-        /* 浮动粒子 */
-        .floating-particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: rgba(0, 255, 255, 0.4);
-            border-radius: 50%;
-            animation: floatParticle 20s linear infinite;
-            /* 初始状态不可见，等待动画开始 */
-            opacity: 0;
-        }
-
-        @keyframes floatParticle {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-    </style>
-
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <!-- 背景网格 -->
@@ -831,8 +33,8 @@
         </button>
 
         <div class="title-section">
-            <h1 class="main-title">OLNDIO</h1>
-            <p class="main-subtitle">被Orlando用来放一些潮汕话ASR开发成果的Studio</span></p>
+            <h1 class="main-title">Olndio</h1>
+            <p class="main-subtitle">一个被Orlando用来放一些潮汕话ASR开发成果的Studio</span></p>
         </div>
 
 
@@ -857,6 +59,12 @@
                 <h3 class="option-title">Teo Phonograph</h3>
                 <p class="option-description">潮汕话音频处理<br>将潮汕话音频转录为数据集</p>
             </a>
+
+            <div class="option-card" onclick="openIntroModal()" style="cursor: pointer;">
+                <div class="option-icon">A</div>
+                <h3 class="option-title">About</h3>
+                <p class="option-description">了解更多信息<br>关于本站与当前项目进展</p>
+            </div>
         </div>
     </div>
 
@@ -895,8 +103,70 @@
     <!-- 通用 Toast 提示消息 -->
     <div class="toast-universal" id="toastUniversal"></div>
 
+    <!-- 简介弹窗 -->
+    <div class="intro-modal-overlay" id="introModalOverlay" onclick="closeIntroModal(event)">
+        <div class="intro-modal" onclick="event.stopPropagation()">
+            <div class="intro-modal-header">
+                <h3>关于 Olndio</h3>
+                <button class="close-btn" onclick="closeIntroModal()">×</button>
+            </div>
+            <div class="intro-modal-content">
+                <h4>欢迎来到 Olndio</h4>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;由于要开发一个前后端项目不得不申请一个域名，用来作为一些云端服务的入口，既然要域名就得找个官方名，有个官方的名字也方便把这个项目做的更产品化一些。想来想去，最后决定就用「Olndio」作为官方一点的名字（其实就是Orlando's Studio的缩写而已咳咳）。</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;开发潮汕话ASR是我高中开始就想做的事情，潮汕话由于其方言特性和语料不足的问题，一直没有一个成熟的ASR模型可用，开发这个平台一方面就是想出一份力，另一方面希望把整个流程打通，为我后续基于潮汕话ASR做垂类领域的AI产品应用做铺垫。</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;从技术方面来说，整个项目没有用什么高精尖的技术，前后端的开发也只是为了方便我制作ASR数据集，方便我把魔改的几个开源项目缝合到一起而已，安全性和性能方面的优化只能说做了跟没做一样，防君子不防小人。好在我这个平台是工具属性，也不用说太过纠结安全和性能（当然我也基于最匮乏的条件尽可能做了），这就是一个工具性质的项目，不会真有人花钱花时间攻击我吧，攻击完我其实也没太大损失，服务器崩了大不了重启，最多数据没了，数据我会定期备份，没备份上没了也就没了，其实也没太大影响。但是在这里还是希望各位佬高抬贵手，别浪费彼此时间了。</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;前端还是贯彻我之前高中做软件的思路，尽量做的好看而且要有意思一点。几个前端基本都以拟物风格设计，和现在常用的扁平简洁的风格相比，其实就是更方便做有意思的交互而已，像teo-phonograph就能通过转动黑胶来控制音频播放进度，没配置api-key三个设备就都是关机状态的样式等等，在信息呈现方式上和拟物思路尽可能地作了结合。每一个动画都是我花了一些心思去设计的（当然具体实现上就是直接一个Powered by AI哈）。</p>
+                <h4>核心功能</h4>
+                <ul>
+                    <li><strong>Teo Recorder</strong>：潮汕话录音应用，用于人工录制和收集潮汕话语音数据，能通过AI生成高质量的随机跟读文本，由用户进行跟读录音，确认为无误后即可上传到后台作为潮汕话语料。</li>
+                    <li><strong>Teo Translater</strong>：潮汕话翻译器，支持潮汕话与普通话之间的双向翻译。不过该功能仅用于体验当前阶段的潮汕话ASR，效果不够成熟，无法在通用场景下稳定使用。</li>
+                    <li><strong>Teo Phonograph</strong>：潮汕话音频处理工具，能对音频文件进行预处理、VAD、质量评估筛选、潮汕话文本ASR，最终自动整合优质数据上传到后端。</li>
+                    <li><strong>Teo DMP</strong>：潮汕话数据管理平台，前端收集的音频数据会发送到该平台进行审核，审核完成后即可一键生成结构化数据集。为提高审核效率，该平台加入了诸多高效的辅助审核功能，如智能分词编辑、快捷变体翻译、批量数据转录等。</li>
+                </ul>
+
+                <h4>使用说明</h4>
+            <p>首次使用前需要点击右上角的密钥按钮，把我提供的 API 密钥配置进去，配置完成后即可使用应用的各项功能，使用方法详见应用下的「使用说明」。</p>
+
+                <h4>联系我</h4>
+                <p>如有任何问题或建议，欢迎通过以下方式联系：</p>
+                <ul>
+                    <li>邮件：Orlandohsu29@163.com</li>
+                    <li>QQ：3445779396</li>
+                </ul>
+
+                <p style="text-align: center; margin-top: 25px; color: #888899; font-size: 0.85rem;">
+                    © 2025 Olndio. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <script>
-      
+
+        // 简介弹窗功能
+        function openIntroModal() {
+            const overlay = document.getElementById('introModalOverlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.classList.add('active');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeIntroModal(event) {
+            // 如果是点击事件且事件源是overlay本身（不是点击内容区域）
+            if (event && event.target !== event.currentTarget) {
+                return;
+            }
+
+            const overlay = document.getElementById('introModalOverlay');
+            overlay.classList.remove('active');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = '';
+        }
+
         // 密钥配置功能
         function openKeyConfig() {
             document.getElementById('keyConfigOverlay').style.display = 'flex';

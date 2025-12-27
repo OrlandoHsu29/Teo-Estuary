@@ -18,9 +18,8 @@ body {
     padding: 40px 20px;
     gap:20px;
     position: relative;
-    /* 默认关机状态 - 停止所有动画 */
-    animation: none !important;
-    transition: none !important;
+    /* 平滑过渡 */
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 音乐粒子效果 */
@@ -43,6 +42,7 @@ body {
     /* 默认关机状态 - 不播放动画 */
     opacity: 0;
     animation: none;
+    transition: opacity 0.6s ease;
 }
 
 /* 开机状态 - 激活粒子动画 */
@@ -81,14 +81,9 @@ body {
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
-    /* 默认低透明度（关机状态） */
-    opacity: 0.2;
-}
-
-/* 开机状态 - 正常透明度 */
-.power-on .grid-overlay {
     opacity: 1;
 }
+
 
 .container {
     position: relative;
@@ -109,16 +104,31 @@ body {
     pointer-events: none;
     z-index: 0;
     /* 默认关机状态 - 不播放动画 */
-    width: 0 !important;
-    height: 0 !important;
+    width: 0;
+    height: 0;
     animation: none;
 }
 
 /* 开机状态 - 激活波纹动画 */
-.power-on .signal-ripple:nth-child(1) { animation: rippleExpand 12s ease-out infinite; animation-delay: 0s; }
-.power-on .signal-ripple:nth-child(2) { animation: rippleExpand 12s ease-out infinite; animation-delay: 3s; }
-.power-on .signal-ripple:nth-child(3) { animation: rippleExpand 12s ease-out infinite; animation-delay: 6s; }
-.power-on .signal-ripple:nth-child(4) { animation: rippleExpand 12s ease-out infinite; animation-delay: 9s; }
+.power-on .signal-ripple:nth-of-type(1) {
+    animation: rippleExpand 12s ease-out infinite;
+    animation-delay: 0s;
+}
+
+.power-on .signal-ripple:nth-of-type(2) {
+    animation: rippleExpand 12s ease-out infinite;
+    animation-delay: 3s;
+}
+
+.power-on .signal-ripple:nth-of-type(3) {
+    animation: rippleExpand 12s ease-out infinite;
+    animation-delay: 6s;
+}
+
+.power-on .signal-ripple:nth-of-type(4) {
+    animation: rippleExpand 12s ease-out infinite;
+    animation-delay: 9s;
+}
 
 @keyframes rippleExpand {
     0% {
@@ -435,7 +445,7 @@ body {
 /* 返回按钮 - 设备上方居中 */
 .back-btn {
     position: absolute;
-    bottom: calc(100% + 15px);
+    bottom: calc(100% + 25px);
     left: 50%;
     transform: translateX(-50%);
     width: 40px;
@@ -629,7 +639,8 @@ body {
     font-size: 9px;
     letter-spacing: 1px;
     /* 默认关机状态 */
-    color: #2a2a3a;
+    color: #2a3a4a;
+    transition: color 0.6s ease, text-shadow 0.6s ease;
 }
 
 /* 开机状态 - 激活标签颜色 */
@@ -644,6 +655,7 @@ body {
     /* 默认关机状态 */
     color: #2a3a4a;
     text-shadow: none;
+    transition: color 0.6s ease, text-shadow 0.6s ease;
 }
 
 /* 开机状态 - 激活值颜色 */
@@ -665,6 +677,7 @@ body {
     font-weight: 700;
     /* 默认关机状态 */
     color: #2a3a4a;
+    transition: color 0.6s ease;
 }
 
 /* 开机状态 - 激活时间颜色 */
@@ -677,6 +690,7 @@ body {
     font-size: 14px;
     /* 默认关机状态 */
     color: #2a2a3a;
+    transition: color 0.6s ease;
 }
 
 /* 开机状态 - 激活分隔符颜色 */
