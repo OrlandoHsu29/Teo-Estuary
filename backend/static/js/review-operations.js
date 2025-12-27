@@ -425,6 +425,10 @@ async function approveCurrent() {
     // 显示进度条动画
     showProgressAnimation('approved');
 
+    // 强制浏览器重排，确保CSS动画立即开始播放
+    // 避免因CSS加载延迟导致动画计时不同步
+    document.body.offsetHeight; // 触发重排
+
     // 使用可能已经合并的最新数据
     const teochewText = record.teochew_text || record.mandarin_text;
 
