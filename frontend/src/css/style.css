@@ -159,7 +159,6 @@ body {
 
 .option-card:hover {
     transform: translateY(-15px) scale(1.02);
-    border-color: rgba(0, 255, 255, 0.3);
     box-shadow:
         0 30px 60px rgba(0, 0, 0, 0.5),
         0 0 40px rgba(0, 255, 255, 0.15),
@@ -172,6 +171,11 @@ body {
 
 .option-card:hover::after {
     opacity: 1;
+}
+
+.option-card:active {
+    border-color: rgb(0, 255, 255);
+
 }
 
 /* 项目图标 */
@@ -939,5 +943,71 @@ body {
     100% {
         transform: translateY(-100vh) rotate(360deg);
         opacity: 0;
+    }
+}
+
+/* 触摸设备性能优化 */
+@media (pointer: coarse) {
+    /* 禁用背景网格 */
+    .grid-background {
+        display: none;
+    }
+
+    /* 禁用光晕效果 */
+    .glow-orb {
+        display: none !important;
+        animation: none !important;
+    }
+
+    /* 禁用浮动粒子 */
+    .particle {
+        display: none !important;
+        animation: none !important;
+    }
+
+
+
+    .option-card:hover {
+        transform: none;
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        border: 2px solid rgba(68, 68, 85, 0.5);
+    }
+
+    .option-card:hover::before {
+        left: 100%;
+    }
+
+    .option-card:hover::after {
+        opacity: 1;
+    }
+
+    /* 禁用图标浮动动画 */
+    .option-card:nth-child(1) .option-icon,
+    .option-card:nth-child(2) .option-icon,
+    .option-card:nth-child(3) .option-icon,
+    .option-card:nth-child(4) .option-icon {
+        animation: none !important;
+    }
+
+    /* 禁用状态点脉冲动画 */
+    .status-dot {
+        animation: none !important;
+    }
+
+    /* 简化卡片阴影和过渡 */
+    .option-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow:
+            0 10px 20px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    }
+
+    /* 简化按钮阴影 */
+    .key-config-btn {
+        box-shadow:
+            2px 2px 6px rgba(0, 0, 0, 0.3),
+            -1px -1px 3px rgba(255, 255, 255, 0.05);
     }
 }

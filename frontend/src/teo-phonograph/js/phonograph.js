@@ -12,6 +12,9 @@ let isDragging = false;
 let isRotating = false;
 let startY = 0;
 let startRotation = 0; // 开始拖拽时的角度
+let rotateFrameId = null; // 旋转节流用
+let volumeFrameId = null; // 音量节流用
+let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); // 移动端检测
 
 // 音量控制相关变量
 let isAdjustingVolume = false;
@@ -281,7 +284,9 @@ function animateVinyl() {
     currentRotation += (rotationSpeed * deltaTime) / 1000;
 
     // 应用旋转（保持居中）
-    elements.vinylRecord.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+    // 移动端优化：使用整数角度减少重绘
+    const displayRotation = isMobile ? Math.round(currentRotation) : currentRotation;
+    elements.vinylRecord.style.transform = `translate(-50%, -50%) rotate(${displayRotation}deg)`;
 
     // 继续动画
     animationId = requestAnimationFrame(animateVinyl);
@@ -492,6 +497,19 @@ function handleRotateMove(event) {
 
     event.preventDefault();
 
+    // 移动端节流优化：使用 requestAnimationFrame
+    if (isMobile) {
+        if (rotateFrameId) return;
+        rotateFrameId = requestAnimationFrame(() => {
+            performRotate(event);
+            rotateFrameId = null;
+        });
+    } else {
+        performRotate(event);
+    }
+}
+
+function performRotate(event) {
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
     const deltaY = clientY - startY; // 向下拖动为正
 
@@ -502,7 +520,10 @@ function handleRotateMove(event) {
     // 计算新角度
     const newRotation = startRotation + angleDelta;
     currentRotation = newRotation;
-    elements.vinylRecord.style.transform = `translate(-50%, -50%) rotate(${newRotation}deg)`;
+
+    // 移动端优化：使用整数角度减少重绘
+    const displayRotation = isMobile ? Math.round(newRotation) : newRotation;
+    elements.vinylRecord.style.transform = `translate(-50%, -50%) rotate(${displayRotation}deg)`;
 
     // 将角度转换为播放进度（0-1）
     let normalizedRotation = newRotation % 360;
@@ -552,7 +573,17 @@ function handleVolumeStart(event) {
 function handleVolumeMove(event) {
     if (!isAdjustingVolume) return;
     event.preventDefault();
-    updateVolumeFromEvent(event);
+
+    // 移动端节流优化：使用 requestAnimationFrame
+    if (isMobile) {
+        if (volumeFrameId) return;
+        volumeFrameId = requestAnimationFrame(() => {
+            updateVolumeFromEvent(event);
+            volumeFrameId = null;
+        });
+    } else {
+        updateVolumeFromEvent(event);
+    }
 }
 
 function handleVolumeEnd(event) {

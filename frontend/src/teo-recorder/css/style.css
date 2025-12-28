@@ -62,47 +62,6 @@ body {
     }
 }
 
-/* 脉冲圆环背景 */
-.pulse-ring {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border: 1px solid rgba(0, 255, 255, 0.1);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 0;
-    /* 默认不播放动画 */
-    width: 0;
-    height: 0;
-    animation: none;
-}
-
-/* 开机状态 - 激活脉冲环动画 */
-.power-on .pulse-ring {
-    animation: pulseExpand 10s ease-out infinite;
-    width: auto !important;
-    height: auto !important;
-}
-
-.power-on .pulse-ring:nth-of-type(1) { animation-delay: 0s; }
-.power-on .pulse-ring:nth-of-type(2) { animation-delay: 2.5s; }
-.power-on .pulse-ring:nth-of-type(3) { animation-delay: 5s; }
-.power-on .pulse-ring:nth-of-type(4) { animation-delay: 7.5s; }
-
-@keyframes pulseExpand {
-    0% {
-        width: 0;
-        height: 0;
-        opacity: 0.5;
-    }
-    100% {
-        width: 150vmax;
-        height: 150vmax;
-        opacity: 0;
-    }
-}
-
 /* 背景网格 */
 .grid-overlay {
     position: fixed;
@@ -241,15 +200,6 @@ body {
     }
 }
 
-
-/* 字体加载优化 - 隐藏字体切换时的闪烁 */
-.font-loading {
-    visibility: hidden;
-}
-
-.font-loaded {
-    visibility: visible;
-}
 
 .status-text {
     font-family: 'DottedSongtiSquareRegular', sans-serif;
@@ -694,183 +644,6 @@ body {
         inset 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* 密钥配置按钮 */
-/* 
-.key-config-btn {
-    // 圆形按钮，直径不超过"使用说明"按钮的高度
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-    border: 2px solid #3a3a4e;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
-        -2px -2px 6px rgba(58, 58, 78, 0.5),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.1);
-    flex-shrink: 0;
-    position: relative;
-}
-
-.key-config-btn:hover {
-    border: 2px solid #4a4a5e;
-    background: linear-gradient(145deg, #3a3a4e, #2a2a3e);
-    transform: translateY(-1px);
-    box-shadow:
-        6px 6px 12px rgba(0, 0, 0, 0.4),
-        -3px -3px 8px rgba(58, 58, 78, 0.6),
-        inset 1px 1px 3px rgba(255, 255, 255, 0.15);
-}
-
-.key-config-btn:active {
-    border: 2px solid #3a3a4e;
-    transform: translateY(0);
-    box-shadow:
-        2px 2px 4px rgba(0, 0, 0, 0.2),
-        -1px -1px 3px rgba(58, 58, 78, 0.3),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.1);
-}
-
-.key-config-btn.unconfigured {
-    border: 2px solid #cf1616;
-}
-
-.key-icon {
-    width: 20px;
-    height: 20px;
-    color: #666677;
-    flex-shrink: 0;
-    transition: color 0.3s ease;
-}
-
-.key-config-btn.unconfigured .key-icon {
-    color: #cf1616;
-}
-
-.key-config-btn.configured .key-icon {
-    color: #00ff88;
-}
-
-// 密钥状态指示器
-.key-config-btn.configured {
-    border: 2px solid #00ff88;
-    box-shadow:
-        4px 4px 8px rgba(0, 0, 0, 0.3),
-        -2px -2px 6px rgba(58, 58, 78, 0.5),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.1),
-        0 0 0 1px rgba(0, 255, 136, 0.3);
-}
-
-.key-config-btn.configured:hover {
-    border: 2px solid #00ff99;
-    box-shadow:
-        6px 6px 12px rgba(0, 0, 0, 0.4),
-        -3px -3px 8px rgba(58, 58, 78, 0.6),
-        inset 1px 1px 3px rgba(255, 255, 255, 0.15),
-        0 0 0 1px rgba(0, 255, 153, 0.4);
-} 
-*/
-
-/* 密钥过期提示弹窗 */
-/* .key-expired-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(5px);
-}
-
-.key-expired-modal {
-    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-    border: 2px solid #3a3a4e;
-    border-radius: 20px;
-    padding: 30px;
-    min-width: 320px;
-    max-width: 400px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: modalSlideIn 0.3s ease-out;
-} */
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* .key-expired-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.key-expired-header h3 {
-    font-family: 'Noto Sans SC', sans-serif;
-    font-size: 1.1rem;
-    color: #ff5050;
-    margin: 0;
-}
-
-.key-expired-content {
-    text-align: center;
-}
-
-.key-expired-content p {
-    color: #ccccdd;
-    margin-bottom: 20px;
-    font-size: 0.95rem;
-}
-
-.key-expired-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.key-expired-actions button {
-    flex: 1;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Noto Sans SC', sans-serif;
-}
-
-.key-expired-actions .btn-cancel {
-    background: #3a3a4e;
-    color: #ccccdd;
-}
-
-.key-expired-actions .btn-cancel:hover {
-    background: #4a4a5e;
-}
-
-.key-expired-actions .btn-confirm {
-    background: linear-gradient(135deg, #00aa55, #009944);
-    color: #ffffff;
-}
-
-.key-expired-actions .btn-confirm:hover {
-    background: linear-gradient(135deg, #00bb66, #00aa55);
-    box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
-}
-
- */
 
 .manual-icon {
     width: 20px;
@@ -1082,39 +855,6 @@ body {
 }
 
 
-/* Toast 消息 */
-.toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
-    color: #ffffff;
-    border-radius: 12px;
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    opacity: 0;
-    transform: translateX(120%);
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-    z-index: 2000;
-    font-family: 'Noto Sans SC', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 2px solid transparent;
-    background-clip: padding-box;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateX(0);
-    border-color: rgba(0, 255, 136, 0.3);
-}
-
 /* 密钥配置弹窗 */
 .key-config-overlay {
     position: fixed;
@@ -1250,55 +990,6 @@ body {
     margin-top: 25px;
 }
 
-.btn-cancel, .btn-clear, .btn-confirm {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: 'Noto Sans SC', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn-cancel {
-    background: linear-gradient(145deg, #666666, #444444);
-    color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.btn-cancel:hover {
-    background: linear-gradient(145deg, #777777, #555555);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-}
-
-.btn-clear {
-    background: linear-gradient(145deg, #ff4757, #cc0000);
-    color: #ffffff;
-    box-shadow: 0 4px 8px rgba(255, 71, 87, 0.3);
-}
-
-.btn-clear:hover {
-    background: linear-gradient(145deg, #ff5772, #dd1111);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(255, 71, 87, 0.5);
-}
-
-.btn-confirm {
-    background: linear-gradient(145deg, #00ff88, #00cc66);
-    color: #000000;
-    box-shadow: 0 4px 8px rgba(0, 255, 136, 0.3);
-}
-
-.btn-confirm:hover {
-    background: linear-gradient(145deg, #00ff99, #00dd77);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(0, 255, 136, 0.5);
-}
-
 /* 响应式弹窗 */
 @media (max-width: 768px) {
     .key-config-modal {
@@ -1351,34 +1042,6 @@ body {
         font-size: 13px;
         padding: 10px;
     }
-}
-
-.toast.success {
-    background: linear-gradient(135deg, #0a4f3c 0%, #0f766e 100%);
-    color: #ffffff;
-    border-color: rgba(0, 255, 136, 0.4);
-    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-}
-
-.toast.error {
-    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-    color: #ffffff;
-    border-color: rgba(255, 51, 51, 0.4);
-    text-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
-}
-
-.toast.warning {
-    background: linear-gradient(135deg, #713f12 0%, #854d0e 100%);
-    color: #ffffff;
-    border-color: rgba(255, 170, 0, 0.4);
-    text-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
-}
-
-.toast.info {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-    color: #ffffff;
-    border-color: rgba(59, 130, 246, 0.4);
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
 }
 
 /* 响应式设计 */
@@ -1616,6 +1279,42 @@ body {
             rgba(0, 255, 255, 0.2),
             transparent
         );
+    }
+}
+
+/* 触摸设备性能优化 */
+@media (pointer: coarse) {
+    /* 禁用背景网格 */
+    .grid-overlay {
+        display: none;
+    }
+
+    /* 禁用音频粒子动画 */
+    .audio-particle {
+        display: none !important;
+        animation: none !important;
+    }
+
+    /* 简化阴影和过渡 */
+    .recorder-body {
+        box-shadow:
+            0 10px 20px rgba(0, 0, 0, 0.3),
+            2px 2px 8px rgba(0, 0, 0, 0.2);
+        border: 1px solid #333344;
+    }
+
+    .recorder-screen {
+        box-shadow:
+            inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+            inset -3px -3px 6px rgba(42, 42, 62, 0.5);
+    }
+
+    .control-btn {
+        box-shadow:
+            4px 4px 8px rgba(10, 10, 26, 0.7),
+            -4px -4px 8px rgba(74, 74, 94, 0.7),
+            inset 1px 1px 2px rgba(255, 255, 255, 0.1);
+        transition: transform 0.2s ease;
     }
 }
 

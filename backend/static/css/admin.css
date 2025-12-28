@@ -2215,11 +2215,16 @@ s
     color: var(--text-disabled);
 }
 
+
+
 /* 响应式设计 */
 @media (max-width: 1024px) {
+
     .main-container {
         flex-direction: column;
     }
+
+
 
     .sidebar {
         width: 100%;
