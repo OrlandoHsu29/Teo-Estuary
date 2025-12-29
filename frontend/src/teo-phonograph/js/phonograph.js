@@ -634,10 +634,10 @@ async function handleSubmit() {
             const formData = new FormData();
             formData.append('audio', audioData.file);
 
-            // 添加超时控制（单个文件2分钟超时）
+            // 添加超时控制（单个文件3分钟超时）
             const controller = new AbortController();
             uploadControllers.push(controller); // 存储controller以便取消
-            const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分钟
+            const timeoutId = setTimeout(() => controller.abort(), 180000); // 3分钟
 
             try {
                 const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material`, {
