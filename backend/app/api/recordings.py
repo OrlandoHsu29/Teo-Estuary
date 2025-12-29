@@ -610,7 +610,7 @@ def api_upload_material_batch(key_obj):
                 emilia_url,
                 files=files_data,
                 data=data,
-                timeout=120  # 批量上传需要更长超时
+                timeout=180  # 批量上传需要更长超时（3分钟）
             )
 
             # 检查 Emilia 服务响应

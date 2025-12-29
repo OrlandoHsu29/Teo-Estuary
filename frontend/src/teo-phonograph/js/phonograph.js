@@ -563,13 +563,22 @@ async function handleSubmit() {
             formData.append('audios', audioData.file);
         });
 
+        // 添加超时控制（3分钟超时）
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3分钟
+
         const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material-batch`, {
             method: 'POST',
             headers: {
                 'X-API-Key': apiKey
             },
-            body: formData
+            body: formData,
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
+
+        console.log('Batch upload response status:', response.status);
 
         // 处理401/403未授权错误
         if (KeyManager && typeof KeyManager.handleApiResponse === 'function') {
@@ -584,6 +593,7 @@ async function handleSubmit() {
         }
 
         const result = await response.json();
+        console.log('Batch upload result:', result);
 
         if (response.ok && result.success) {
             elements.statusText.textContent = '全部提交完成';
@@ -597,7 +607,13 @@ async function handleSubmit() {
     } catch (error) {
         console.error('Upload error:', error);
         elements.statusText.textContent = '提交失败';
-        showToast(`上传失败：${error.message}`, 'error');
+
+        if (error.name === 'AbortError') {
+            showToast('上传超时，文件可能过大或数量过多', 'error');
+        } else {
+            showToast(`上传失败：${error.message}`, 'error');
+        }
+
         // 提交失败后重新查询服务状态
         checkEmiliaHealth();
     } finally {
