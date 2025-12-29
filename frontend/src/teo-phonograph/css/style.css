@@ -633,7 +633,7 @@ body {
 .time-display {
     font-family: 'Orbitron', monospace;
     display: flex;
-    direction: row;
+    flex-direction: row;
     font-size: 26px;
 
 }
@@ -679,10 +679,13 @@ body {
 
 .button-row {
     display: flex;
+    flex-direction: row;
     gap: 8px;
 }
 
 .primary-controls {
+    display: flex;
+    flex-direction: row;
     justify-content: space-between;
 }
 
@@ -692,6 +695,8 @@ body {
 }
 
 .secondary-controls {
+    display: flex;
+    flex-direction: row;
     justify-content: space-between;
 }
 
