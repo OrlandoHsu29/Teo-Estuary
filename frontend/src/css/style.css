@@ -968,7 +968,7 @@ body {
 
 
     .option-card:hover {
-        transform: none;
+        transform: translateY(0px) scale(1.00);
         box-shadow:
             0 20px 40px rgba(0, 0, 0, 0.4),
             0 0 0 1px rgba(255, 255, 255, 0.05) inset;
