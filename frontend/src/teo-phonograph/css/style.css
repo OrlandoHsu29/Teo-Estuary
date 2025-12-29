@@ -953,6 +953,29 @@ body {
     cursor: not-allowed;
 }
 
+/* 取消模式样式（上传时的提交按钮） */
+.control-btn.cancel-mode {
+    background: linear-gradient(145deg, #8a2a2a, #6a1a1a);
+    border: 1px solid #9a3a3a;
+    color: #ffcccc;
+}
+
+.control-btn.cancel-mode:hover:not(:disabled) {
+    background: linear-gradient(145deg, #9a3a3a, #7a2a2a);
+    border-color: #aa4a4a;
+    transform: translateY(-1px);
+    box-shadow:
+        0 6px 12px rgba(200, 50, 50, 0.3),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.control-btn.cancel-mode:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow:
+        2px 2px 6px rgba(200, 50, 50, 0.3),
+        inset 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* 播放列表视图 */
 .playlist-view {
     position: absolute;

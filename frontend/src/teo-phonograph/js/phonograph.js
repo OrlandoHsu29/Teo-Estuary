@@ -25,6 +25,8 @@ let currentVolume = 0.75;
 
 // 进度条相关变量
 let uploadProgressInterval = null;
+let isUploading = false; // 是否正在上传
+let uploadControllers = []; // 存储上传请求的AbortController
 
 // DOM 元素
 const elements = {
@@ -160,8 +162,14 @@ function bindEvents() {
     elements.nextBtn.addEventListener('click', handleNextTrack);
     elements.playlistToggleBtn.addEventListener('click', togglePlaylist);
 
-    // 提交按钮
-    elements.submitBtn.addEventListener('click', handleSubmit);
+    // 提交按钮（根据状态决定是提交还是取消）
+    elements.submitBtn.addEventListener('click', () => {
+        if (isUploading) {
+            cancelUpload();
+        } else {
+            handleSubmit();
+        }
+    });
 
     // 使用说明切换
     const manualToggle = document.getElementById('manualToggle');
@@ -564,7 +572,16 @@ async function handleSubmit() {
     }
 
     // 显示提交状态和进度条
-    elements.submitBtn.disabled = true;
+    isUploading = true;
+    uploadControllers = []; // 清空之前的controllers
+    elements.submitBtn.disabled = false;
+    elements.submitBtn.classList.add('cancel-mode');
+
+    // 更新按钮文本为"取消"
+    const submitBtnText = elements.submitBtn.querySelector('.btn-text');
+    if (submitBtnText) {
+        submitBtnText.textContent = '取消';
+    }
 
     // 显示进度条，隐藏status-text
     if (elements.statusText) {
@@ -585,6 +602,29 @@ async function handleSubmit() {
     try {
         // 逐个上传文件
         for (let i = 0; i < audioPlaylist.length; i++) {
+            // 检查是否被取消
+            if (!isUploading) {
+                console.log('Upload cancelled by user');
+                elements.progressLabel.textContent = '已取消';
+
+                // 隐藏进度条
+                if (elements.screenProgress) {
+                    elements.screenProgress.style.display = 'none';
+                }
+
+                // 恢复status-text显示
+                setTimeout(() => {
+                    if (elements.statusText) {
+                        elements.statusText.style.display = 'block';
+                        elements.statusText.textContent = '上传已取消';
+                    }
+                }, 100);
+
+                showToast('上传已取消', 'warning');
+                resetSubmitButton();
+                return;
+            }
+
             const audioData = audioPlaylist[i];
 
             // 更新进度标签
@@ -596,6 +636,7 @@ async function handleSubmit() {
 
             // 添加超时控制（单个文件2分钟超时）
             const controller = new AbortController();
+            uploadControllers.push(controller); // 存储controller以便取消
             const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分钟
 
             try {
@@ -610,11 +651,16 @@ async function handleSubmit() {
 
                 clearTimeout(timeoutId);
 
+                // 检查是否被取消
+                if (!isUploading) {
+                    console.log('Upload cancelled after request completed');
+                    break; // 退出循环
+                }
+
                 console.log(`Upload file ${i + 1}/${totalFiles} response status:`, response.status);
 
                 // 处理401/403未授权错误
                 if (response.status === 401 || response.status === 403) {
-                    elements.submitBtn.disabled = false;
                     showToast('密钥已失效，请重新配置', 'error');
 
                     // 立即隐藏进度条
@@ -630,6 +676,7 @@ async function handleSubmit() {
                         }
                     }, 100);
 
+                    resetSubmitButton();
                     return;
                 }
 
@@ -659,11 +706,18 @@ async function handleSubmit() {
 
             } catch (error) {
                 console.error(`Upload file ${i + 1}/${totalFiles} error:`, error);
+
+                // 检查是否是用户取消
+                if (!isUploading) {
+                    console.log('Upload cancelled during error handling');
+                    break; // 退出循环
+                }
+
                 failedCount++;
                 results.push({
                     filename: audioData.file.name,
                     success: false,
-                    error: error.name === 'AbortError' ? '上传超时' : error.message
+                    error: error.name === 'AbortError' ? '上传超时或已取消' : error.message
                 });
 
                 // 更新进度条
@@ -762,7 +816,42 @@ async function handleSubmit() {
         showToast(`上传失败：${error.message}`, 'error');
         checkEmiliaHealth();
     } finally {
-        elements.submitBtn.disabled = false;
+        resetSubmitButton();
+    }
+}
+
+// 重置提交按钮状态
+function resetSubmitButton() {
+    isUploading = false;
+    uploadControllers = [];
+
+    if (elements.submitBtn) {
+        elements.submitBtn.classList.remove('cancel-mode');
+        elements.submitBtn.disabled = true;
+
+        // 恢复按钮文本为"提交"
+        const submitBtnText = elements.submitBtn.querySelector('.btn-text');
+        if (submitBtnText) {
+            submitBtnText.textContent = '提交';
+        }
+    }
+}
+
+// 取消上传
+function cancelUpload() {
+    if (isUploading) {
+        isUploading = false;
+
+        // 取消所有正在进行的请求
+        uploadControllers.forEach(controller => {
+            if (controller) {
+                controller.abort();
+            }
+        });
+        uploadControllers = [];
+
+        console.log('Upload cancelled');
+        showToast('正在取消上传...', 'warning');
     }
 }
 
