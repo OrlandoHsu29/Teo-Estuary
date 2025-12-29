@@ -669,6 +669,80 @@ body {
     text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
 }
 
+/* 进度条区域 - 内联样式，与status-text同一行 */
+.screen-progress-inline {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.screen-progress-inline .progress-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: #4466aa;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.power-on .screen-progress-inline .progress-label {
+    color: #0088ff;
+    text-shadow: 0 0 6px rgba(0, 136, 255, 0.4);
+}
+
+.screen-progress-inline .progress-bar {
+    flex: 1;
+    height: 8px;
+    min-width: 80px;
+    background: linear-gradient(90deg, #1a2a3a, #0f1a2a);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2a3a4a;
+}
+
+.screen-progress-inline .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg,
+        #0088ff 0%,
+        #00aaff 50%,
+        #0088ff 100%
+    );
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 136, 255, 0.6);
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.screen-progress-inline .progress-percent {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #4466aa;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.power-on .screen-progress-inline .progress-percent {
+    color: #0088ff;
+    text-shadow: 0 0 6px rgba(0, 136, 255, 0.4);
+}
+
 /* 按钮区域 */
 .button-section {
     display: flex;
@@ -1301,6 +1375,19 @@ body {
         box-shadow:
             inset 3px 3px 10px rgba(0, 0, 0, 0.4),
             inset -1px -1px 5px rgba(255, 255, 255, 0.05);
+    }
+
+    /* 禁用屏幕过渡动画 */
+    .player-view,
+    .playlist-view,
+    .screen-progress-inline {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    /* 禁用进度条填充动画 */
+    .screen-progress-inline .progress-fill {
+        transition: none !important;
     }
 }
 

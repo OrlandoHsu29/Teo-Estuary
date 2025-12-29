@@ -23,6 +23,9 @@ let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
 let isAdjustingVolume = false;
 let currentVolume = 0.75;
 
+// 进度条相关变量
+let uploadProgressInterval = null;
+
 // DOM 元素
 const elements = {
     vinylRecord: null,
@@ -48,6 +51,10 @@ const elements = {
     volumeKnob: null,
     labelText: null,
     toastUniversal: null,
+    screenProgress: null,
+    progressLabel: null,
+    progressFill: null,
+    progressPercent: null,
     playlistView: null,
     playlistItems: null,
     playerView: null,
@@ -119,6 +126,10 @@ function initializeElements() {
     elements.volumeKnob = document.getElementById('volumeKnob');
     elements.labelText = document.getElementById('labelText');
     elements.toastUniversal = document.getElementById('toastUniversal');
+    elements.screenProgress = document.getElementById('screenProgress');
+    elements.progressLabel = document.getElementById('progressLabel');
+    elements.progressFill = document.getElementById('progressFill');
+    elements.progressPercent = document.getElementById('progressPercent');
     elements.playlistView = document.getElementById('playlistView');
     elements.playlistItems = document.getElementById('playlistItems');
     elements.playerView = document.getElementById('playerView');
@@ -552,69 +563,203 @@ async function handleSubmit() {
         return;
     }
 
-    // 显示提交状态
-    elements.statusText.textContent = `正在提交 ${audioPlaylist.length} 个文件...`;
+    // 显示提交状态和进度条
     elements.submitBtn.disabled = true;
 
+    // 显示进度条，隐藏status-text
+    if (elements.statusText) {
+        elements.statusText.style.display = 'none';
+    }
+    if (elements.screenProgress) {
+        elements.screenProgress.style.display = 'flex';
+        elements.progressLabel.textContent = '正在上传...';
+        elements.progressFill.style.width = '0%';
+        elements.progressPercent.textContent = '0%';
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const totalFiles = audioPlaylist.length;
+    const results = [];
+
     try {
-        // 创建 FormData，批量上传
-        const formData = new FormData();
-        audioPlaylist.forEach(audioData => {
-            formData.append('audios', audioData.file);
-        });
+        // 逐个上传文件
+        for (let i = 0; i < audioPlaylist.length; i++) {
+            const audioData = audioPlaylist[i];
 
-        // 添加超时控制（3分钟超时）
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3分钟
+            // 更新进度标签
+            elements.progressLabel.textContent = `正在上传...`;
 
-        const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material-batch`, {
-            method: 'POST',
-            headers: {
-                'X-API-Key': apiKey
-            },
-            body: formData,
-            signal: controller.signal
-        });
+            // 创建 FormData，单个上传
+            const formData = new FormData();
+            formData.append('audio', audioData.file);
 
-        clearTimeout(timeoutId);
+            // 添加超时控制（单个文件2分钟超时）
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分钟
 
-        console.log('Batch upload response status:', response.status);
+            try {
+                const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material`, {
+                    method: 'POST',
+                    headers: {
+                        'X-API-Key': apiKey
+                    },
+                    body: formData,
+                    signal: controller.signal
+                });
 
-        // 处理401/403未授权错误
-        if (KeyManager && typeof KeyManager.handleApiResponse === 'function') {
-            await KeyManager.handleApiResponse(response);
+                clearTimeout(timeoutId);
+
+                console.log(`Upload file ${i + 1}/${totalFiles} response status:`, response.status);
+
+                // 处理401/403未授权错误
+                if (response.status === 401 || response.status === 403) {
+                    elements.submitBtn.disabled = false;
+                    showToast('密钥已失效，请重新配置', 'error');
+
+                    // 立即隐藏进度条
+                    if (elements.screenProgress) {
+                        elements.screenProgress.style.display = 'none';
+                    }
+
+                    // 恢复status-text显示
+                    setTimeout(() => {
+                        if (elements.statusText) {
+                            elements.statusText.style.display = 'block';
+                            elements.statusText.textContent = '密钥已失效';
+                        }
+                    }, 100);
+
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    successCount++;
+                    results.push({
+                        filename: audioData.file.name,
+                        success: true
+                    });
+                } else {
+                    failedCount++;
+                    results.push({
+                        filename: audioData.file.name,
+                        success: false,
+                        error: result.error
+                    });
+                }
+
+                // 更新进度条
+                const progress = ((i + 1) / totalFiles) * 100;
+                if (elements.progressFill && elements.progressPercent) {
+                    elements.progressFill.style.width = `${progress}%`;
+                    elements.progressPercent.textContent = `${Math.round(progress)}%`;
+                }
+
+            } catch (error) {
+                console.error(`Upload file ${i + 1}/${totalFiles} error:`, error);
+                failedCount++;
+                results.push({
+                    filename: audioData.file.name,
+                    success: false,
+                    error: error.name === 'AbortError' ? '上传超时' : error.message
+                });
+
+                // 更新进度条
+                const progress = ((i + 1) / totalFiles) * 100;
+                if (elements.progressFill && elements.progressPercent) {
+                    elements.progressFill.style.width = `${progress}%`;
+                    elements.progressPercent.textContent = `${Math.round(progress)}%`;
+                }
+
+                // 如果是超时错误，继续上传下一个
+                if (error.name === 'AbortError') {
+                    showToast(`文件 ${audioData.file.name} 上传超时，跳过`, 'error');
+                }
+            }
         }
 
-        if (response.status === 401 || response.status === 403) {
-            elements.statusText.textContent = '密钥已失效';
-            elements.submitBtn.disabled = false;
-            showToast('密钥已失效，请重新配置', 'error');
-            return;
+        // 所有文件上传完成
+        if (elements.progressLabel) {
+            elements.progressLabel.textContent = '上传完成';
         }
 
-        const result = await response.json();
-        console.log('Batch upload result:', result);
+        // 如果只有一个文件，播放完整的进度动画
+        if (totalFiles === 1) {
+            // 动画从当前进度推进到100%
+            const currentProgress = 100;
+            if (elements.progressFill && elements.progressPercent) {
+                elements.progressFill.style.width = '100%';
+                elements.progressPercent.textContent = '100%';
+            }
 
-        if (response.ok && result.success) {
-            elements.statusText.textContent = '全部提交完成';
-            showToast(`成功提交 ${result.success_count} 个音频文件`, 'success');
+            // 等待动画完成后隐藏进度条
+            setTimeout(() => {
+                if (elements.screenProgress) {
+                    elements.screenProgress.style.display = 'none';
+                }
+
+                // 恢复status-text显示
+                setTimeout(() => {
+                    if (elements.statusText) {
+                        elements.statusText.style.display = 'block';
+                    }
+                    if (successCount === totalFiles) {
+                        elements.statusText.textContent = '音频提交完成';
+                        showToast(`成功提交 ${successCount} 个音频文件`, 'success');
+                    } else if (successCount > 0) {
+                        elements.statusText.textContent = '部分提交完成';
+                        showToast(`成功提交 ${successCount} 个，失败 ${failedCount} 个`, 'warning');
+                    } else {
+                        elements.statusText.textContent = '提交失败';
+                        showToast(`上传失败：文件提交失败`, 'error');
+                        checkEmiliaHealth();
+                    }
+                }, 100);
+            }, 500); // 500ms动画时间
         } else {
-            elements.statusText.textContent = '提交失败';
-            showToast(`上传失败：${result.error || '未知错误'}`, 'error');
-            // 提交失败后重新查询服务状态
-            checkEmiliaHealth();
+            // 多个文件，立即隐藏进度条
+            if (elements.screenProgress) {
+                elements.screenProgress.style.display = 'none';
+            }
+
+            // 恢复status-text显示
+            setTimeout(() => {
+                if (elements.statusText) {
+                    elements.statusText.style.display = 'block';
+                }
+                if (successCount === totalFiles) {
+                    elements.statusText.textContent = '所有音频提交完成';
+                    showToast(`成功提交 ${successCount} 个音频文件`, 'success');
+                } else if (successCount > 0) {
+                    elements.statusText.textContent = '部分音频提交完成';
+                    showToast(`成功提交 ${successCount} 个，失败 ${failedCount} 个`, 'warning');
+                } else {
+                    elements.statusText.textContent = '提交失败';
+                    showToast(`上传失败：文件均提交失败`, 'error');
+                    checkEmiliaHealth();
+                }
+            }, 100);
         }
+
     } catch (error) {
         console.error('Upload error:', error);
-        elements.statusText.textContent = '提交失败';
 
-        if (error.name === 'AbortError') {
-            showToast('上传超时，文件可能过大或数量过多', 'error');
-        } else {
-            showToast(`上传失败：${error.message}`, 'error');
+        // 立即隐藏进度条
+        if (elements.screenProgress) {
+            elements.screenProgress.style.display = 'none';
         }
 
-        // 提交失败后重新查询服务状态
+        // 恢复status-text显示
+        setTimeout(() => {
+            if (elements.statusText) {
+                elements.statusText.style.display = 'block';
+                elements.statusText.textContent = '提交失败';
+            }
+        }, 100);
+
+        showToast(`上传失败：${error.message}`, 'error');
         checkEmiliaHealth();
     } finally {
         elements.submitBtn.disabled = false;
