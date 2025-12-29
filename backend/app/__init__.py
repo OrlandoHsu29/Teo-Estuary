@@ -46,7 +46,7 @@ def create_app():
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
-    app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB max file size
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
     # 硅基流动API配置
     app.config['SILICONFLOW_API_KEY'] = os.environ.get('SILICONFLOW_API_KEY', 'sk-dqfrbwdryedhuzxwtgdzfffxjstlkkjgenatmuwmembcdjhb')
@@ -177,7 +177,7 @@ def register_error_handlers(app):
     @app.errorhandler(413)
     def too_large(e):
         """文件过大错误处理"""
-        return jsonify({'error': '文件太大，请选择小于200MB的文件'}), 413
+        return jsonify({'error': '文件太大，请选择小于100MB的文件'}), 413
 
     @app.errorhandler(404)
     def not_found(e):
