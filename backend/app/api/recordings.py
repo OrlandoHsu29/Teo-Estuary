@@ -501,13 +501,13 @@ def admin_download_recording(recording_id):
 
 
 @recordings_bp.route('/api/upload-material', methods=['POST'])
-@api_key_required_with_rate_limit(hourly_limit=200, daily_limit=500)
+@api_key_required_with_rate_limit(hourly_limit=500, daily_limit=2000)
 def api_upload_material(key_obj):
-    """上传音频素材到 Emilia 服务
+    """上传音频素材到 Emilia 服务（单文件，兼容旧接口）
     接收音频文件并转发到 localhost:5029/upload_audio
     限制：
-    - 每小时最多200次上传
-    - 每天最多500次上传
+    - 每小时最多500次上传
+    - 每天最多2000次上传
     """
     try:
         if 'audio' not in request.files:
@@ -568,6 +568,83 @@ def api_upload_material(key_obj):
     except Exception as e:
         logger.error(f"Upload material error: {e}")
         return jsonify({'error': '上传失败，请重试'}), 500
+
+
+@recordings_bp.route('/api/upload-material-batch', methods=['POST'])
+@api_key_required_with_rate_limit(hourly_limit=50, daily_limit=200)
+def api_upload_material_batch(key_obj):
+    """批量上传音频素材到 Emilia 服务
+    接收多个音频文件并转发到 localhost:5029/upload_audio_batch
+    限制：
+    - 每次最多10个文件
+    - 每小时最多50次批量上传
+    - 每天最多200次批量上传
+    """
+    try:
+        if 'audios' not in request.files:
+            return jsonify({'error': '没有音频文件'}), 400
+
+        files = request.files.getlist('audios')
+        if not files or files[0].filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+
+        # 检查文件数量
+        if len(files) > 10:
+            return jsonify({'error': '最多只能上传10个文件'}), 400
+
+        # 检查文件类型
+        for file in files:
+            if not file.content_type or not file.content_type.startswith('audio/'):
+                return jsonify({'error': f'文件类型错误：{file.filename}，请上传音频文件'}), 400
+
+        # 转发到 Emilia 服务的批量上传接口
+        emilia_url = f'{emilia_service_host}/upload_audio_batch'
+
+        try:
+            # 准备转发文件和数据
+            files_data = [('files', (file.filename, file.stream, file.content_type)) for file in files]
+            data = {'ip_address': get_client_ip()}
+
+            # 发送请求到 Emilia 服务
+            response = requests.post(
+                emilia_url,
+                files=files_data,
+                data=data,
+                timeout=120  # 批量上传需要更长超时
+            )
+
+            # 检查 Emilia 服务响应
+            if response.status_code == 201:
+                result = response.json()
+                logger.info(f"Successfully forwarded {result.get('success_count', 0)} audio files to Emilia")
+
+                return jsonify({
+                    'success': True,
+                    'message': result.get('message'),
+                    'total': result.get('total'),
+                    'success_count': result.get('success_count'),
+                    'failed_count': result.get('failed_count'),
+                    'results': result.get('results', [])
+                }), 201
+            else:
+                logger.error(f"Emilia service returned error: {response.status_code} - {response.text}")
+                return jsonify({
+                    'error': f'Emilia 服务返回错误: {response.status_code}'
+                }), response.status_code
+
+        except requests.exceptions.Timeout:
+            logger.error("Timeout forwarding batch audio to Emilia service")
+            return jsonify({'error': 'Emilia 服务响应超时，请稍后重试'}), 504
+        except requests.exceptions.ConnectionError:
+            logger.error("Cannot connect to Emilia service at localhost:5029")
+            return jsonify({'error': '无法连接到 Emilia 服务，请确认服务已启动'}), 503
+        except Exception as e:
+            logger.error(f"Error forwarding batch to Emilia: {e}")
+            return jsonify({'error': f'批量转发失败: {str(e)}'}), 500
+
+    except Exception as e:
+        logger.error(f"Batch upload material error: {e}")
+        return jsonify({'error': '批量上传失败，请重试'}), 500
 
 
 @recordings_bp.route('/teo_emilia_health', methods=['GET'])

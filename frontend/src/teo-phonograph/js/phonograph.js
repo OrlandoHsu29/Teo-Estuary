@@ -1,11 +1,14 @@
 // 全局变量
 let audioElement = null;
 let audioFile = null;
+let audioPlaylist = []; // 播放列表
+let currentAudioIndex = 0; // 当前播放的音频索引
 let isPlaying = false;
 let animationId = null;
 let currentRotation = 0; // 当前旋转角度
 let lastAnimationTime = 0; // 上一次动画更新时间
 let emiliaServiceHealthy = false; // Emilia服务健康状态
+let isPlaylistVisible = false; // 播放列表是否可见
 
 // 旋转拖拽相关变量
 let isDragging = false;
@@ -32,12 +35,24 @@ const elements = {
     statusText: null,
     playBtn: null,
     playBtnText: null,
+    prevBtn: null,
+    nextBtn: null,
     uploadBtn: null,
     submitBtn: null,
     audioFileInput: null,
     playIcon: null,
     pauseIcon: null,
-    toastUniversal: null
+    dragHint: null,
+    volumeSlider: null,
+    volumeFill: null,
+    volumeKnob: null,
+    labelText: null,
+    toastUniversal: null,
+    playlistView: null,
+    playlistItems: null,
+    playerView: null,
+    playlistToggleBtn: null,
+    displayScreen: null
 };
 
 // 初始化
@@ -91,6 +106,8 @@ function initializeElements() {
     elements.statusText = document.getElementById('statusText');
     elements.playBtn = document.getElementById('playBtn');
     elements.playBtnText = elements.playBtn?.querySelector('.btn-text');
+    elements.prevBtn = document.getElementById('prevBtn');
+    elements.nextBtn = document.getElementById('nextBtn');
     elements.uploadBtn = document.getElementById('uploadBtn');
     elements.submitBtn = document.getElementById('submitBtn');
     elements.audioFileInput = document.getElementById('audioFileInput');
@@ -102,18 +119,21 @@ function initializeElements() {
     elements.volumeKnob = document.getElementById('volumeKnob');
     elements.labelText = document.getElementById('labelText');
     elements.toastUniversal = document.getElementById('toastUniversal');
+    elements.playlistView = document.getElementById('playlistView');
+    elements.playlistItems = document.getElementById('playlistItems');
+    elements.playerView = document.getElementById('playerView');
+    elements.playlistToggleBtn = document.getElementById('playlistToggleBtn');
+    elements.displayScreen = document.getElementById('displayScreen');
 
-    // 禁用播放和提交按钮
+    // 禁用播放控制按钮
     elements.playBtn.disabled = true;
+    elements.prevBtn.disabled = true;
+    elements.nextBtn.disabled = true;
+    elements.playlistToggleBtn.disabled = true;
     elements.submitBtn.disabled = true;
 
     // 初始化音量显示
     updateVolumeUI(currentVolume);
-
-    // 设置播放按钮默认文本
-    if (elements.playBtnText) {
-        elements.playBtnText.textContent = '播放';
-    }
 }
 
 function bindEvents() {
@@ -123,8 +143,11 @@ function bindEvents() {
     // 文件输入
     elements.audioFileInput.addEventListener('change', handleFileSelect);
 
-    // 播放按钮
+    // 播放控制按钮
     elements.playBtn.addEventListener('click', handlePlayPause);
+    elements.prevBtn.addEventListener('click', handlePrevTrack);
+    elements.nextBtn.addEventListener('click', handleNextTrack);
+    elements.playlistToggleBtn.addEventListener('click', togglePlaylist);
 
     // 提交按钮
     elements.submitBtn.addEventListener('click', handleSubmit);
@@ -151,18 +174,23 @@ function bindEvents() {
     elements.volumeKnob.addEventListener('mousedown', handleVolumeStart);
     document.addEventListener('mousemove', handleVolumeMove);
     document.addEventListener('mouseup', handleVolumeEnd);
+}
 
-    // 音频事件
-    if (elements.audioFileInput) {
-        elements.audioFileInput.addEventListener('loadedmetadata', () => {
-            if (audioElement) {
-                elements.totalTime.textContent = formatTime(audioElement.duration);
-            }
-        });
+// 上一个音频
+function handlePrevTrack() {
+    if (audioPlaylist.length === 0) return;
+    const newIndex = currentAudioIndex - 1;
+    if (newIndex >= 0) {
+        loadAudioByIndex(newIndex);
+    }
+}
 
-        elements.audioFileInput.addEventListener('timeupdate', updateProgress);
-
-        elements.audioFileInput.addEventListener('ended', handleAudioEnded);
+// 下一个音频
+function handleNextTrack() {
+    if (audioPlaylist.length === 0) return;
+    const newIndex = currentAudioIndex + 1;
+    if (newIndex < audioPlaylist.length) {
+        loadAudioByIndex(newIndex);
     }
 }
 
@@ -171,46 +199,141 @@ function handleUpload() {
 }
 
 function handleFileSelect(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    // 检查文件数量
+    if (files.length > 10) {
+        showToast('最多只能上传10个音频文件', 'warning');
+        return;
+    }
 
     // 检查文件类型
-    if (!file.type.startsWith('audio/')) {
+    const invalidFiles = files.filter(file => !file.type.startsWith('audio/'));
+    if (invalidFiles.length > 0) {
         showToast('请选择音频文件（MP3、WAV、OGG格式）', 'error');
         return;
     }
 
-    audioFile = file;
+    // 清空之前的播放列表
+    audioPlaylist = [];
+    currentAudioIndex = 0;
 
     // 显示加载状态
-    elements.statusText.textContent = '正在加载...';
+    elements.statusText.textContent = `正在加载 ${files.length} 个文件...`;
 
-    // 创建音频元素
+    // 加载所有音频文件到播放列表
+    files.forEach((file, index) => {
+        const fileName = file.name.replace(/\.[^/.]+$/, ''); // 移除文件扩展名
+        audioPlaylist.push({
+            file: file,
+            name: fileName,
+            url: URL.createObjectURL(file)
+        });
+    });
+
+    // 加载第一个音频
+    loadAudioByIndex(0);
+
+    // 更新播放列表UI
+    updatePlaylistUI();
+
+    // 启用/禁用相关按钮
+    updateNavigationButtons();
+
+    showToast(`已加载 ${files.length} 个音频文件`, 'success');
+}
+
+// 更新导航按钮状态
+function updateNavigationButtons() {
+    const hasMultipleFiles = audioPlaylist.length > 1;
+
+    // 启用播放按钮
+    elements.playBtn.disabled = false;
+    // 根据Emilia服务状态决定是否启用提交按钮
+    elements.submitBtn.disabled = !emiliaServiceHealthy;
+
+    // 启用/禁用翻页按钮和播放列表按钮
+    if (hasMultipleFiles) {
+        elements.prevBtn.disabled = false;
+        elements.nextBtn.disabled = false;
+        elements.playlistToggleBtn.disabled = false;
+    } else {
+        elements.prevBtn.disabled = true;
+        elements.nextBtn.disabled = true;
+        elements.playlistToggleBtn.disabled = true;
+    }
+}
+
+// 加载指定索引的音频
+function loadAudioByIndex(index) {
+    if (index < 0 || index >= audioPlaylist.length) return;
+
+    currentAudioIndex = index;
+    const audioData = audioPlaylist[index];
+
+    // 停止当前播放
     if (audioElement) {
         audioElement.pause();
         audioElement = null;
     }
 
+    // 重置播放状态
+    isPlaying = false;
+    currentRotation = 0;
+
+    // 停止动画
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+
+    // 重置黑胶旋转角度
+    if (elements.vinylRecord) {
+        elements.vinylRecord.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+    }
+
+    // 重置tonearm位置
+    if (elements.tonearm) {
+        elements.tonearm.querySelector('.tonearm-arm').classList.remove('playing');
+    }
+
+    // 更新播放/暂停按钮图标
+    if (elements.playIcon && elements.pauseIcon) {
+        elements.playIcon.style.display = 'block';
+        elements.pauseIcon.style.display = 'none';
+    }
+
+    // 创建新的音频元素
     audioElement = new Audio();
-    audioElement.src = URL.createObjectURL(file);
-    audioElement.volume = currentVolume; // 设置初始音量
+    audioElement.src = audioData.url;
+    audioElement.volume = currentVolume;
 
     // 更新黑胶标签显示文件名
-    const fileName = file.name.replace(/\.[^/.]+$/, ''); // 移除文件扩展名
-    elements.labelText.textContent = fileName;
+    elements.labelText.textContent = audioData.name;
+
+    // 显示加载状态
+    elements.statusText.textContent = '加载中...';
 
     audioElement.addEventListener('loadedmetadata', () => {
         elements.totalTime.textContent = formatTime(audioElement.duration);
-        elements.trackNumber.textContent = '01';
-        elements.playBtn.disabled = false;
-        // 根据Emilia服务状态决定是否启用提交按钮
-        elements.submitBtn.disabled = !emiliaServiceHealthy;
-        elements.statusText.textContent = '加载完成';
+
+        // 更新track info显示（单个或多个音频）
+        if (audioPlaylist.length > 1) {
+            elements.trackNumber.textContent = `${String(index + 1).padStart(2, '0')} / ${String(audioPlaylist.length).padStart(2, '0')}`;
+        } else {
+            elements.trackNumber.textContent = String(index + 1).padStart(2, '0');
+        }
+
+        elements.statusText.textContent = '准备就绪';
 
         // 显示拖拽提示箭头
         if (elements.dragHint) {
             elements.dragHint.classList.add('visible');
         }
+
+        // 更新播放列表的高亮状态
+        updatePlaylistUI();
     });
 
     audioElement.addEventListener('error', () => {
@@ -220,6 +343,84 @@ function handleFileSelect(event) {
 
     audioElement.addEventListener('timeupdate', updateProgress);
     audioElement.addEventListener('ended', handleAudioEnded);
+}
+
+// 更新播放列表UI
+function updatePlaylistUI() {
+    if (!elements.playlistItems) return;
+
+    elements.playlistItems.innerHTML = '';
+
+    audioPlaylist.forEach((audioData, index) => {
+        const item = document.createElement('div');
+        item.className = 'playlist-item';
+        if (index === currentAudioIndex) {
+            item.classList.add('active');
+        }
+
+        item.innerHTML = `
+            <span class="playlist-item-index">${String(index + 1).padStart(2, '0')}</span>
+            <span class="playlist-item-title">${audioData.name}</span>
+        `;
+
+        item.addEventListener('click', () => {
+            loadAudioByIndex(index);
+            // 延迟返回播放器视图，让用户看到点击效果
+            setTimeout(() => {
+                hidePlaylist();
+            }, 150);
+        });
+
+        elements.playlistItems.appendChild(item);
+    });
+}
+
+// 切换播放列表视图
+function togglePlaylist() {
+    if (isPlaylistVisible) {
+        hidePlaylist();
+    } else {
+        showPlaylist();
+    }
+}
+
+// 显示播放列表视图（带滑动动画）
+function showPlaylist() {
+    if (!elements.playlistView || !elements.playerView) return;
+
+    isPlaylistVisible = true;
+    elements.playlistView.style.display = 'flex';
+    elements.playlistView.classList.add('active');
+    elements.playerView.classList.add('hidden');
+
+    // 更新播放列表的高亮状态
+    updatePlaylistUI();
+}
+
+// 隐藏播放列表视图（带渐隐动画）
+function hidePlaylist() {
+    if (!elements.playlistView || !elements.playerView) return;
+
+    isPlaylistVisible = false;
+    elements.playlistView.classList.remove('active');
+    elements.playerView.classList.remove('hidden');
+
+    // 等待动画完成后再隐藏元素
+    setTimeout(() => {
+        if (!isPlaylistVisible) {
+            elements.playlistView.style.display = 'none';
+        }
+    }, 300); // 与CSS动画时长一致
+}
+
+// 保留旧函数名以兼容
+function showPlaylistView() {
+    showPlaylist();
+}
+
+// 显示播放器视图
+function showPlayerView() {
+    hidePlaylist();
 }
 
 function handlePlayPause() {
@@ -328,7 +529,7 @@ function handleAudioEnded() {
 }
 
 async function handleSubmit() {
-    if (!audioFile) {
+    if (audioPlaylist.length === 0) {
         showToast('请先上传音频文件', 'warning');
         return;
     }
@@ -352,16 +553,17 @@ async function handleSubmit() {
     }
 
     // 显示提交状态
-    elements.statusText.textContent = '正在提交...';
+    elements.statusText.textContent = `正在提交 ${audioPlaylist.length} 个文件...`;
     elements.submitBtn.disabled = true;
 
-    // 创建 FormData
-    const formData = new FormData();
-    formData.append('audio', audioFile);
-
     try {
+        // 创建 FormData，批量上传
+        const formData = new FormData();
+        audioPlaylist.forEach(audioData => {
+            formData.append('audios', audioData.file);
+        });
 
-        const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material`, {
+        const response = await fetch(`${KeyManager.API_BASE_URL}/api/upload-material-batch`, {
             method: 'POST',
             headers: {
                 'X-API-Key': apiKey
@@ -384,8 +586,8 @@ async function handleSubmit() {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            elements.statusText.textContent = '提交完成';
-            showToast(`音频素材上传成功！文件ID: ${result.id}`, 'success');
+            elements.statusText.textContent = '全部提交完成';
+            showToast(`成功提交 ${result.success_count} 个音频文件`, 'success');
         } else {
             elements.statusText.textContent = '提交失败';
             showToast(`上传失败：${result.error || '未知错误'}`, 'error');

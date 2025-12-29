@@ -5,7 +5,7 @@
   "main": "src/index.html",
   "scripts": {
     "dev": "python -m http.server 8080 --directory src",
-    "build": 'echo "No build process needed for static files"',
+    "build": "echo \"No build process needed for static files\"",
     "serve": "python -m http.server 8080 --directory src"
   },
   "dependencies": {},

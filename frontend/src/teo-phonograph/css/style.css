@@ -567,6 +567,9 @@ body {
         inset 3px 3px 8px rgba(0, 0, 0, 0.5),
         inset -1px -1px 3px rgba(255, 255, 255, 0.05);
     border: 1px solid #2a3a4a;
+    min-height: 140px;
+    position: relative;
+    overflow: hidden;
 }
 
 .screen-content {
@@ -574,6 +577,19 @@ body {
     flex-direction: column;
     gap: 12px;
     align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* 播放器视图 */
+.player-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    transition: opacity 0.3s ease;
 }
 
 .track-info {
@@ -584,73 +600,71 @@ body {
 
 .info-label {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 1px;
-    /* 默认关机状态 */
     color: #2a3a4a;
     transition: color 0.6s ease, text-shadow 0.6s ease;
 }
 
-/* 开机状态 - 激活标签颜色 */
 .power-on .info-label {
     color: #4466aa;
 }
 
 .info-value {
     font-family: 'Orbitron', monospace;
-    font-size: 16px;
-    font-weight: 700;
-    /* 默认关机状态 */
+    font-size: 14px;
+    font-weight: 600;
     color: #2a3a4a;
     text-shadow: none;
     transition: color 0.6s ease, text-shadow 0.6s ease;
 }
 
-/* 开机状态 - 激活值颜色 */
 .power-on .info-value {
     color: #0088ff;
-    text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
+    text-shadow: 0 0 10px rgba(0, 136, 255, 0.6);
 }
 
 .time-info {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+}
+
+.time-display {
+    font-family: 'Orbitron', monospace;
+    display: flex;
+    direction: row;
+    font-size: 26px;
+
 }
 
 .time-current,
 .time-total {
-    font-family: 'Orbitron', monospace;
-    font-size: 18px;
     font-weight: 700;
-    /* 默认关机状态 */
     color: #2a3a4a;
     transition: color 0.6s ease;
 }
 
-/* 开机状态 - 激活时间颜色 */
 .power-on .time-current,
 .power-on .time-total {
     color: #0088ff;
+    text-shadow: 0 0 15px rgba(0, 136, 255, 0.6);
 }
 
 .time-divider {
-    font-size: 14px;
-    /* 默认关机状态 */
+    margin: auto 4px;
     color: #2a2a3a;
     transition: color 0.6s ease;
 }
 
-/* 开机状态 - 激活分隔符颜色 */
 .power-on .time-divider {
     color: #4466aa;
 }
 
 .status-text {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 2px;
-    /* 保持亮色 - 不受关机状态影响 */
     color: #0088ff;
     text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
 }
@@ -663,13 +677,36 @@ body {
     margin-top: auto;
 }
 
-.control-btn {
-    width: 100%;
+.button-row {
     display: flex;
+    gap: 8px;
+}
+
+.primary-controls {
+    justify-content: space-between;
+}
+
+.primary-controls .control-btn {
+    flex: 1;
+    padding: 12px 8px;
+}
+
+.secondary-controls {
+    justify-content: space-between;
+}
+
+.secondary-controls .control-btn {
+    flex: 1;
+}
+
+.control-btn {
+    width: auto;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 12px;
+    gap: 6px;
+    padding: 12px 8px;
     background: linear-gradient(145deg, #2a2a3a, #1a1a2a);
     border: 1px solid #3a3a4a;
     border-radius: 10px;
@@ -680,6 +717,139 @@ body {
         4px 4px 10px rgba(0, 0, 0, 0.3),
         -2px -2px 6px rgba(255, 255, 255, 0.03),
         inset 1px 1px 2px rgba(255, 255, 255, 0.05);
+    min-height: 55px;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.primary-controls .btn-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.btn-text {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+/* 播放列表视图 */
+.playlist-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(145deg, #0a1a2a, #051020);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.playlist-view.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 播放列表项容器 - 自定义滚动条 */
+.playlist-items {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px;
+}
+
+/* 自定义滚动条样式 */
+.playlist-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.playlist-items::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    margin: 4px;
+}
+
+.playlist-items::-webkit-scrollbar-thumb {
+    background: rgba(0, 136, 255, 0.3);
+    border-radius: 3px;
+    transition: background 0.3s ease;
+}
+
+.playlist-items::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 136, 255, 0.5);
+}
+
+/* Firefox 滚动条样式 */
+.playlist-items {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 136, 255, 0.3) rgba(0, 0, 0, 0.2);
+}
+
+/* 播放列表项 */
+.playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+}
+
+.playlist-item:hover {
+    background: rgba(0, 136, 255, 0.1);
+    border-color: rgba(0, 136, 255, 0.3);
+    transform: translateX(2px);
+}
+
+.playlist-item.active {
+    background: rgba(0, 136, 255, 0.2);
+    border-color: #0088ff;
+    box-shadow: 0 0 15px rgba(0, 136, 255, 0.3);
+}
+
+.playlist-item-index {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #6666aa;
+    min-width: 28px;
+    text-align: center;
+}
+
+.playlist-item.active .playlist-item-index {
+    color: #0088ff;
+    text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
+}
+
+.playlist-item-title {
+    flex: 1;
+    font-size: 13px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playlist-item.active .playlist-item-title {
+    color: #0088ff;
+    font-weight: 500;
+}
+
+/* 视图切换动画 */
+.player-view.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .control-btn:hover:not(:disabled) {
@@ -704,16 +874,113 @@ body {
     cursor: not-allowed;
 }
 
-.btn-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
+/* 播放列表视图 */
+.playlist-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(145deg, #0a1a2a, #051020);
 }
 
-.btn-text {
+.playlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid #2a3a4a;
+}
+
+.playlist-title {
+    font-family: 'Orbitron', monospace;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 1px;
+    color: #0088ff;
+    text-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
+}
+
+.back-to-player-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.back-to-player-btn svg {
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.back-to-player-btn:hover {
+    border-color: rgba(255, 80, 80, 0.6);
+    background: rgba(255, 80, 80, 0.1);
+}
+
+.back-to-player-btn:hover svg {
+    color: #ff5050;
+}
+
+.playlist-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.playlist-item:hover {
+    background: rgba(0, 136, 255, 0.1);
+    border-color: rgba(0, 136, 255, 0.3);
+}
+
+.playlist-item.active {
+    background: rgba(0, 136, 255, 0.2);
+    border-color: #0088ff;
+}
+
+.playlist-item-index {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6666aa;
+    min-width: 24px;
+}
+
+.playlist-item.active .playlist-item-index {
+    color: #0088ff;
+}
+
+.playlist-item-title {
+    flex: 1;
+    font-size: 12px;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playlist-item.active .playlist-item-title {
+    color: #0088ff;
+    font-weight: 500;
 }
 
 /* 使用说明样式 */
@@ -1178,8 +1445,7 @@ body {
         font-size: 14px;
     }
 
-    .time-current,
-    .time-total {
+    .time-display {
         font-size: 16px;
     }
 

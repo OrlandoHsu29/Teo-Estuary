@@ -18,9 +18,9 @@ def api_key_required_with_rate_limit(hourly_limit=300, daily_limit=750):
             from flask import request
             from app import db
 
-            # 跳过 OPTIONS 请求（CORS 预检），让 Flask-CORS 自动处理
+            # 跳过 OPTIONS 请求（CORS 预检），直接返回200
             if request.method == 'OPTIONS':
-                return f(*args, **kwargs)
+                return '', 200
 
             # 1. 验证API密钥
             key_obj, error = verify_api_key(request)

@@ -87,49 +87,92 @@
                     </div>
 
                     <!-- 显示屏 -->
-                    <div class="display-screen">
-                        <div class="screen-content" id="screenContent">
-                            <div class="track-info">
-                                <div class="info-label">TRACK</div>
-                                <div class="info-value" id="trackNumber">--</div>
+                    <div class="display-screen" id="displayScreen">
+                        <!-- 播放器视图 -->
+                        <div class="screen-content player-view" id="playerView">
+                            <div class="screen-header">
+                                <div class="track-info">
+                                    <div class="info-label">TRACK</div>
+                                    <div class="info-value" id="trackNumber">--</div>
+                                </div>
                             </div>
-                            <div class="time-info">
-                                <div class="time-current" id="currentTime">0:00</div>
-                                <div class="time-divider">/</div>
-                                <div class="time-total" id="totalTime">0:00</div>
+                            <div class="screen-main">
+                                <div class="time-display">
+                                    <div class="time-current" id="currentTime">0:00</div>
+                                    <div class="time-divider">/</div>
+                                    <div class="time-total" id="totalTime">0:00</div>
+                                </div>
                             </div>
-                            <div class="status-text" id="statusText">READY</div>
+                            <div class="screen-footer">
+                                <div class="track-counter" id="trackCounter" style="display: none;"></div>
+                                <div class="status-text" id="statusText">----</div>
+                            </div>
+                        </div>
+
+                        <!-- 播放列表视图 -->
+                        <div class="playlist-view" id="playlistView" style="display: none;">
+                            <div class="playlist-items" id="playlistItems">
+                                <!-- 播放列表项将动态添加 -->
+                            </div>
                         </div>
                     </div>
 
                     <!-- 按钮区域 -->
                     <div class="button-section">
-                        <button class="control-btn upload-btn" id="uploadBtn" title="上传音频">
-                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            <span class="btn-text">上传</span>
-                        </button>
+                        <!-- 第一行：播放控制按钮 -->
+                        <div class="button-row primary-controls">
+                            <button class="control-btn prev-btn" id="prevBtn" title="上一个音频" disabled>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
 
-                        <button class="control-btn play-btn" id="playBtn" title="播放/暂停">
-                            <svg class="btn-icon play-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            <svg class="btn-icon pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                                <rect x="6" y="4" width="4" height="16"></rect>
-                                <rect x="14" y="4" width="4" height="16"></rect>
-                            </svg>
-                            <span class="btn-text">播放</span>
-                        </button>
+                            <button class="control-btn play-btn" id="playBtn" title="播放/暂停" disabled>
+                                <svg class="btn-icon play-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <svg class="btn-icon pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                                    <rect x="6" y="4" width="4" height="16"></rect>
+                                    <rect x="14" y="4" width="4" height="16"></rect>
+                                </svg>
+                            </button>
 
-                        <button class="control-btn submit-btn" id="submitBtn" title="提交音频">
-                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span class="btn-text">提交</span>
-                        </button>
+                            <button class="control-btn next-btn" id="nextBtn" title="下一个音频" disabled>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </button>
+
+                            <button class="control-btn playlist-toggle-btn" id="playlistToggleBtn" title="播放列表" disabled>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- 第二行：上传和提交按钮 -->
+                        <div class="button-row secondary-controls">
+                            <button class="control-btn upload-btn" id="uploadBtn" title="上传音频">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <span class="btn-text">上传</span>
+                            </button>
+
+                            <button class="control-btn submit-btn" id="submitBtn" title="提交音频">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span class="btn-text">提交</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -196,8 +239,8 @@
     </div>
 </div>
 
-<!-- 隐藏的文件输入 -->
-<input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+<!-- 隐藏的文件输入 - 支持多文件选择 -->
+<input type="file" id="audioFileInput" accept="audio/*" multiple style="display: none;">
 
 <!-- 通用 Toast 提示消息 -->
 <div class="toast-universal" id="toastUniversal"></div>

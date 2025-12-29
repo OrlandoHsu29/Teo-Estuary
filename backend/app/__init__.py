@@ -76,9 +76,12 @@ def create_app():
     # 启用CORS支持
     CORS(app, resources={
         r"/*": {
-            "origins": "*",
+            "origins": "*",  # 允许所有来源，包括 file://
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": "*"
+            "allow_headers": ["Content-Type", "X-API-Key", "X-Requested-With"],
+            "expose_headers": ["Content-Type"],
+            "supports_credentials": False,
+            "max_age": 3600  # 预检请求缓存时间
         }
     })
 
