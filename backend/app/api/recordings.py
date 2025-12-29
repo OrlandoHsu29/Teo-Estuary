@@ -456,7 +456,6 @@ def admin_download_recording(recording_id):
 
             # Handle HEAD requests (for audio URL accessibility testing)
             if request.method == 'HEAD':
-                from flask import Response
                 response = Response()
                 response.headers['Content-Type'] = mime_type
                 response.headers['Content-Length'] = os.path.getsize(file_path)
@@ -472,7 +471,6 @@ def admin_download_recording(recording_id):
                 return send_from_directory(directory, filename, download_name=download_name, as_attachment=True)
             else:
                 # 为HTML5 audio设置正确的MIME类型
-                from flask import Response
                 try:
                     logger.info(f"Serving audio file for recording {recording_id}: {file_path}")
 
