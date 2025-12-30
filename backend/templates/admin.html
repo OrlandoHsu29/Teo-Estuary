@@ -191,7 +191,18 @@
                                             <!-- 左侧：文本内容 -->
                                             <div class="text-column">
                                                 <div class="text-display compact">
-                                                    <label>普通话文本 <span class="edit-hint" onclick="enableMandarinTextEdit()">编辑</span></label>
+                                                    <label>
+                                                        <span class="label-text">
+                                                            <p>普通话文本</p>
+                                                            <span class="edit-hint" onclick="enableMandarinTextEdit()">编辑</span>
+                                                        </span>
+                                                        <button class="text-save-btn" id="mandarinSaveBtn" onclick="savePendingMandarinEdits()" disabled title="保存修改">
+                                                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                                                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
+                                                            </svg>
+                                                            保存
+                                                        </button>
+                                                    </label>
                                                     <div class="mandarin-text">
                                                         <p id="mandarinText">-</p>
                                                         <textarea id="mandarinTextEdit" style="display: none;"></textarea>
@@ -203,7 +214,18 @@
                                                 </div>
 
                                                 <div class="text-display compact">
-                                                    <label>潮汕话文本 <span class="edit-hint" onclick="enableTeochewTextEdit()">编辑</span></label>
+                                                    <label>
+                                                        <span class="label-text">
+                                                            <p>潮汕话文本</p>
+                                                            <span class="edit-hint" onclick="enableTeochewTextEdit()">编辑</span>
+                                                        </span>
+                                                        <button class="text-save-btn" id="teochewSaveBtn" onclick="savePendingTeochewEdits()" disabled title="保存修改">
+                                                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                                                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
+                                                            </svg>
+                                                            保存
+                                                        </button>
+                                                    </label>
                                                     <div class="teochew-text">
                                                         <p id="teochewText">-</p>
                                                         <textarea id="teochewTextEdit" style="display: none;"></textarea>

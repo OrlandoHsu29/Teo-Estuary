@@ -1,5 +1,9 @@
 // 录音数据管理
 
+// 跟踪未保存的修改
+let hasPendingMandarinEdits = false;
+let hasPendingTeochewEdits = false;
+
 // 初始化reviewDevice的默认显示状态
 function initializeReviewDeviceDisplay() {
     // 更新标题显示加载信息
@@ -229,6 +233,11 @@ function displayCurrentRecord() {
     if (typeof exitAllEditModes === 'function') {
         exitAllEditModes();
     }
+
+    // 重置未保存修改状态
+    hasPendingMandarinEdits = false;
+    hasPendingTeochewEdits = false;
+    updateSaveButtonState();
 
     // 确保加载动画被隐藏
     hideDataLoading();
@@ -621,7 +630,7 @@ function createWordButton(word, index) {
         button.textContent = displayText;
         button.dataset.isVariant = 'true';
         button.dataset.baseWord = baseWord;
-        button.dataset.currentVariant = 1; // 当前变体编号
+        button.dataset.currentVariant = 0; // 0 表示初始状态（还未选择过变体）
 
         // 为变体词添加点击事件（切换变体），但延迟执行以等待双击
         let clickTimer = null;
@@ -691,10 +700,20 @@ async function handleVariantClick(button) {
         // 获取所有变体
         const variants = await getWordVariants(baseWord);
 
-        if (variants && variants.length > 1) {
-            // 计算下一个变体
-            const nextVariantIndex = variants.findIndex(v => v[0] === currentVariant) + 1;
-            const nextVariant = variants[nextVariantIndex % variants.length];
+        if (variants && variants.length > 0) {
+            let nextVariant;
+            // 如果是初始状态（currentVariant = 0），直接选择第一个变体
+            if (currentVariant === 0) {
+                nextVariant = variants[0];
+            } else if (variants.length > 1) {
+                // 计算下一个变体
+                const currentIndex = variants.findIndex(v => v[0] === currentVariant);
+                const nextVariantIndex = (currentIndex + 1) % variants.length;
+                nextVariant = variants[nextVariantIndex];
+            } else {
+                // 只有一个变体，保持当前状态
+                nextVariant = variants[0];
+            }
 
             // 更新按钮显示
             button.textContent = nextVariant[1];
@@ -843,13 +862,13 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
     }
 
     const record = recordingsData[currentRecordIndex];
-    const isOriginalText = buttonElement?.closest('#originalText');
+    const isMandarinText = buttonElement?.closest('#mandarinText');
 
     let newContent;
     let originalWord = ''; // 保存原始词的完整信息
 
-    if (isOriginalText) {
-        // 更新原始文本
+    if (isMandarinText) {
+        // 更新普通话文本
         const words = record.mandarin_text.split(' ');
         originalWord = words[wordIndex];
 
@@ -862,13 +881,14 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             // 移除按钮元素
             buttonElement.remove();
 
-            // 更新数据库
-            updateRecordingOriginalText(record.id, newContent);
+            // 标记有未保存的修改
+            hasPendingMandarinEdits = true;
+            updateSaveButtonState();
 
             // 重新渲染所有按钮以更新索引
-            const originalTextElement = document.getElementById('originalText');
-            if (originalTextElement) {
-                renderWordButtons(originalTextElement, newContent || (newContent === '' ? '' : '-'));
+            const mandarinTextElement = document.getElementById('mandarinText');
+            if (mandarinTextElement) {
+                renderWordButtons(mandarinTextElement, newContent || (newContent === '' ? '' : '-'));
             }
         } else {
             // 判断原始词的格式并保持相应的格式
@@ -894,11 +914,12 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             buttonElement.dataset.originalWord = words[wordIndex];
             buttonElement.textContent = newWord;
 
-            // 更新数据库
-            updateRecordingOriginalText(record.id, newContent);
+            // 标记有未保存的修改
+            hasPendingMandarinEdits = true;
+            updateSaveButtonState();
         }
     } else {
-        // 更新转换文本
+        // 更新潮汕话文本
         const words = record.teochew_text.split(' ');
         originalWord = words[wordIndex];
 
@@ -911,13 +932,14 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             // 移除按钮元素
             buttonElement.remove();
 
-            // 更新数据库
-            updateRecordingContent(record.id, newContent);
+            // 标记有未保存的修改
+            hasPendingTeochewEdits = true;
+            updateSaveButtonState();
 
             // 重新渲染所有按钮以更新索引
-            const convertedTextElement = document.getElementById('convertedText');
-            if (convertedTextElement) {
-                renderWordButtons(convertedTextElement, newContent || (newContent === '' ? '' : '-'));
+            const teochewTextElement = document.getElementById('teochewText');
+            if (teochewTextElement) {
+                renderWordButtons(teochewTextElement, newContent || (newContent === '' ? '' : '-'));
             }
         } else {
             // 判断原始词的格式并保持相应的格式
@@ -943,8 +965,9 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             buttonElement.dataset.originalWord = words[wordIndex];
             buttonElement.textContent = newWord;
 
-            // 更新数据库
-            updateRecordingContent(record.id, newContent);
+            // 标记有未保存的修改
+            hasPendingTeochewEdits = true;
+            updateSaveButtonState();
         }
     }
 
@@ -964,12 +987,12 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
     }
 
     const record = recordingsData[currentRecordIndex];
-    const isOriginalText = buttonElement?.closest('#originalText');
+    const isMandarinText = buttonElement?.closest('#mandarinText');
 
     let newContent;
 
-    if (isOriginalText) {
-        // 更新原始文本
+    if (isMandarinText) {
+        // 更新普通话文本
         const words = record.mandarin_text.split(' ');
         words[wordIndex] = newWord;
         newContent = words.join(' ');
@@ -978,10 +1001,11 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
         // 更新按钮数据
         buttonElement.dataset.originalWord = newWord;
 
-        // 更新数据库
-        updateRecordingOriginalText(record.id, newContent);
+        // 标记有未保存的修改
+        hasPendingMandarinEdits = true;
+        updateSaveButtonState();
     } else {
-        // 更新转换文本
+        // 更新潮汕话文本
         const words = record.teochew_text.split(' ');
         words[wordIndex] = newWord;
         newContent = words.join(' ');
@@ -990,8 +1014,9 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
         // 更新按钮数据
         buttonElement.dataset.originalWord = newWord;
 
-        // 更新数据库
-        updateRecordingContent(record.id, newContent);
+        // 标记有未保存的修改
+        hasPendingTeochewEdits = true;
+        updateSaveButtonState();
     }
 }
 
@@ -1191,5 +1216,84 @@ function syncWordButtonsWithEdit() {
         if (newContent) {
             renderWordButtons(convertedTextElement, newContent);
         }
+    }
+}
+
+// 更新保存按钮状态
+function updateSaveButtonState() {
+    const mandarinSaveBtn = document.getElementById('mandarinSaveBtn');
+    const teochewSaveBtn = document.getElementById('teochewSaveBtn');
+
+    if (mandarinSaveBtn) {
+        mandarinSaveBtn.disabled = !hasPendingMandarinEdits;
+    }
+    if (teochewSaveBtn) {
+        teochewSaveBtn.disabled = !hasPendingTeochewEdits;
+    }
+}
+
+// 保存普通话文本的修改到后端
+async function savePendingMandarinEdits() {
+    if (!hasPendingMandarinEdits || recordingsData.length === 0) {
+        return;
+    }
+
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return;
+
+    try {
+        const response = await fetch(`/api/recording/${record.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ mandarin_text: record.mandarin_text })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            hasPendingMandarinEdits = false;
+            updateSaveButtonState();
+            showToast('普通话文本已保存', 'success');
+        } else {
+            showToast(data.error || '保存失败', 'error');
+        }
+    } catch (error) {
+        console.error('保存失败:', error);
+        showToast('保存失败', 'error');
+    }
+}
+
+// 保存潮汕话文本的修改到后端
+async function savePendingTeochewEdits() {
+    if (!hasPendingTeochewEdits || recordingsData.length === 0) {
+        return;
+    }
+
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return;
+
+    try {
+        const response = await fetch(`/api/recording/${record.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ teochew_text: record.teochew_text })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            hasPendingTeochewEdits = false;
+            updateSaveButtonState();
+            showToast('潮汕话文本已保存', 'success');
+        } else {
+            showToast(data.error || '保存失败', 'error');
+        }
+    } catch (error) {
+        console.error('保存失败:', error);
+        showToast('保存失败', 'error');
     }
 }

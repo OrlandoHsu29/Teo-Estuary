@@ -262,6 +262,14 @@ async function approveCurrent() {
         return;
     }
 
+    // 自动保存未保存的修改
+    if (typeof savePendingMandarinEdits === 'function' && hasPendingMandarinEdits) {
+        await savePendingMandarinEdits();
+    }
+    if (typeof savePendingTeochewEdits === 'function' && hasPendingTeochewEdits) {
+        await savePendingTeochewEdits();
+    }
+
     // 自动合并分词按钮为完整句子（同步进行）
     if (typeof autoMergeAllTextsOnApprove === 'function') {
         // 先启动气泡动画
@@ -414,6 +422,14 @@ async function approveCurrent() {
     if (!record.teochew_text && !record.mandarin_text) {
         showToast('请先填写音频实际内容后再进行审核', 'error');
         return;
+    }
+
+    // 自动保存未保存的修改
+    if (typeof savePendingMandarinEdits === 'function' && hasPendingMandarinEdits) {
+        await savePendingMandarinEdits();
+    }
+    if (typeof savePendingTeochewEdits === 'function' && hasPendingTeochewEdits) {
+        await savePendingTeochewEdits();
     }
 
     // 自动合并分词按钮为完整句子（同步进行）
