@@ -35,6 +35,7 @@ function initializeReviewDeviceDisplay() {
 
     // 禁用所有控制按钮
     updateControlButtonsByStatus();
+    updateTranslateButtonState();
 }
 
 // 显示数据加载动画
@@ -223,6 +224,9 @@ function displayEmptyRecordState() {
     if (screenProgress) {
         screenProgress.style.display = 'block';
     }
+
+    // 禁用翻译按钮
+    updateTranslateButtonState();
 }
 
 // 显示当前记录
@@ -336,6 +340,7 @@ function displayCurrentRecord() {
     }
 
     updateControlButtonsByStatus();
+    updateTranslateButtonState();
 }
 
 // 更新导航按钮状态
@@ -978,6 +983,9 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
         delete buttonElement.dataset.originalText;
     }
 
+    // 更新翻译按钮状态（因为词块数量可能改变）
+    updateTranslateButtonState();
+
 }
 
 // 更新记录中的变体词
@@ -1018,6 +1026,9 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
         hasPendingTeochewEdits = true;
         updateSaveButtonState();
     }
+
+    // 更新翻译按钮状态（虽然变体切换不改变词块数量，但保持一致性）
+    updateTranslateButtonState();
 }
 
 // 检查是否需要合并分词按钮
@@ -1295,5 +1306,141 @@ async function savePendingTeochewEdits() {
     } catch (error) {
         console.error('保存失败:', error);
         showToast('保存失败', 'error');
+    }
+}
+
+// 检查词块数量并更新翻译按钮状态
+function updateTranslateButtonState() {
+    const mandarinTextElement = document.getElementById('mandarinText');
+    const teochewTextElement = document.getElementById('teochewText');
+    const translateToMandarinBtn = document.getElementById('translateToMandarinBtn');
+    const translateToTeochewBtn = document.getElementById('translateToTeochewBtn');
+
+    if (!mandarinTextElement || !teochewTextElement || !translateToMandarinBtn || !translateToTeochewBtn) {
+        return;
+    }
+
+    // 计算普通话文本的词块数量
+    const mandarinContainer = mandarinTextElement.querySelector('.word-buttons-container');
+    const mandarinWordCount = mandarinContainer ? mandarinContainer.querySelectorAll('.word-button').length : 0;
+
+    // 计算潮汕话文本的词块数量
+    const teochewContainer = teochewTextElement.querySelector('.word-buttons-container');
+    const teochewWordCount = teochewContainer ? teochewContainer.querySelectorAll('.word-button').length : 0;
+
+    // 只有潮汕话是单个词块时，向上箭头（潮汕话->普通话）才可用
+    translateToMandarinBtn.disabled = (teochewWordCount !== 1);
+
+    // 只有普通话是单个词块时，向下箭头（普通话->潮汕话）才可用
+    translateToTeochewBtn.disabled = (mandarinWordCount !== 1);
+}
+
+// 翻译函数
+async function translateTo(targetLang) {
+    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
+        showToast('没有可翻译的记录', 'warning');
+        return;
+    }
+
+    const record = recordingsData[currentRecordIndex];
+    let sourceText = '';
+    let targetElementId = '';
+    let clickedBtn = null;
+
+    // 确定源文本和目标元素，并获取点击的按钮
+    if (targetLang === 'mandarin') {
+        // 潮汕话 -> 普通话
+        sourceText = record.teochew_text || '';
+        targetElementId = 'mandarinText';
+        clickedBtn = document.getElementById('translateToMandarinBtn');
+    } else {
+        // 普通话 -> 潮汕话
+        sourceText = record.mandarin_text || '';
+        targetElementId = 'teochewText';
+        clickedBtn = document.getElementById('translateToTeochewBtn');
+    }
+
+    // 清理源文本中的标记（获取纯文本）
+    const cleanSourceText = sourceText.replace(/#\$/g, '').replace(/\$\[([^\]]+)\]/g, '').trim();
+
+    if (!cleanSourceText || cleanSourceText === '-') {
+        showToast('源文本为空，无法翻译', 'warning');
+        return;
+    }
+
+    // 根据记录状态决定是否保留标记
+    // "已通过"状态的记录不保留标记和空格
+    const isApproved = record.status === 'approved';
+    const preserveMarkers = !isApproved;  // False=不保留标记也不保留空格
+
+    // 禁用所有翻译按钮并添加加载状态
+    const allTranslateBtns = document.querySelectorAll('.translate-arrow-btn');
+    allTranslateBtns.forEach(btn => {
+        btn.disabled = true;
+        if (btn === clickedBtn) {
+            btn.classList.add('loading');
+        }
+    });
+
+    try {
+        showToast('正在翻译...', 'info');
+
+        const response = await fetch('/admin/api/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: cleanSourceText,
+                target_lang: targetLang,
+                preserve_markers: preserveMarkers  // 根据状态决定是否保留标记
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 更新记录数据
+            const translatedText = data.translated_text;
+
+            if (targetLang === 'mandarin') {
+                record.mandarin_text = translatedText;
+            } else {
+                record.teochew_text = translatedText;
+            }
+
+            // 标记有未保存的修改
+            if (targetLang === 'mandarin') {
+                hasPendingMandarinEdits = true;
+            } else {
+                hasPendingTeochewEdits = true;
+            }
+            updateSaveButtonState();
+
+            // 重新渲染目标文本
+            const targetElement = document.getElementById(targetElementId);
+            if (targetElement) {
+                renderWordButtons(targetElement, translatedText);
+            }
+
+            // 更新翻译按钮状态
+            updateTranslateButtonState();
+
+            showToast('翻译成功', 'success');
+        } else {
+            showToast(data.error || '翻译失败', 'error');
+            // 恢复按钮状态
+            updateTranslateButtonState();
+        }
+    } catch (error) {
+        console.error('翻译失败:', error);
+        showToast('翻译失败', 'error');
+        // 恢复按钮状态
+        updateTranslateButtonState();
+    } finally {
+        // 移除加载状态
+        if (clickedBtn) {
+            clickedBtn.classList.remove('loading');
+        }
     }
 }

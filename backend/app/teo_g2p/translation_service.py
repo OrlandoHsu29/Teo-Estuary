@@ -34,7 +34,7 @@ class TranslationService:
         else:
             print(f"[WARNING] jieba词典未找到: {jieba_path}")
 
-    def translate(self, text: str, auto_split: bool = True, use_cache: bool = True, cache_ttl: int = 3600, target_lang: str = 'teochew') -> str:
+    def translate(self, text: str, auto_split: bool = True, use_cache: bool = True, cache_ttl: int = 3600, target_lang: str = 'teochew', preserve_markers: bool = True) -> str:
         """
         双向翻译功能：普通话<->潮州话
 
@@ -44,12 +44,13 @@ class TranslationService:
             use_cache: 是否使用缓存
             cache_ttl: 缓存生存时间（秒）
             target_lang: 目标语言 ('teochew'=普通话转潮州话, 'mandarin'=潮州话转普通话)
+            preserve_markers: 是否保留翻译标记（#、$[]）和空格，True=保留标记和空格，False=只返回纯文本（无空格）
 
         Returns:
             翻译后的文本
         """
-        # 生成缓存键
-        cache_key = self._generate_cache_key(f"translate:{text}:{auto_split}:{target_lang}")
+        # 生成缓存键（包含 preserve_markers 参数）
+        cache_key = self._generate_cache_key(f"translate:{text}:{auto_split}:{target_lang}:{preserve_markers}")
 
         if use_cache:
             cached = self.cache.get(cache_key)
@@ -67,15 +68,23 @@ class TranslationService:
         for word in word_list:
             translations, has_multiple = self._get_word_translations(word, return_variant_info=True, target_lang=target_lang)
             if translations:
-                # 根据变体数量选择标记
-                if has_multiple:
-                    result.append(translations[0] + f'$[{word}]')
+                if preserve_markers:
+                    # 根据变体数量选择标记
+                    if has_multiple:
+                        result.append(translations[0] + f'$[{word}]')
+                    else:
+                        result.append(translations[0] + '#')
                 else:
-                    result.append(translations[0] + '#')
+                    # 不保留标记，只返回翻译文本
+                    result.append(translations[0])
             else:
                 result.append(word)
 
-        translated_text = ' '.join(result)
+        # 根据 preserve_markers 决定是否保留空格
+        if preserve_markers:
+            translated_text = ' '.join(result)  # 保留空格
+        else:
+            translated_text = ''.join(result)  # 不保留空格
 
         # 缓存结果
         if use_cache:

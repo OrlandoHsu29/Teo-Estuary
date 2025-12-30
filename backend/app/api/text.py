@@ -105,3 +105,103 @@ def admin_api_get_word_variants():
             'success': False,
             'error': '获取变体翻译失败，请重试'
         }), 500
+
+
+@text_bp.route('/api/translate', methods=['POST'])
+@api_key_required_with_rate_limit(hourly_limit=500, daily_limit=2000)
+def api_translate(key_obj):
+    """双向翻译接口（需要API密钥）"""
+    try:
+        data = request.get_json()
+
+        text = data.get('text', '').strip()
+        target_lang = data.get('target_lang', 'teochew')  # 'teochew' 或 'mandarin'
+        preserve_markers = data.get('preserve_markers', True)  # 是否保留翻译标记
+
+        if not text:
+            return jsonify({
+                'success': False,
+                'error': '文本不能为空'
+            }), 400
+
+        # 验证 target_lang 参数
+        if target_lang not in ['teochew', 'mandarin']:
+            return jsonify({
+                'success': False,
+                'error': 'target_lang 参数必须是 teochew 或 mandarin'
+            }), 400
+
+        # 调用翻译服务
+        translated_text = translation_service.translate(
+            text=text,
+            auto_split=True,
+            use_cache=True,
+            target_lang=target_lang,
+            preserve_markers=preserve_markers
+        )
+
+        logger.info(f"API translate: {target_lang}, preserve_markers={preserve_markers}, text={text}")
+
+        return jsonify({
+            'success': True,
+            'original_text': text,
+            'translated_text': translated_text,
+            'target_lang': target_lang,
+            'preserve_markers': preserve_markers
+        })
+    except Exception as e:
+        logger.error(f"Translate error: {e}")
+        return jsonify({
+            'success': False,
+            'error': '翻译失败，请重试'
+        }), 500
+
+
+@text_bp.route('/admin/api/translate', methods=['POST'])
+@admin_required
+def admin_api_translate():
+    """管理员双向翻译接口（无需API密钥）"""
+    try:
+        data = request.get_json()
+
+        text = data.get('text', '').strip()
+        target_lang = data.get('target_lang', 'teochew')  # 'teochew' 或 'mandarin'
+        preserve_markers = data.get('preserve_markers', True)  # 是否保留翻译标记
+
+        if not text:
+            return jsonify({
+                'success': False,
+                'error': '文本不能为空'
+            }), 400
+
+        # 验证 target_lang 参数
+        if target_lang not in ['teochew', 'mandarin']:
+            return jsonify({
+                'success': False,
+                'error': 'target_lang 参数必须是 teochew 或 mandarin'
+            }), 400
+
+        # 调用翻译服务
+        translated_text = translation_service.translate(
+            text=text,
+            auto_split=True,
+            use_cache=True,
+            target_lang=target_lang,
+            preserve_markers=preserve_markers
+        )
+
+        logger.info(f"Admin API translate: {target_lang}, preserve_markers={preserve_markers}, text={text}")
+
+        return jsonify({
+            'success': True,
+            'original_text': text,
+            'translated_text': translated_text,
+            'target_lang': target_lang,
+            'preserve_markers': preserve_markers
+        })
+    except Exception as e:
+        logger.error(f"Admin translate error: {e}")
+        return jsonify({
+            'success': False,
+            'error': '翻译失败，请重试'
+        }), 500
