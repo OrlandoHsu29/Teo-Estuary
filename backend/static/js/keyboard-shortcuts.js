@@ -22,14 +22,11 @@ function initializeKeyboardShortcuts() {
                     navigateRecord(1);
                 }
                 break;
-            case 'Enter':
+            case ' ':
                 e.preventDefault();
-                approveCurrent();
-                break;
-            case 'Delete':
-            case 'Backspace':
-                e.preventDefault();
-                rejectCurrent();
+                if (typeof toggleAudio === 'function') {
+                    toggleAudio();
+                }
                 break;
         }
     });

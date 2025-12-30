@@ -2929,6 +2929,12 @@ s
     display: block !important;
 }
 
+/* 编辑模式下隐藏翻译控制按钮 */
+.content-row:has(.text-column.editing) .translation-controls,
+.content-row:has(.text-column.editing-mandarin) .translation-controls {
+    display: none;
+}
+
 /* 上传途径样式 */
 .upload-type-recorded {
     color: #64b5f6;
