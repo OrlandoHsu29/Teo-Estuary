@@ -204,7 +204,8 @@
                                                         </button>
                                                     </label>
                                                     <div class="mandarin-text">
-                                                        <p id="mandarinText">-</p>
+                                                        <div class="word-buttons-container" id="mandarinText">
+                                                        </div>
                                                         <textarea id="mandarinTextEdit" style="display: none;"></textarea>
                                                         <div class="edit-actions" id="mandarinEditActions" style="display: none;">
                                                             <button class="cancel-btn action-btn" onclick="cancelMandarinTextEdit()">取消</button>
@@ -215,12 +216,12 @@
 
                                                 <!-- 翻译控制按钮 -->
                                                 <div class="translation-controls">
-                                                    <button class="translate-arrow-btn up" id="translateToMandarinBtn" onclick="translateTo('mandarin')" disabled title="潮汕话 -> 普通话">
+                                                    <button class="translate-arrow-btn left" id="translateToMandarinBtn" onclick="translateTo('mandarin')" disabled title="潮汕话 -> 普通话">
                                                         <svg fill="currentColor" viewBox="0 0 20 20">
                                                             <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                                                         </svg>
                                                     </button>
-                                                    <button class="translate-arrow-btn down" id="translateToTeochewBtn" onclick="translateTo('teochew')" disabled title="普通话 -> 潮汕话">
+                                                    <button class="translate-arrow-btn right" id="translateToTeochewBtn" onclick="translateTo('teochew')" disabled title="普通话 -> 潮汕话">
                                                         <svg fill="currentColor" viewBox="0 0 20 20">
                                                             <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                                         </svg>
@@ -241,7 +242,8 @@
                                                         </button>
                                                     </label>
                                                     <div class="teochew-text">
-                                                        <p id="teochewText">-</p>
+                                                        <div class="word-buttons-container" id="teochewText">
+                                                        </div>
                                                         <textarea id="teochewTextEdit" style="display: none;"></textarea>
                                                         <div class="edit-actions" id="teochewEditActions" style="display: none;">
                                                             <button class="cancel-btn action-btn" onclick="cancelTeochewTextEdit()">取消</button>

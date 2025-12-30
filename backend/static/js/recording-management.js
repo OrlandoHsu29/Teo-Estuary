@@ -572,8 +572,20 @@ let wordVariantCache = new Map(); // 缓存变体数据
 
 // 渲染字词按钮
 function renderWordButtons(container, text) {
+    // container 现在直接就是 .word-buttons-container
+    // 移除merging类，恢复正常的gap间隔
+    container.classList.remove('merging');
+    // 清空所有词块按钮
+    container.innerHTML = '';
+
     if (!text || text === '-') {
-        container.textContent = text || '-';
+        // 创建一个不可编辑的词块按钮显示"-"
+        const emptyButton = document.createElement('div');
+        emptyButton.className = 'word-button disabled';
+        emptyButton.textContent = '-';
+        emptyButton.style.cursor = 'default';
+        emptyButton.style.pointerEvents = 'none';
+        container.appendChild(emptyButton);
         return;
     }
 
@@ -584,20 +596,13 @@ function renderWordButtons(container, text) {
         return;
     }
 
-    // 清空容器并创建字词按钮容器
-    container.innerHTML = '';
-    const wordButtonsContainer = document.createElement('div');
-    wordButtonsContainer.className = 'word-buttons-container';
-
     // 分词：按空格分割，保留标记符
     const words = text.split(' ').filter(word => word.length > 0);
 
     words.forEach((word, index) => {
         const button = createWordButton(word, index);
-        wordButtonsContainer.appendChild(button);
+        container.appendChild(button);
     });
-
-    container.appendChild(wordButtonsContainer);
 }
 
 // 创建单个字词按钮
@@ -1120,11 +1125,16 @@ function autoMergeAllTextsOnApprove() {
     if (needsMerging(record.mandarin_text)) {
         // 添加合并动画
         const mandarinTextElement = document.getElementById('mandarinText');
-        const originalContainer = mandarinTextElement?.querySelector('.word-buttons-container');
-        if (originalContainer) {
-            originalContainer.classList.add('merging');
-            const wordButtons = originalContainer.querySelectorAll('.word-button');
+        if (mandarinTextElement) {
+            mandarinTextElement.classList.add('merging');
+            const wordButtons = mandarinTextElement.querySelectorAll('.word-button');
             wordButtons.forEach(btn => btn.classList.add('merging'));
+
+            // 动画完成后移除merging类
+            setTimeout(() => {
+                mandarinTextElement.classList.remove('merging');
+                wordButtons.forEach(btn => btn.classList.remove('merging'));
+            }, 300);
 
             // 立即计算合并后的文本并更新记录对象（同步操作）
             const mergedText = mergeWordsToSentence(record.mandarin_text);
@@ -1142,11 +1152,16 @@ function autoMergeAllTextsOnApprove() {
     if (needsMerging(record.teochew_text)) {
         // 添加合并动画
         const teochewTextElement = document.getElementById('teochewText');
-        const convertedContainer = teochewTextElement?.querySelector('.word-buttons-container');
-        if (convertedContainer) {
-            convertedContainer.classList.add('merging');
-            const wordButtons = convertedContainer.querySelectorAll('.word-button');
+        if (teochewTextElement) {
+            teochewTextElement.classList.add('merging');
+            const wordButtons = teochewTextElement.querySelectorAll('.word-button');
             wordButtons.forEach(btn => btn.classList.add('merging'));
+
+            // 动画完成后移除merging类
+            setTimeout(() => {
+                teochewTextElement.classList.remove('merging');
+                wordButtons.forEach(btn => btn.classList.remove('merging'));
+            }, 300);
 
             // 立即计算合并后的文本并更新记录对象（同步操作）
             const mergedText = mergeWordsToSentence(record.teochew_text);
@@ -1320,13 +1335,14 @@ function updateTranslateButtonState() {
         return;
     }
 
-    // 计算普通话文本的词块数量
-    const mandarinContainer = mandarinTextElement.querySelector('.word-buttons-container');
-    const mandarinWordCount = mandarinContainer ? mandarinContainer.querySelectorAll('.word-button').length : 0;
+    // mandarinTextElement 和 teochewTextElement 现在直接就是 .word-buttons-container
+    // 计算普通话文本的词块数量（排除 disabled 的）
+    const mandarinWordButtons = mandarinTextElement.querySelectorAll('.word-button:not(.disabled)');
+    const mandarinWordCount = mandarinWordButtons.length;
 
-    // 计算潮汕话文本的词块数量
-    const teochewContainer = teochewTextElement.querySelector('.word-buttons-container');
-    const teochewWordCount = teochewContainer ? teochewContainer.querySelectorAll('.word-button').length : 0;
+    // 计算潮汕话文本的词块数量（排除 disabled 的）
+    const teochewWordButtons = teochewTextElement.querySelectorAll('.word-button:not(.disabled)');
+    const teochewWordCount = teochewWordButtons.length;
 
     // 只有潮汕话是单个词块时，向上箭头（潮汕话->普通话）才可用
     translateToMandarinBtn.disabled = (teochewWordCount !== 1);
