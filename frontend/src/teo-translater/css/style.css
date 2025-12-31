@@ -242,34 +242,17 @@ body {
 }
 
 .signal-bars {
-    display: none;
+    display: flex;
     gap: 3px;
     align-items: flex-end;
-}
-
-.signal-bars.visible {
-    display: flex;
 }
 
 .bar {
     width: 5px;
     background: #333333;
     border-radius: 3px;
-    transition: all 0.1s ease;
-}
-
-.bar:nth-child(1) { height: 6px; }
-.bar:nth-child(2) { height: 12px; }
-.bar:nth-child(3) { height: 18px; }
-
-.bar.active {
-    background: linear-gradient(to top, #00cc00, #00ff00);
-    box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
-}
-
-.bar:nth-child(3).active {
-    background: linear-gradient(to top, #ff9900, #ffcc00);
-    box-shadow: 0 0 6px rgba(255, 204, 0, 0.6);
+    transition: height 0.1s ease;
+    height: 6px; /* 默认最小高度 */
 }
 
 /* 显示区域 */
@@ -1140,14 +1123,12 @@ body {
         0 6px 12px rgba(0, 0, 0, 0.3),
         inset 2px 2px 4px rgba(255, 255, 255, 0.2),
         inset -2px -2px 4px rgba(0, 0, 0, 0.2);
-    /* 默认禁用状态 */
-    opacity: 0.5;
-    pointer-events: none;
 }
 
-.record-btn:not(:disabled) {
-    opacity: 1;
-    pointer-events: auto;
+.record-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .record-btn:hover:not(:disabled) {

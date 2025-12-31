@@ -7,6 +7,7 @@ class TeoTranslator {
         this.stream = null;
         this.isRecording = false;
         this.isProcessing = false;
+        this.isIdle = true; // 是否处于空闲状态
         this.audioContext = null;
         this.analyser = null;
         this.microphone = null;
@@ -104,18 +105,16 @@ class TeoTranslator {
             // 开始录音
             this.mediaRecorder.start(100);
             this.isRecording = true;
+            this.isIdle = false;
             this.recordingStartTime = Date.now();
 
             // 更新UI
             this.updateRecordingUI(true);
             this.startVolumeMonitoring();
-            this.updateDisplay('正在录音...');
+            this.updateDisplay('松开按钮即可完成录音');
             this.updateStatusText('录音中');
-
-            // 显示音量条
-            if (this.elements.signalBars) {
-                this.elements.signalBars.classList.add('visible');
-            }
+            // 重置音量条状态
+            this.resetVolumeBars();
 
             // 启动录音计时器和倒计时检查
             this.startRecordingTimer();
@@ -154,12 +153,10 @@ class TeoTranslator {
             this.cleanupAudioResources();
             this.updateRecordingUI(false);
             this.updateDisplay('录音时间太短');
-            this.updateStatusText('按住录音按键即可开始录音');
-
-            // 隐藏音量条
-            if (this.elements.signalBars) {
-                this.elements.signalBars.classList.remove('visible');
-            }
+            this.updateStatusText('等待录音');
+            // 重置音量条状态
+            this.resetVolumeBars();
+            this.isIdle = true;
 
             // 清理定时器
             if (this.recordingTimer) {
@@ -187,13 +184,10 @@ class TeoTranslator {
 
         // 更新UI
         this.updateRecordingUI(false);
-        this.updateDisplay('正在识别...');
-        this.updateStatusText('上传音频识别中');
-
-        // 隐藏音量条
-        if (this.elements.signalBars) {
-            this.elements.signalBars.classList.remove('visible');
-        }
+        this.updateDisplay('上传音频识别中...');
+        this.updateStatusText('正在识别');
+        // 重置音量条状态
+        this.resetVolumeBars();
     }
 
     // 启动录音计时器
@@ -226,7 +220,7 @@ class TeoTranslator {
         if (this.audioChunks.length === 0) {
             showToast('未录制到音频', 'warning');
             this.updateDisplay('按住按钮开始录音...');
-            this.updateStatusText('按住按钮即可开始录音');
+            this.updateStatusText('等待录音');
             return;
         }
 
@@ -241,7 +235,7 @@ class TeoTranslator {
             // 检查是否需要转换格式
             if (mimeType !== 'audio/wav' && mimeType !== 'audio/wave') {
                 this.updateDisplay('正在转换音频格式...');
-                this.updateStatusText('音频格式转换中');
+                this.updateStatusText('格式转换中');
 
                 // 转换为WAV格式
                 audioBlob = await this.convertToWav(audioBlob, this.stream);
@@ -250,8 +244,8 @@ class TeoTranslator {
             this.audioBlob = audioBlob;
 
             // 转换完成，开始上传
-            this.updateDisplay('正在识别...');
-            this.updateStatusText('上传音频识别中');
+            this.updateDisplay('音频识别中...');
+            this.updateStatusText('正在识别');
 
             // 上传音频进行识别
             await this.uploadAudio();
@@ -259,8 +253,8 @@ class TeoTranslator {
         } catch (error) {
             console.error('音频处理失败:', error);
             showToast('音频处理失败: ' + error.message, 'error');
-            this.updateDisplay('处理失败');
-            this.updateStatusText('音频处理失败，等待一会儿后重试');
+            this.updateDisplay('音频处理失败，等待一会儿后重试');
+            this.updateStatusText('处理失败');
         } finally {
             this.isProcessing = false;
             this.updateProcessingUI(false);
@@ -382,6 +376,8 @@ class TeoTranslator {
                 }
 
                 this.updateStatusText('潮汕话识别完成');
+                this.resetVolumeBars();
+                this.isIdle = true;
 
                 // 震动反馈
                 this.vibrateDevice();
@@ -391,6 +387,8 @@ class TeoTranslator {
                 showToast(errorMsg, 'error');
                 this.updateDisplay(`错误: ${errorMsg}`);
                 this.updateStatusText('识别失败，请等待一会儿后重试');
+                this.resetVolumeBars();
+                this.isIdle = true;
             }
 
         } catch (error) {
@@ -398,6 +396,8 @@ class TeoTranslator {
             showToast('上传失败，请检查网络连接', 'error');
             this.updateDisplay('网络错误');
             this.updateStatusText('上传音频失败，等待一会儿后重试');
+            this.resetVolumeBars();
+            this.isIdle = true;
         } finally {
             // 清理音频资源
             this.cleanupAudioResources();
@@ -511,17 +511,32 @@ class TeoTranslator {
         this.updateVolumeMeter(0);
     }
 
+    // 重置音量条到默认状态
+    resetVolumeBars() {
+        this.elements.volumeBars.forEach((bar) => {
+            bar.style.height = '2px';
+        });
+    }
+
     // 更新音量显示
     updateVolumeMeter(value) {
         const maxValue = 20;
         const normalizedValue = Math.min(value / maxValue, 1);
-        const activeBars = Math.ceil(normalizedValue * 3);
+
+        // 每个bar的最大高度（像素）
+        const maxHeights = [6, 12, 18];
 
         this.elements.volumeBars.forEach((bar, index) => {
-            if (index < activeBars) {
-                bar.classList.add('active');
+            const maxHeight = maxHeights[index];
+            // 当音量超过该bar的阈值时才显示
+            // 阈值：第1个bar=0.2, 第2个bar=0.4, 第3个bar=0.6
+            const threshold = (index + 1) * 0.2;
+
+            if (normalizedValue > threshold) {
+                bar.style.height = `${maxHeight}px`;
             } else {
-                bar.classList.remove('active');
+                // 没声音时显示最小高度
+                bar.style.height = '2px';
             }
         });
     }
@@ -534,6 +549,9 @@ class TeoTranslator {
             this.updateServiceStatus(null);
             return;
         }
+
+        // 显示检查中的状态
+        this.updateServiceStatus(null);
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/asr/health`, {
@@ -569,10 +587,33 @@ class TeoTranslator {
 
         if (isHealthy === true) {
             serviceDot.classList.add('healthy');
+            // 启用录音按钮
+            if (this.elements.recordBtn) {
+                this.elements.recordBtn.disabled = false;
+            }
+            // 清除错误提示
+            if (this.isIdle) {
+                this.updateDisplay('按住按钮开始录音...');
+                this.updateStatusText('等待录音');
+            }
         } else if (isHealthy === false) {
             serviceDot.classList.add('unhealthy');
+            // 禁用录音按钮
+            if (this.elements.recordBtn) {
+                this.elements.recordBtn.disabled = true;
+            }
+            // 显示错误提示
+            this.updateDisplay('ASR服务不可用');
+            this.updateStatusText('ASR服务连接失败');
+        } else {
+            // null表示检查中或未检查
+            // 只在开机状态时显示检查中提示
+            const isPowerOn = document.body.classList.contains('power-on');
+            if (isPowerOn && this.isIdle) {
+                this.updateDisplay('正在检查ASR服务...');
+                this.updateStatusText('等待ASR服务响应');
+            }
         }
-        // null表示未检查，保持灰色
     }
 
     // 更新显示内容
@@ -633,28 +674,39 @@ class TeoTranslator {
                 this.elements.recordBtn.disabled = true;
             }
 
+            // 清空显示区域
             if (this.elements.displayText) {
                 this.elements.displayText.textContent = '';
             }
 
-            this.updateStatusText('配置密钥');
+            // 在mode-text位置显示提示
+            this.updateStatusText('先配置API密钥后才能使用');
             this.updateServiceStatus(null);
         } else {
+            // 先检查密钥，有密钥才开机
+            const apiKey = localStorage.getItem('apiKey');
+            if (!apiKey) {
+                // 没有密钥，保持关机状态
+                this.updateStatusText('配置密钥');
+                this.updateServiceStatus(null);
+                return;
+            }
+
             // 开机状态
             if (this.elements.lcdGlass) {
                 this.elements.lcdGlass.classList.add('power-on');
             }
             document.body.classList.add('power-on');
 
-            // 启用录音按钮
+            // 开机时先禁用录音按钮，等待ASR服务检查
             if (this.elements.recordBtn) {
-                this.elements.recordBtn.disabled = false;
+                this.elements.recordBtn.disabled = true;
             }
 
-            this.updateDisplay('等待录音...');
-            this.updateStatusText('按住录音按键即可开始录音');
+            this.updateDisplay('按住录音按键即可开始录音...');
+            this.updateStatusText('等待录音');
 
-            // 检查ASR服务状态
+            // 检查ASR服务状态（会自动启用按钮如果服务健康）
             this.checkASRServiceHealth();
 
             // 每30秒检查一次服务状态
