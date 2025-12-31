@@ -1,21 +1,27 @@
-// Teo Translater - 潮汕话翻译器 JavaScript
+// Teo Translater - 潮汕话语音翻译器 JavaScript
 class TeoTranslator {
     constructor() {
-        this.currentMode = 'mandarin-to-teochew'; // 默认普通话转潮汕话
-        this.isTranslating = false;
-        this.typewriterTimer = null; // 打字机效果定时器
-        this.displayDebounceTimer = null; // 防抖定时器
-        this.elements = {}; // 存储DOM元素引用
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        this.audioBlob = null;
+        this.stream = null;
+        this.isRecording = false;
+        this.isProcessing = false;
+        this.audioContext = null;
+        this.analyser = null;
+        this.microphone = null;
+        this.javascriptNode = null;
+        this.asrServiceHealthy = null; // null=未检查, true=健康, false=不健康
+        this.typewriterTimer = null;
+        this.recordingStartTime = null;
+        this.recordingTimer = null;
+        this.elements = {};
         this.init();
     }
 
     init() {
         this.initElements();
         this.bindEvents();
-        this.updateUI();
-        this.startAnimations();
-        // 不再在初始化时调用simulateStartup
-        // 改为在密钥验证成功（开机）时调用
         console.log('Teo Translater 初始化完成');
     }
 
@@ -24,116 +30,566 @@ class TeoTranslator {
         this.elements = {
             lcdGlass: document.querySelector('.lcd-glass'),
             displayText: document.getElementById('displayText'),
-            textInput: document.getElementById('textInput'),
-            translateBtn: document.getElementById('translateBtn'),
-            toggleBtn: document.querySelector('.toggle-btn')
+            modeText: document.getElementById('modeText'),
+            recordBtn: document.getElementById('recordBtn'),
+            serviceDot: document.getElementById('serviceDot'),
+            volumeBars: document.querySelectorAll('.bar'),
+            signalBars: document.querySelector('.signal-bars')
         };
     }
 
     bindEvents() {
-        // 文本输入事件
-        const textInput = document.getElementById('textInput');
-        if (textInput) {
-            textInput.addEventListener('input', (e) => this.handleTextInput(e));
-            textInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
-            // 禁止粘贴非中文内容
-            textInput.addEventListener('paste', (e) => this.handlePaste(e));
+        // 录音按钮事件
+        const recordBtn = this.elements.recordBtn;
+        if (recordBtn) {
+            // 鼠标事件
+            recordBtn.addEventListener('mousedown', (e) => this.startRecording(e));
+            recordBtn.addEventListener('mouseup', () => this.stopRecording());
+            recordBtn.addEventListener('mouseleave', () => {
+                if (this.isRecording) {
+                    this.stopRecording();
+                }
+            });
+
+            // 触摸事件（移动端）
+            recordBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.startRecording(e);
+            });
+            recordBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.stopRecording();
+            });
         }
 
-        // 页面加载完成后初始化字符计数器
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.updateCharCounter();
+        // 页面关闭时清理资源
+        window.addEventListener('beforeunload', () => this.cleanup());
+    }
+
+    // 开始录音
+    async startRecording(event) {
+        if (this.isRecording || this.isProcessing) {
+            return;
+        }
+
+        try {
+            // 获取麦克风权限
+            this.stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    sampleRate: 16000,
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
             });
-        } else {
-            this.updateCharCounter();
+
+            // 创建MediaRecorder
+            const options = { mimeType: 'audio/webm' };
+            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                options.mimeType = 'audio/mp4';
+            }
+
+            this.mediaRecorder = new MediaRecorder(this.stream, options);
+            this.audioChunks = [];
+
+            // 录音事件处理
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.audioChunks.push(event.data);
+                }
+            };
+
+            this.mediaRecorder.onstop = () => this.processRecording();
+
+            // 开始录音
+            this.mediaRecorder.start(100);
+            this.isRecording = true;
+            this.recordingStartTime = Date.now();
+
+            // 更新UI
+            this.updateRecordingUI(true);
+            this.startVolumeMonitoring();
+            this.updateDisplay('正在录音...');
+            this.updateStatusText('录音中');
+
+            // 显示音量条
+            if (this.elements.signalBars) {
+                this.elements.signalBars.classList.add('visible');
+            }
+
+            // 启动录音计时器和倒计时检查
+            this.startRecordingTimer();
+
+        } catch (error) {
+            console.error('开始录音失败:', error);
+            let errorMessage = '录音失败，请检查麦克风权限';
+
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                errorMessage = '请允许浏览器访问麦克风权限';
+            }
+
+            showToast(errorMessage, 'error');
+            this.updateDisplay('录音失败');
         }
     }
 
-    // 处理文本输入
-    handleTextInput(event) {
-        const text = event.target.value;
-
-        // 清除之前的防抖定时器
-        if (this.displayDebounceTimer) {
-            clearTimeout(this.displayDebounceTimer);
+    // 停止录音
+    stopRecording() {
+        if (!this.isRecording) {
+            return;
         }
 
-        // 防抖延迟 500ms 更新屏幕和计数器
-        this.displayDebounceTimer = setTimeout(() => {
-            // 如果正在翻译，不更新屏幕
-            if (this.isTranslating) {
+        this.isRecording = false;
+
+        // 检查录音时长
+        const recordingDuration = (Date.now() - this.recordingStartTime) / 1000;
+        const MIN_RECORDING_DURATION = 1.0; // 最短录音时长1秒
+
+        if (recordingDuration < MIN_RECORDING_DURATION) {
+            // 录音时间太短，清理并提示
+            if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                this.mediaRecorder.stop();
+            }
+            this.stopVolumeMonitoring();
+            this.cleanupAudioResources();
+            this.updateRecordingUI(false);
+            this.updateDisplay('录音时间太短');
+            this.updateStatusText('按住录音按键即可开始录音');
+
+            // 隐藏音量条
+            if (this.elements.signalBars) {
+                this.elements.signalBars.classList.remove('visible');
+            }
+
+            // 清理定时器
+            if (this.recordingTimer) {
+                clearInterval(this.recordingTimer);
+                this.recordingTimer = null;
+            }
+
+            showToast('录音时间太短，请按住至少1秒', 'warning');
+            return;
+        }
+
+        // 停止MediaRecorder
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+        }
+
+        // 停止音量监听
+        this.stopVolumeMonitoring();
+
+        // 清理定时器
+        if (this.recordingTimer) {
+            clearInterval(this.recordingTimer);
+            this.recordingTimer = null;
+        }
+
+        // 更新UI
+        this.updateRecordingUI(false);
+        this.updateDisplay('正在识别...');
+        this.updateStatusText('上传音频识别中');
+
+        // 隐藏音量条
+        if (this.elements.signalBars) {
+            this.elements.signalBars.classList.remove('visible');
+        }
+    }
+
+    // 启动录音计时器
+    startRecordingTimer() {
+        const MAX_RECORDING_DURATION = 30; // 最大录音时长30秒
+
+        this.recordingTimer = setInterval(() => {
+            if (!this.isRecording || !this.recordingStartTime) {
                 return;
             }
 
-            // 更新字符计数器
-            this.updateCharCounter();
+            const elapsed = (Date.now() - this.recordingStartTime) / 1000;
 
-            // 如果输入内容，更新屏幕显示
-            if (text.length > 0) {
-                this.updateDisplay(`输入: ${text.substring(0, 25)}${text.length > 25 ? '...' : ''}`);
-            } else {
-                this.updateDisplay('等待输入...');
+            // 最后10秒显示倒计时
+            if (elapsed >= MAX_RECORDING_DURATION - 10 && elapsed < MAX_RECORDING_DURATION) {
+                const remaining = Math.ceil(MAX_RECORDING_DURATION - elapsed);
+                this.updateDisplay(`录音中... ${remaining}秒`);
             }
-        }, 500);
+
+            // 达到最大时长，自动停止
+            if (elapsed >= MAX_RECORDING_DURATION) {
+                showToast('已达到最大录音时长', 'warning');
+                this.stopRecording();
+            }
+        }, 100); // 每100ms检查一次
     }
 
-    // 处理键盘事件
-    handleKeyDown(event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            this.translate();
-        } else if (event.key === 'Escape') {
-            this.clearAll();
+    // 处理录音数据
+    async processRecording() {
+        if (this.audioChunks.length === 0) {
+            showToast('未录制到音频', 'warning');
+            this.updateDisplay('按住按钮开始录音...');
+            this.updateStatusText('按住按钮即可开始录音');
+            return;
+        }
+
+        this.isProcessing = true;
+        this.updateProcessingUI(true);
+
+        try {
+            // 创建音频Blob
+            const mimeType = this.mediaRecorder ? this.mediaRecorder.mimeType : 'audio/webm';
+            let audioBlob = new Blob(this.audioChunks, { type: mimeType });
+
+            // 检查是否需要转换格式
+            if (mimeType !== 'audio/wav' && mimeType !== 'audio/wave') {
+                this.updateDisplay('正在转换音频格式...');
+                this.updateStatusText('音频格式转换中');
+
+                // 转换为WAV格式
+                audioBlob = await this.convertToWav(audioBlob, this.stream);
+            }
+
+            this.audioBlob = audioBlob;
+
+            // 转换完成，开始上传
+            this.updateDisplay('正在识别...');
+            this.updateStatusText('上传音频识别中');
+
+            // 上传音频进行识别
+            await this.uploadAudio();
+
+        } catch (error) {
+            console.error('音频处理失败:', error);
+            showToast('音频处理失败: ' + error.message, 'error');
+            this.updateDisplay('处理失败');
+            this.updateStatusText('音频处理失败，等待一会儿后重试');
+        } finally {
+            this.isProcessing = false;
+            this.updateProcessingUI(false);
         }
     }
 
-    // 处理粘贴事件
-    handlePaste(event) {
-        // 不再阻止粘贴，允许粘贴任何内容
-        // 粘贴后会自动触发 input 事件，由 handleTextInput 处理
-        setTimeout(() => {
-            const textInput = event.target;
-            // 立即更新计数器和屏幕
-            this.updateCharCounter();
-            this.updateDisplay(`输入: ${textInput.value.substring(0, 25)}${textInput.value.length > 25 ? '...' : ''}`);
-        }, 10);
+    // 将音频转换为WAV格式
+    async convertToWav(audioBlob, stream) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const arrayBuffer = reader.result;
+
+                    // 解码音频数据
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                    // 转换为WAV
+                    const wavBlob = this.audioBufferToWav(audioBuffer);
+                    resolve(wavBlob);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = () => reject(new Error('读取音频数据失败'));
+            reader.readAsArrayBuffer(audioBlob);
+        });
     }
 
-    // 更新字符计数器
-    updateCharCounter() {
-        const textInput = document.getElementById('textInput');
-        const charCount = document.getElementById('charCount');
-        if (textInput && charCount) {
-            const count = textInput.value.length;
-            charCount.textContent = count;
+    // 将AudioBuffer转换为WAV Blob
+    audioBufferToWav(audioBuffer) {
+        const numberOfChannels = audioBuffer.numberOfChannels;
+        const length = audioBuffer.length * numberOfChannels * 2 + 44;
+        const buffer = new ArrayBuffer(length);
+        const view = new DataView(buffer);
+        const channels = [];
+        let offset = 0;
 
-            // 超过90个字符时改变颜色警告
-            if (count > 90) {
-                charCount.style.color = '#ff5252';
-            } else if (count > 75) {
-                charCount.style.color = '#ff9800';
-            } else {
-                charCount.style.color = '#333333';
+        // 写入WAV头
+        const writeString = (offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        // RIFF标识符
+        writeString(0, 'RIFF');
+        view.setUint32(4, length - 8, true);
+        writeString(8, 'WAVE');
+
+        // fmt子块
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true); // fmt块大小
+        view.setUint16(20, 1, true); // 音频格式 (1 = PCM)
+        view.setUint16(22, numberOfChannels, true); // 声道数
+        view.setUint32(24, audioBuffer.sampleRate, true); // 采样率
+        view.setUint32(28, audioBuffer.sampleRate * 2 * numberOfChannels, true); // 字节率
+        view.setUint16(32, numberOfChannels * 2, true); // 块对齐
+        view.setUint16(34, 16, true); // 位深度
+
+        // data子块
+        writeString(36, 'data');
+        view.setUint32(40, length - 44, true);
+
+        // 写入音频数据
+        offset = 44;
+        for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+            channels.push(audioBuffer.getChannelData(i));
+        }
+
+        for (let i = 0; i < audioBuffer.length; i++) {
+            for (let channel = 0; channel < numberOfChannels; channel++) {
+                const sample = Math.max(-1, Math.min(1, channels[channel][i]));
+                view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                offset += 2;
             }
         }
+
+        return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    // 上传音频到ASR服务
+    async uploadAudio() {
+        const apiKey = localStorage.getItem('apiKey');
+
+        if (!apiKey) {
+            showToast('请先配置API密钥', 'error');
+            if (window.KeyManager) {
+                window.KeyManager.goToKeyConfig();
+            }
+            this.updateDisplay('未配置密钥');
+            this.updateStatusText('请先配置密钥');
+            return;
+        }
+
+        try {
+            // 创建FormData
+            const formData = new FormData();
+            formData.append('file', this.audioBlob, 'recording.wav');
+
+            // 发送请求
+            const response = await fetch(`${API_BASE_URL}/api/asr/offline`, {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': apiKey
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                if (result.text) {
+                    // 识别成功
+                    this.updateDisplay(`识别结果: ${result.text}`);
+                } else {
+                    this.updateDisplay(`未识别到内容`);
+                }
+
+                this.updateStatusText('潮汕话识别完成');
+
+                // 震动反馈
+                this.vibrateDevice();
+            } else {
+                // 识别失败
+                const errorMsg = result.message || '识别失败';
+                showToast(errorMsg, 'error');
+                this.updateDisplay(`错误: ${errorMsg}`);
+                this.updateStatusText('识别失败，请等待一会儿后重试');
+            }
+
+        } catch (error) {
+            console.error('上传音频失败:', error);
+            showToast('上传失败，请检查网络连接', 'error');
+            this.updateDisplay('网络错误');
+            this.updateStatusText('上传音频失败，等待一会儿后重试');
+        } finally {
+            // 清理音频资源
+            this.cleanupAudioResources();
+        }
+    }
+
+    // 清理音频资源
+    cleanupAudioResources() {
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+        }
+
+        this.audioChunks = [];
+        this.audioBlob = null;
+        this.mediaRecorder = null;
+    }
+
+    // 清理所有资源
+    cleanup() {
+        this.stopVolumeMonitoring();
+        this.cleanupAudioResources();
+        if (this.audioContext) {
+            this.audioContext.close();
+            this.audioContext = null;
+        }
+
+        // 清理定时器
+        if (this.recordingTimer) {
+            clearInterval(this.recordingTimer);
+            this.recordingTimer = null;
+        }
+    }
+
+    // 更新录音UI状态
+    updateRecordingUI(isRecording) {
+        const recordBtn = this.elements.recordBtn;
+        if (!recordBtn) return;
+
+        if (isRecording) {
+            recordBtn.classList.add('recording');
+            recordBtn.classList.remove('processing');
+            recordBtn.disabled = false;
+        } else {
+            recordBtn.classList.remove('recording');
+        }
+    }
+
+    // 更新处理UI状态
+    updateProcessingUI(isProcessing) {
+        const recordBtn = this.elements.recordBtn;
+        if (!recordBtn) return;
+
+        if (isProcessing) {
+            recordBtn.classList.add('processing');
+            recordBtn.disabled = true;
+        } else {
+            recordBtn.classList.remove('processing');
+            recordBtn.disabled = false;
+        }
+    }
+
+    // 启动音量监听
+    startVolumeMonitoring() {
+        if (!this.stream) return;
+
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.analyser = this.audioContext.createAnalyser();
+            this.microphone = this.audioContext.createMediaStreamSource(this.stream);
+            this.javascriptNode = this.audioContext.createScriptProcessor(2048, 1, 1);
+
+            this.analyser.smoothingTimeConstant = 0.8;
+            this.analyser.fftSize = 1024;
+
+            this.microphone.connect(this.analyser);
+            this.analyser.connect(this.javascriptNode);
+            this.javascriptNode.connect(this.audioContext.destination);
+
+            this.javascriptNode.onaudioprocess = () => {
+                const array = new Uint8Array(this.analyser.frequencyBinCount);
+                this.analyser.getByteFrequencyData(array);
+                const values = array.reduce((a, b) => a + b, 0);
+                const average = values / array.length;
+                this.updateVolumeMeter(average);
+            };
+        } catch (error) {
+            console.error('音量监听启动失败:', error);
+        }
+    }
+
+    // 停止音量监听
+    stopVolumeMonitoring() {
+        if (this.javascriptNode) {
+            this.javascriptNode.onaudioprocess = null;
+            this.javascriptNode.disconnect();
+            this.javascriptNode = null;
+        }
+
+        if (this.microphone) {
+            this.microphone.disconnect();
+            this.microphone = null;
+        }
+
+        if (this.analyser) {
+            this.analyser.disconnect();
+            this.analyser = null;
+        }
+
+        // 重置音量显示
+        this.updateVolumeMeter(0);
+    }
+
+    // 更新音量显示
+    updateVolumeMeter(value) {
+        const maxValue = 20;
+        const normalizedValue = Math.min(value / maxValue, 1);
+        const activeBars = Math.ceil(normalizedValue * 3);
+
+        this.elements.volumeBars.forEach((bar, index) => {
+            if (index < activeBars) {
+                bar.classList.add('active');
+            } else {
+                bar.classList.remove('active');
+            }
+        });
+    }
+
+    // 检查ASR服务状态
+    async checkASRServiceHealth() {
+        const apiKey = localStorage.getItem('apiKey');
+
+        if (!apiKey) {
+            this.updateServiceStatus(null);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/asr/health`, {
+                method: 'GET',
+                headers: {
+                    'X-API-Key': apiKey
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                const isHealthy = result.status === 'healthy';
+                this.updateServiceStatus(isHealthy);
+                this.asrServiceHealthy = isHealthy;
+            } else {
+                this.updateServiceStatus(false);
+                this.asrServiceHealthy = false;
+            }
+        } catch (error) {
+            console.error('ASR服务健康检查失败:', error);
+            this.updateServiceStatus(false);
+            this.asrServiceHealthy = false;
+        }
+    }
+
+    // 更新服务状态指示灯
+    updateServiceStatus(isHealthy) {
+        const serviceDot = this.elements.serviceDot;
+        if (!serviceDot) return;
+
+        // 移除所有状态类
+        serviceDot.classList.remove('healthy', 'unhealthy');
+
+        if (isHealthy === true) {
+            serviceDot.classList.add('healthy');
+        } else if (isHealthy === false) {
+            serviceDot.classList.add('unhealthy');
+        }
+        // null表示未检查，保持灰色
     }
 
     // 更新显示内容
     updateDisplay(text) {
-        const displayText = document.getElementById('displayText');
-        if (displayText) {
-            // 取消之前的打字机效果
-            if (this.typewriterTimer) {
-                clearTimeout(this.typewriterTimer);
-                this.typewriterTimer = null;
-            }
-            this.typewriterEffect(displayText, text, 30);
+        const displayText = this.elements.displayText;
+        if (!displayText) return;
+
+        // 取消之前的打字机效果
+        if (this.typewriterTimer) {
+            clearTimeout(this.typewriterTimer);
+            this.typewriterTimer = null;
         }
+        this.typewriterEffect(displayText, text, 30);
     }
 
     // 打字机效果
-    typewriterEffect(element, text, speed = 50) {
+    typewriterEffect(element, text, speed = 30) {
         let i = 0;
         element.textContent = '';
 
@@ -148,197 +604,11 @@ class TeoTranslator {
         type();
     }
 
-    // 切换翻译模式
-    toggleMode() {
-        this.currentMode = this.currentMode === 'mandarin-to-teochew'
-            ? 'teochew-to-mandarin'
-            : 'mandarin-to-teochew';
-
-        this.updateUI();
-        this.animateModeSwitch();
-    }
-
-    // 更新UI状态
-    updateUI() {
-        const modeText = document.getElementById('modeText');
-        const textInput = document.getElementById('textInput');
-        const translateBtnText = document.getElementById('translateBtnText');
-
-        if (this.currentMode === 'mandarin-to-teochew') {
-            if (modeText) modeText.textContent = '普通话→潮汕';
-            if (textInput) textInput.placeholder = '输入普通话文本...';
-            if (translateBtnText) translateBtnText.textContent = '潮';
-        } else {
-            if (modeText) modeText.textContent = '潮汕→普通话';
-            if (textInput) textInput.placeholder = '输入潮汕话文本...';
-            if (translateBtnText) translateBtnText.textContent = '普';
-        }
-    }
-
-    // 模式切换动画
-    animateModeSwitch() {
-        const lcdGlass = document.querySelector('.lcd-glass');
-        if (lcdGlass) {
-            lcdGlass.style.animation = 'modeSwitch 0.5s ease';
-            setTimeout(() => {
-                lcdGlass.style.animation = '';
-            }, 500);
-        }
-    }
-
-    // 翻译功能
-    async translate() {
-        const textInput = document.getElementById('textInput');
-        const text = textInput.value.trim();
-
-        if (!text) {
-            this.updateDisplay('请输入要翻译的文本');
-            return;
-        }
-
-        if (this.isTranslating) {
-            return;
-        }
-
-        // 清除防抖定时器，避免被覆盖
-        if (this.displayDebounceTimer) {
-            clearTimeout(this.displayDebounceTimer);
-            this.displayDebounceTimer = null;
-        }
-
-        this.isTranslating = true;
-
-        // 在屏幕显示"翻译中..."
-        this.updateDisplay('翻译中...');
-
-        try {
-            // 模拟延迟
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            // 显示开发中提示
-            this.updateDisplay('翻译功能正在开发中，敬请期待...');
-
-            // 震动反馈（如果支持）
-            this.vibrateDevice();
-
-        } catch (error) {
-            console.error('翻译错误:', error);
-            this.updateDisplay('翻译功能正在开发中，敬请期待...');
-        } finally {
-            this.isTranslating = false;
-        }
-    }
-
-    // 模拟翻译API调用
-    simulateTranslation(text) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // 这里是模拟翻译结果
-                // 实际应用中应该调用真实的翻译API
-                let translation = '';
-
-                if (this.currentMode === 'mandarin-to-teochew') {
-                    translation = this.mandarinToTeochew(text);
-                } else {
-                    translation = this.teochewToMandarin(text);
-                }
-
-                resolve(translation);
-            }, 1200 + Math.random() * 800); // 1.2-2秒的随机延迟
-        });
-    }
-
-    // 模拟普通话转潮汕话
-    mandarinToTeochew(text) {
-        // 简单的模拟翻译规则
-        const translations = {
-            '你好': '你好',
-            '世界': '世界',
-            '谢谢': '多谢',
-            '再见': '再会',
-            '吃饭': '食饭',
-            '睡觉': '睏觉',
-            '我爱你': '我爱你',
-            '早上好': '早晨',
-            '晚上好': '暗昼好',
-            '是什么': '是乜个',
-            '这个': '这个',
-            '那个': '许个',
-            '我们': '阮',
-            '你们': '恁',
-            '他们': '伊人'
-        };
-
-        let result = text;
-        for (const [mandarin, teochew] of Object.entries(translations)) {
-            result = result.replace(new RegExp(mandarin, 'g'), teochew);
-        }
-
-        // 如果没有找到对应翻译，添加后缀表示
-        if (result === text) {
-            result = text + ' (潮汕话)';
-        }
-
-        return result;
-    }
-
-    // 模拟潮汕话转普通话
-    teochewToMandarin(text) {
-        // 简单的模拟翻译规则
-        const translations = {
-            '你好': '你好',
-            '世界': '世界',
-            '多谢': '谢谢',
-            '再会': '再见',
-            '食饭': '吃饭',
-            '睏觉': '睡觉',
-            '早晨': '早上好',
-            '暗昼好': '晚上好',
-            '是乜个': '是什么',
-            '阮': '我们',
-            '恁': '你们',
-            '伊人': '他们'
-        };
-
-        let result = text;
-        for (const [teochew, mandarin] of Object.entries(translations)) {
-            result = result.replace(new RegExp(teochew, 'g'), mandarin);
-        }
-
-        // 如果没有找到对应翻译，添加后缀表示
-        if (result === text) {
-            result = text + ' (普通话)';
-        }
-
-        return result;
-    }
-
-    // 显示翻译结果
-    displayTranslation(inputText, outputText) {
-        this.updateDisplay(`结果: ${outputText}`);
-        this.playSuccessSound();
-    }
-
-    // 清除所有内容
-    clearAll() {
-        const textInput = document.getElementById('textInput');
-        if (textInput) {
-            textInput.value = '';
-        }
-
-        this.updateCharCounter();
-        this.updateDisplay('等待输入...');
-    }
-
-    // 显示加载动画
-    showLoading(show) {
-        const loadingLayer = document.getElementById('loadingLayer');
-        if (loadingLayer) {
-            if (show) {
-                loadingLayer.classList.add('active');
-            } else {
-                loadingLayer.classList.remove('active');
-            }
+    // 更新状态文本
+    updateStatusText(text) {
+        const modeText = this.elements.modeText;
+        if (modeText) {
+            modeText.textContent = text;
         }
     }
 
@@ -349,121 +619,86 @@ class TeoTranslator {
         }
     }
 
-    // 模拟成功音效
-    playSuccessSound() {
-        // 创建简单的音频反馈
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
-
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    // 模拟启动过程
-    simulateStartup() {
-        // 显示启动消息（只在开机时调用）
-        setTimeout(() => {
-            this.updateDisplay('系统就绪');
-        }, 1000);
-    }
-
-    // 开始动画效果
-    startAnimations() {
-        // 添加CSS动画样式
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes modeSwitch {
-                0% { opacity: 1; }
-                50% { opacity: 0.5; }
-                100% { opacity: 1; }
-            }
-        `;
-
-        if (!document.querySelector('style[data-translator-animations]')) {
-            style.setAttribute('data-translator-animations', 'true');
-            document.head.appendChild(style);
-        }
-    }
-
     // 设置电源状态
     setPowerState(powerOn) {
         if (!powerOn) {
-            // 关机状态（默认）
+            // 关机状态
             if (this.elements.lcdGlass) {
                 this.elements.lcdGlass.classList.remove('power-on');
             }
             document.body.classList.remove('power-on');
-            this.setAllButtonsDisabled(true);
+
+            // 禁用录音按钮
+            if (this.elements.recordBtn) {
+                this.elements.recordBtn.disabled = true;
+            }
+
             if (this.elements.displayText) {
                 this.elements.displayText.textContent = '';
             }
-            if (this.elements.textInput) {
-                this.elements.textInput.placeholder = '请先配置API密钥';
-            }
+
+            this.updateStatusText('配置密钥');
+            this.updateServiceStatus(null);
         } else {
             // 开机状态
             if (this.elements.lcdGlass) {
                 this.elements.lcdGlass.classList.add('power-on');
             }
             document.body.classList.add('power-on');
-            this.setAllButtonsDisabled(false);
-            if (this.elements.textInput) {
-                this.elements.textInput.placeholder = '输入普通话文本...';
-            }
-            // 显示系统就绪
-            this.simulateStartup();
-        }
-    }
 
-    // 设置所有按钮的禁用状态
-    setAllButtonsDisabled(disabled) {
-        if (this.elements.textInput) {
-            this.elements.textInput.disabled = disabled;
-        }
-        if (this.elements.translateBtn) {
-            this.elements.translateBtn.disabled = disabled;
-        }
-        if (this.elements.toggleBtn) {
-            this.elements.toggleBtn.disabled = disabled;
+            // 启用录音按钮
+            if (this.elements.recordBtn) {
+                this.elements.recordBtn.disabled = false;
+            }
+
+            this.updateDisplay('等待录音...');
+            this.updateStatusText('按住录音按键即可开始录音');
+
+            // 检查ASR服务状态
+            this.checkASRServiceHealth();
+
+            // 每30秒检查一次服务状态
+            setInterval(() => {
+                if (document.body.classList.contains('power-on')) {
+                    this.checkASRServiceHealth();
+                }
+            }, 30000);
         }
     }
 }
 
 // 全局函数，供HTML调用
-function toggleMode() {
-    if (window.translator) {
-        window.translator.toggleMode();
-    }
-}
-
-function handleTranslateClick() {
-    if (window.translator) {
-        window.translator.translate();
-    }
-}
-
-function clearAll() {
-    if (window.translator) {
-        window.translator.clearAll();
-    }
-}
-
-// 返回主页函数
 function goBack() {
-    // 如果正在翻译，不强制中断，直接返回
-    // 翻译器没有录音状态，所以直接返回即可
+    if (window.translator) {
+        // 如果正在录音或处理，不允许返回
+        if (window.translator.isRecording || window.translator.isProcessing) {
+            showToast('请等待录音或识别完成', 'warning');
+            return;
+        }
+    }
     window.location.href = '../index.html';
+}
+
+// Toast提示函数
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastUniversal');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+
+    toastContainer.appendChild(toast);
+
+    // 3秒后移除
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (toastContainer.contains(toast)) {
+                toastContainer.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
 }
 
 // 页面加载完成后初始化
@@ -497,9 +732,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     }
-
-    // 添加键盘快捷键提示
-    console.log('Teo Translater 快捷键:');
-    console.log('Enter - 翻译文本');
-    console.log('Escape - 清除文本');
 });

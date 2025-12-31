@@ -205,8 +205,6 @@ body {
 .lcd-glass {
     border-radius: 10px;
     padding: 18px;
-    padding-bottom: 0px;
-
     min-height: 100px;
     position: relative;
     font-family: 'Courier New', monospace;
@@ -244,20 +242,35 @@ body {
 }
 
 .signal-bars {
-    display: flex;
+    display: none;
     gap: 3px;
     align-items: flex-end;
 }
 
-.bar {
-    width: 4px;
-    background: #000000;
-    border-radius: 2px;
+.signal-bars.visible {
+    display: flex;
 }
 
-.bar:nth-child(1) { height: 8px; }
-.bar:nth-child(2) { height: 14px; }
-.bar:nth-child(3) { height: 20px; }
+.bar {
+    width: 5px;
+    background: #333333;
+    border-radius: 3px;
+    transition: all 0.1s ease;
+}
+
+.bar:nth-child(1) { height: 6px; }
+.bar:nth-child(2) { height: 12px; }
+.bar:nth-child(3) { height: 18px; }
+
+.bar.active {
+    background: linear-gradient(to top, #00cc00, #00ff00);
+    box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+}
+
+.bar:nth-child(3).active {
+    background: linear-gradient(to top, #ff9900, #ffcc00);
+    box-shadow: 0 0 6px rgba(255, 204, 0, 0.6);
+}
 
 /* 显示区域 */
 .lcd-display {
@@ -330,8 +343,9 @@ body {
 /* 输入区域 */
 .input-section {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
+    justify-content: center;
 }
 
 .input-frame {
@@ -787,6 +801,12 @@ body {
 }
 
 @media (max-width: 480px) {
+
+    .display-text {
+        min-height: 200px;
+    }
+
+
     .container {
         padding: 100px 10px 10px 10px;
     }
@@ -1058,3 +1078,166 @@ body {
     background: linear-gradient(135deg, #00bb66, #00aa55);
     box-shadow: 0 4px 15px rgba(0, 170, 85, 0.3);
 }
+/* ==================== */
+/* ASR 录音控制样式 */
+/* ==================== */
+
+/* ASR服务状态指示灯 */
+.service-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 12px;
+    background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+    border-radius: 12px;
+    border: 1px solid #333333;
+    box-shadow:
+        inset 3px 3px 6px rgba(0, 0, 0, 0.5),
+        inset -2px -2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.service-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #666666;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.service-dot.healthy {
+    background: #00ff00;
+    box-shadow: 0 0 8px #00ff00;
+}
+
+.service-dot.unhealthy {
+    background: #ff0000;
+    box-shadow: 0 0 8px #ff0000;
+}
+
+.service-label {
+    font-size: 9px;
+    color: #888888;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* 录音按钮 */
+.record-btn {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: linear-gradient(145deg, #cc0000, #990000);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 6px 12px rgba(0, 0, 0, 0.3),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.2);
+    /* 默认禁用状态 */
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.record-btn:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.record-btn:hover:not(:disabled) {
+    background: linear-gradient(145deg, #dd0000, #aa0000);
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.record-btn:active:not(:disabled) {
+    background: linear-gradient(145deg, #aa0000, #880000);
+    transform: translateY(0);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.record-btn.recording {
+    background: linear-gradient(145deg, #ff3333, #cc0000);
+    animation: recordPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+    0%, 100% {
+        box-shadow:
+            0 6px 12px rgba(0, 0, 0, 0.3),
+            0 0 20px rgba(255, 0, 0, 0.4),
+            inset 2px 2px 4px rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow:
+            0 6px 12px rgba(0, 0, 0, 0.3),
+            0 0 30px rgba(255, 0, 0, 0.6),
+            inset 2px 2px 4px rgba(255, 255, 255, 0.2);
+    }
+}
+
+.record-btn.processing {
+    background: linear-gradient(145deg, #666666, #444444);
+    cursor: wait;
+}
+
+.mic-icon {
+    width: 30px;
+    height: 30px;
+    color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.record-btn.recording .mic-icon {
+    animation: micScale 0.8s ease-in-out infinite;
+}
+
+@keyframes micScale {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.record-text {
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .record-btn {
+        width: 70px;
+        height: 70px;
+    }
+
+    .mic-icon {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .record-btn {
+        width: 60px;
+        height: 60px;
+    }
+
+    .mic-icon {
+        width: 28px;
+        height: 28px;
+    }
+}
+
