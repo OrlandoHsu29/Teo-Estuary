@@ -120,7 +120,7 @@ def create_app():
     logger.info(f"Default limits: {default_limits}")
 
     # 注册蓝图
-    from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, dictionary_sync_bp
+    from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, dictionary_sync_bp, asr_bp
     from app.api.jieba_sync import jieba_sync_bp
     from app.admin.routes import admin_bp
 
@@ -130,6 +130,7 @@ def create_app():
     app.register_blueprint(text_bp)
     app.register_blueprint(dictionary_bp)
     app.register_blueprint(dictionary_sync_bp)
+    app.register_blueprint(asr_bp)
     app.register_blueprint(jieba_sync_bp)
     app.register_blueprint(admin_bp)
 

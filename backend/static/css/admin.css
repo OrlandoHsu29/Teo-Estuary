@@ -2599,8 +2599,14 @@ s
     margin-bottom: 10px;
     display: inline-flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
     font-weight: 600;
+    pointer-events: none;
+}
+
+.text-display.compact label > * {
+    pointer-events: auto;
 }
 
 .text-display.compact label .label-text {
@@ -2612,10 +2618,6 @@ s
 .text-display.compact label .label-text p{
     font-size: 16px;
     padding-bottom: 2.8px;
-}
-
-.text-display.compact label .text-save-btn {
-    margin-left: auto;
 }
 
 /* 文本保存按钮样式 */
