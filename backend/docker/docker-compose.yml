@@ -40,6 +40,9 @@ services:
       # Emilia服务配置（可选）
       - EMILIA_SERVICE_URL=${EMILIA_SERVICE_URL:-http://host.docker.internal:5029}
 
+      # ASR语音识别服务配置（可选）
+      - ASR_SERVICE_URL=${ASR_SERVICE_URL:-http://host.docker.internal:5026}
+
       # Gunicorn配置（生产环境）
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - GUNICORN_THREADS=${GUNICORN_THREADS:-4}
