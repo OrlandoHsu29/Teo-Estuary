@@ -235,19 +235,15 @@ def api_update_recording(recording_id):
                         }), 404
 
                     audio_name = get_next_audio_name(new_status, exclude_id=recording_id)
-                    new_filename = f"{audio_name}.webm"
                     source_path = current_path
 
                     target_path = move_audio_file(source_path, audio_name, new_status, current_app.config['DATA_FOLDER'])
 
                     if target_path:
-                        # 存储相对于data目录的路径
-                        base_dir = 'good' if new_status == 'approved' else 'bad'
-                        s_part = audio_name[:4]  # S001
-                        f_part = audio_name[4:8]  # F001
                         recording.status = new_status
-                        # 构建相对于data根目录的路径: good/S001/F001/S001F001C001.webm
-                        relative_path = os.path.join(base_dir, s_part, f_part, new_filename).replace('\\', '/')
+                        # 转化为相对于data根目录的路径: good/S001/F001/S001F001C001.webm
+                        relative_path = os.path.relpath(target_path, current_app.config['DATA_FOLDER'])
+
                         recording.file_path = relative_path
 
                         logger.info(f"{old_status} → {new_status}: Moved recording {recording_id} to {relative_path}")
