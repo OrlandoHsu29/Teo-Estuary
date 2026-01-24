@@ -1,5 +1,5 @@
 [project]
-name = "teo-recorder-backend"
+name = "TeoEstuary-backend"
 version = "1.0.0"
 description = "潮汕话录音机后端服务"
 authors = ["OrlandoHsu <2858117894@qq.com>"]

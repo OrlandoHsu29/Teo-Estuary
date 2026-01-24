@@ -1,9 +1,9 @@
-# TeoRecord Docker 部署指南
+# TeoEstuary Docker 部署指南
 
 ## 概述
 
 本项目使用Docker Compose进行部署，包含以下服务：
-- **teorecord-backend**: Flask应用服务
+- **TeoEstuary-backend**: Flask应用服务
 - **redis**: Redis缓存服务（用于Flask-Limiter速率限制存储）
 
 ## 快速开始
@@ -79,7 +79,7 @@ curl http://localhost:5001/health
 
 ## 服务详情
 
-### Backend服务 (teorecord-backend)
+### Backend服务 (TeoEstuary-backend)
 
 - **端口**: 5001:5000 (主机:容器)
 - **健康检查**: 每30秒检查一次
@@ -208,7 +208,7 @@ GUNICORN_LOG_LEVEL=info   # 日志级别
 docker-compose ps
 
 # 查看后端服务日志
-docker-compose logs teorecord-backend
+docker-compose logs TeoEstuary-backend
 
 # 查看Redis服务日志
 docker-compose logs redis
@@ -229,8 +229,8 @@ cp instance/recorder_manager.db ./backup/recorder_manager-$(date +%Y%m%d).db
 tar -czf ./backup/data-$(date +%Y%m%d).tar.gz data/data/
 
 # 备份Redis数据（Redis仍使用Docker卷）
-docker exec teorecord-redis redis-cli BGSAVE
-docker cp teorecord-redis:/data/dump.rdb ./backup/
+docker exec TeoEstuary-redis redis-cli BGSAVE
+docker cp TeoEstuary-redis:/data/dump.rdb ./backup/
 ```
 
 **恢复数据**：
@@ -272,10 +272,10 @@ tar -xzf ./backup/data-20231226.tar.gz
 docker-compose logs -f
 
 # 查看特定服务日志
-docker-compose logs -f teorecord-backend
+docker-compose logs -f TeoEstuary-backend
 
 # 查看最近的日志
-docker-compose logs --tail=100 teorecord-backend
+docker-compose logs --tail=100 TeoEstuary-backend
 ```
 
 ## 开发环境
@@ -288,10 +288,10 @@ docker-compose logs --tail=100 teorecord-backend
 
 ```bash
 # 进入容器调试
-docker-compose exec teorecord-backend bash
+docker-compose exec TeoEstuary-backend bash
 
 # 查看应用日志
-docker-compose exec teorecord-backend tail -f logs/app.log
+docker-compose exec TeoEstuary-backend tail -f logs/app.log
 ```
 
 ## 更新部署
@@ -331,7 +331,7 @@ curl http://localhost:5001/health
 docker volume inspect docker_db_data
 
 # 从容器备份数据库文件
-docker cp teorecord-backend:/app/instance/dialect_recorder.db ./backup/
+docker cp TeoEstuary-backend:/app/instance/dialect_recorder.db ./backup/
 
 # 备份整个卷
 docker run --rm -v docker_db_data:/data -v $(pwd):/backup alpine tar czf /backup/db_backup.tar.gz /data

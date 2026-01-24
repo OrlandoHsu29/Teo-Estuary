@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Starting TeoRecord Backend..."
+echo "Starting Teo-Estuary Backend..."
 echo "Debug mode: ${DEBUG:-False}"
 
 # 修复挂载目录的权限问题
