@@ -42,7 +42,7 @@ def get_next_audio_name(target_status: str, exclude_id=None):
         if not latest_recording or not latest_recording.file_path:
             return "S001F001C001"
 
-        filename = os.path.basename(latest_recording.file_path).replace('.webm', '')
+        filename = os.path.basename(latest_recording.file_path).replace('.webm', '').replace('.mp3', '').replace('.wav', '')
         match = re.match(r'S(\d+)F(\d+)C(\d+)', filename)
         if not match:
             return "S001F001C001"
@@ -88,20 +88,21 @@ def move_audio_file(source_path, audio_name, status, data_folder):
     """
     try:
         if status == 'approved':
-            base_dir = f'{data_folder}/good'
+            base_dir = os.path.join(data_folder, 'good')
         elif status == 'rejected':
-            base_dir = f'{data_folder}/bad'
+            base_dir = os.path.join(data_folder, 'bad')
         else:
             logger.error(f"Unknown status: {status}")
             return None
 
+        # 获取后缀
+        _, ext = os.path.splitext(source_path)
         target_dir = ensure_directory_structure(audio_name, base_dir)
-        target_path = os.path.join(target_dir, f"{audio_name}.webm")
+        target_path = os.path.join(target_dir, f"{audio_name}{ext}")
 
         import shutil
         shutil.move(source_path, target_path)
 
-        logger.info(f"Moved {status} audio to: {target_path}")
         return target_path
 
     except Exception as e:

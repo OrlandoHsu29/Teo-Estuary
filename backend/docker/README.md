@@ -1,9 +1,9 @@
-# TeoRecord Docker 部署指南
+# TeoEstuary Docker 部署指南
 
 ## 概述
 
 本项目使用Docker Compose进行部署，包含以下服务：
-- **teorecord-backend**: Flask应用服务
+- **TeoEstuary-backend**: Flask应用服务
 - **redis**: Redis缓存服务（用于Flask-Limiter速率限制存储）
 
 ## 快速开始
@@ -79,7 +79,7 @@ curl http://localhost:5001/health
 
 ## 服务详情
 
-### Backend服务 (teorecord-backend)
+### Backend服务 (TeoEstuary-backend)
 
 - **端口**: 5001:5000 (主机:容器)
 - **健康检查**: 每30秒检查一次
@@ -138,7 +138,26 @@ EMILIA_SERVICE_URL=http://emilia:5029
 
 ## 速率限制配置
 
-### 默认配置
+### ⚠️ 重要：离线版 vs 线上版
+
+本项目的速率限制功能可以通过环境变量 `ENABLE_RATE_LIMITER` 快速开关：
+
+- **离线无限制版**（默认）：`ENABLE_RATE_LIMITER=False` - 禁用所有限制
+- **线上生产版**：`ENABLE_RATE_LIMITER=True` - 启用所有限制
+
+```env
+# 离线版配置（.env 文件）
+ENABLE_RATE_LIMITER=False  # 禁用所有限制，适合离线个人使用
+
+# 线上版配置（.env 文件）
+ENABLE_RATE_LIMITER=True   # 启用限制，适合公网部署
+```
+
+**快速切换**：
+- 从线上merge到离线版后，只需修改 `.env` 文件中的 `ENABLE_RATE_LIMITER=False`
+- 从离线版部署到线上时，修改为 `ENABLE_RATE_LIMITER=True`
+
+### 默认配置（仅当 ENABLE_RATE_LIMITER=True 时生效）
 
 - **全局限制**: 每天1000次，每小时100次请求
 - **上传接口**: 每天100次，每小时30次
@@ -152,9 +171,12 @@ EMILIA_SERVICE_URL=http://emilia:5029
 
 ### 自定义配置
 
-通过环境变量调整：
+通过环境变量调整（仅在 ENABLE_RATE_LIMITER=True 时生效）：
 
 ```env
+# 启用速率限制
+ENABLE_RATE_LIMITER=True
+
 # 更改默认全局限制
 RATELIMIT_DEFAULT=2000 per day, 200 per hour
 
@@ -208,7 +230,7 @@ GUNICORN_LOG_LEVEL=info   # 日志级别
 docker-compose ps
 
 # 查看后端服务日志
-docker-compose logs teorecord-backend
+docker-compose logs TeoEstuary-backend
 
 # 查看Redis服务日志
 docker-compose logs redis
@@ -229,8 +251,8 @@ cp instance/recorder_manager.db ./backup/recorder_manager-$(date +%Y%m%d).db
 tar -czf ./backup/data-$(date +%Y%m%d).tar.gz data/data/
 
 # 备份Redis数据（Redis仍使用Docker卷）
-docker exec teorecord-redis redis-cli BGSAVE
-docker cp teorecord-redis:/data/dump.rdb ./backup/
+docker exec TeoEstuary-redis redis-cli BGSAVE
+docker cp TeoEstuary-redis:/data/dump.rdb ./backup/
 ```
 
 **恢复数据**：
@@ -272,10 +294,10 @@ tar -xzf ./backup/data-20231226.tar.gz
 docker-compose logs -f
 
 # 查看特定服务日志
-docker-compose logs -f teorecord-backend
+docker-compose logs -f TeoEstuary-backend
 
 # 查看最近的日志
-docker-compose logs --tail=100 teorecord-backend
+docker-compose logs --tail=100 TeoEstuary-backend
 ```
 
 ## 开发环境
@@ -288,10 +310,10 @@ docker-compose logs --tail=100 teorecord-backend
 
 ```bash
 # 进入容器调试
-docker-compose exec teorecord-backend bash
+docker-compose exec TeoEstuary-backend bash
 
 # 查看应用日志
-docker-compose exec teorecord-backend tail -f logs/app.log
+docker-compose exec TeoEstuary-backend tail -f logs/app.log
 ```
 
 ## 更新部署
@@ -331,7 +353,7 @@ curl http://localhost:5001/health
 docker volume inspect docker_db_data
 
 # 从容器备份数据库文件
-docker cp teorecord-backend:/app/instance/dialect_recorder.db ./backup/
+docker cp TeoEstuary-backend:/app/instance/dialect_recorder.db ./backup/
 
 # 备份整个卷
 docker run --rm -v docker_db_data:/data -v $(pwd):/backup alpine tar czf /backup/db_backup.tar.gz /data
@@ -346,6 +368,7 @@ docker run --rm -v docker_db_data:/data -v $(pwd):/backup alpine tar czf /backup
 | `ADMIN_USERNAME` | 管理员用户名 | admin | ❌ |
 | `ADMIN_PASSWORD` | 管理员密码 | - | ✅ |
 | `DATABASE_URL` | 数据库URL | sqlite:///instance/dialect_recorder.db | ❌ |
+| `ENABLE_RATE_LIMITER` | **启用速率限制（False=离线无限制，True=线上限制）** | **False** | ❌ |
 | `RATELIMIT_STORAGE_URL` | 速率限制存储 | redis://redis:6379 | ❌ |
 | `RATELIMIT_DEFAULT` | 默认速率限制 | 1000 per day, 100 per hour | ❌ |
 | `EMILIA_SERVICE_URL` | Emilia服务URL | http://localhost:5029 | ❌ |

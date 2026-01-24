@@ -1,11 +1,11 @@
-# Teo Recorder - 前后端分离版本
+# Teo Estuary - 前后端分离版本
 
 潮汕话录音数据收集系统的前后端分离版本。
 
 ## 项目结构
 
 ```
-TeoRecord-dev/
+TeoEstuary-dev/
 ├── frontend/          # 前端代码
 │   ├── src/          # 源代码
 │   │   ├── css/      # 样式文件

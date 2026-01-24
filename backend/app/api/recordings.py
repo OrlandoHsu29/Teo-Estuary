@@ -159,103 +159,25 @@ def api_recordings():
 
 @recordings_bp.route('/api/recording/<recording_id>', methods=['PUT'])
 def api_update_recording(recording_id):
-    """更新录音信息（管理用）"""
+    """更新录音基本信息（管理用）
+    仅支持更新 teochew_text、mandarin_text、file_path 等基本信息
+    不处理状态变更和文件移动
+    """
     try:
         from app.models import Recording
 
         recording = Recording.query.get_or_404(recording_id)
         data = request.get_json()
-        old_status = recording.status
 
+        # 仅更新基本信息字段
         if 'teochew_text' in data:
             recording.teochew_text = data['teochew_text']
 
         if 'mandarin_text' in data:
             recording.mandarin_text = data['mandarin_text']
 
-        if 'status' in data:
-            new_status = data['status']
-
-            if new_status in ['approved', 'rejected'] and old_status != new_status:
-                if not recording.teochew_text:
-                    return jsonify({
-                        'success': False,
-                        'error': '请先填写音频实际内容后再进行审核'
-                    }), 400
-
-                # 检查 file_path 是否是 URL 形式（来自 Emilia 服务）
-                if recording.file_path and (recording.file_path.startswith('http://') or recording.file_path.startswith('https://')):
-                    # 调用 Emilia 服务的 move_audio 接口
-                    emilia_url = f'{emilia_service_host}/move_audio'
-
-                    try:
-                        response = requests.post(
-                            emilia_url,
-                            data={
-                                'recording_id': recording_id,
-                                'status': new_status
-                            },
-                            timeout=30
-                        )
-
-                        if response.status_code == 200:
-                            # Emilia 服务移动成功，只需更新状态
-                            recording.status = new_status
-                            logger.info(f"{old_status} → {new_status}: Emilia recording {recording_id} moved via Emilia service")
-                        else:
-                            logger.error(f"Emilia move_audio returned error: {response.status_code} - {response.text}")
-                            return jsonify({
-                                'success': False,
-                                'error': f'Emilia 服务返回错误: {response.status_code}'
-                            }), response.status_code
-
-                    except requests.exceptions.Timeout:
-                        logger.error("Timeout calling Emilia move_audio")
-                        return jsonify({'success': False, 'error': 'Emilia 服务响应超时'}), 504
-                    except requests.exceptions.ConnectionError:
-                        logger.error("Cannot connect to Emilia service")
-                        return jsonify({'success': False, 'error': '无法连接到 Emilia 服务'}), 503
-                    except Exception as e:
-                        logger.error(f"Error calling Emilia move_audio: {e}")
-                        return jsonify({'success': False, 'error': f'调用 Emilia 服务失败: {str(e)}'}), 500
-
-                else:
-                    # 本地文件处理逻辑
-                    # 获取当前文件信息
-                    current_filename = os.path.basename(recording.file_path)
-                    # 将相对与data的路径转换为绝对路径
-                    current_path = f'{current_app.config["DATA_FOLDER"]}/' + recording.file_path
-
-                    # 检查源文件是否存在
-                    if not os.path.exists(current_path):
-                        logger.error(f"Source file not found: {current_path}")
-                        return jsonify({
-                            'success': False,
-                            'error': '源文件不存在，无法移动'
-                        }), 404
-
-                    audio_name = get_next_audio_name(new_status, exclude_id=recording_id)
-                    new_filename = f"{audio_name}.webm"
-                    source_path = current_path
-
-                    target_path = move_audio_file(source_path, audio_name, new_status, current_app.config['DATA_FOLDER'])
-
-                    if target_path:
-                        # 存储相对于data目录的路径
-                        base_dir = 'good' if new_status == 'approved' else 'bad'
-                        s_part = audio_name[:4]  # S001
-                        f_part = audio_name[4:8]  # F001
-                        recording.status = new_status
-                        # 构建相对于data根目录的路径: good/S001/F001/S001F001C001.webm
-                        relative_path = os.path.join(base_dir, s_part, f_part, new_filename).replace('\\', '/')
-                        recording.file_path = relative_path
-
-                        logger.info(f"{old_status} → {new_status}: Moved recording {recording_id} to {relative_path}")
-                    else:
-                        return jsonify({
-                            'success': False,
-                            'error': '文件移动失败，请重试'
-                        }), 500
+        if 'file_path' in data:
+            recording.file_path = data['file_path']
 
         db.session.commit()
 
@@ -270,6 +192,135 @@ def api_update_recording(recording_id):
         return jsonify({'error': '更新失败'}), 500
 
 
+@recordings_bp.route('/api/recording/<recording_id>/review', methods=['PUT'])
+def api_review_recording(recording_id):
+    """审核录音（更新状态并移动文件）
+    专门用于将录音状态更改为 approved 或 rejected，并相应移动文件
+    """
+    try:
+        from app.models import Recording
+
+        recording = Recording.query.get_or_404(recording_id)
+        data = request.get_json()
+
+        # 获取新状态
+        new_status = data.get('status')
+        if not new_status:
+            return jsonify({
+                'success': False,
+                'error': '缺少status参数'
+            }), 400
+
+        # 验证状态值
+        if new_status not in ['approved', 'rejected']:
+            return jsonify({
+                'success': False,
+                'error': 'status参数必须是approved或rejected'
+            }), 400
+
+        old_status = recording.status
+
+        # 如果状态没有变化，直接返回成功
+        if old_status == new_status:
+            return jsonify({
+                'success': True,
+                'message': '状态未变化'
+            })
+
+        # 检查是否有潮汕话文本
+        if not recording.teochew_text:
+            return jsonify({
+                'success': False,
+                'error': '请先填写音频实际内容后再进行审核'
+            }), 400
+
+        # 如果请求中包含 teochew_text，先更新
+        if 'teochew_text' in data:
+            recording.teochew_text = data['teochew_text']
+
+        # 检查 file_path 是否来自 Emilia 服务
+        if recording.file_path and recording.upload_type == 1:
+            # 调用 Emilia 服务的 move_audio 接口
+            emilia_url = f'{emilia_service_host}/move_audio'
+
+            try:
+                response = requests.post(
+                    emilia_url,
+                    data={
+                        'recording_id': recording_id,
+                        'status': new_status
+                    },
+                    timeout=30
+                )
+
+                if response.status_code == 200:
+                    # Emilia 服务移动成功，只需更新状态
+                    recording.status = new_status
+                    logger.info(f"{old_status} → {new_status}: Emilia recording {recording_id} moved via Emilia service")
+                else:
+                    logger.error(f"Emilia move_audio returned error: {response.status_code} - {response.text}")
+                    return jsonify({
+                        'success': False,
+                        'error': f'Emilia 服务返回错误: {response.status_code}'
+                    }), response.status_code
+
+            except requests.exceptions.Timeout:
+                logger.error("Timeout calling Emilia move_audio")
+                return jsonify({'success': False, 'error': 'Emilia 服务响应超时'}), 504
+            except requests.exceptions.ConnectionError:
+                logger.error("Cannot connect to Emilia service")
+                return jsonify({'success': False, 'error': '无法连接到 Emilia 服务'}), 503
+            except Exception as e:
+                logger.error(f"Error calling Emilia move_audio: {e}")
+                return jsonify({'success': False, 'error': f'调用 Emilia 服务失败: {str(e)}'}), 500
+
+        else:
+            # 本地文件处理逻辑
+            # 获取当前文件信息
+            current_filename = os.path.basename(recording.file_path)
+            # 将相对与data的路径转换为绝对路径
+            current_path = f'{current_app.config["DATA_FOLDER"]}/' + recording.file_path
+
+            # 检查源文件是否存在
+            if not os.path.exists(current_path):
+                logger.error(f"Source file not found: {current_path}")
+                return jsonify({
+                    'success': False,
+                    'error': '源文件不存在，无法移动'
+                }), 404
+
+            audio_name = get_next_audio_name(new_status, exclude_id=recording_id)
+            source_path = current_path
+
+            target_path = move_audio_file(source_path, audio_name, new_status, current_app.config['DATA_FOLDER'])
+
+            if target_path:
+                recording.status = new_status
+                # 转化为相对于data根目录的路径: good/S001/F001/S001F001C001.webm
+                relative_path = os.path.relpath(target_path, current_app.config['DATA_FOLDER'])
+
+                recording.file_path = relative_path
+
+                logger.info(f"{old_status} → {new_status}: Moved recording {recording_id} to {relative_path}")
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': '文件移动失败，请重试'
+                }), 500
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': '审核成功'
+        })
+
+    except Exception as e:
+        logger.error(f"Review recording error: {e}")
+        db.session.rollback()
+        return jsonify({'error': '审核失败'}), 500
+
+
 @recordings_bp.route('/admin/api/recordings/<recording_id>', methods=['DELETE'])
 @admin_required
 def api_delete_recording(recording_id):
@@ -279,8 +330,8 @@ def api_delete_recording(recording_id):
 
         recording = Recording.query.get_or_404(recording_id)
 
-        # 检查 file_path 是否是 URL 形式（来自 Emilia 服务）
-        if recording.file_path and (recording.file_path.startswith('http://') or recording.file_path.startswith('https://')):
+        # 检查 file_path 是否来自 Emilia 服务
+        if recording.file_path and recording.upload_type == 1:
             # 调用 Emilia 服务的删除接口
             emilia_url = f'{emilia_service_host}/audio/{recording_id}'
 
@@ -358,10 +409,10 @@ def admin_download_recording(recording_id):
 
         recording = Recording.query.get_or_404(recording_id)
 
-        # 检查 file_path 是否是 URL 形式（来自 Emilia 服务）
-        if recording.file_path and (recording.file_path.startswith('http://') or recording.file_path.startswith('https://')):
+        # 检查 file_path 是否来自 Emilia 服务
+        if recording.upload_type == 1:
             # 调用 Emilia 服务的获取音频接口
-            emilia_url = recording.file_path
+            emilia_url = f'{emilia_service_host}/audio/{recording_id}'
 
             try:
                 if request.method == 'HEAD':
@@ -557,7 +608,7 @@ def api_upload_material(key_obj):
             logger.error("Timeout forwarding audio to Emilia service")
             return jsonify({'error': 'Emilia 服务响应超时，请稍后重试'}), 504
         except requests.exceptions.ConnectionError:
-            logger.error("Cannot connect to Emilia service at localhost:5029")
+            logger.error(f"Cannot connect to Emilia service at {emilia_service_host}")
             return jsonify({'error': '无法连接到 Emilia 服务，请确认服务已启动'}), 503
         except Exception as e:
             logger.error(f"Error forwarding to Emilia: {e}")
@@ -641,12 +692,6 @@ def admin_batch_import_emilia():
                     'task_id': result.get('task_id')
                 }), 409
 
-            if response.status_code != 200:
-                return jsonify({
-                    'success': False,
-                    'error': f'Emilia batch_process 返回错误: {response.status_code}'
-                }), response.status_code
-
             result = response.json()
 
             if not result.get('success'):
@@ -662,30 +707,6 @@ def admin_batch_import_emilia():
                     'message': '没有需要导入的数据',
                     'imported_count': 0
                 }), 200
-
-            # 如果立即返回了200，直接调用 batch-result 接口处理数据
-            try:
-                result_response = requests.post(
-                    'http://localhost:5000/admin/api/emilia/batch-result',
-                    json={'data': data_list},
-                    headers={'Content-Type': 'application/json'},
-                    timeout=300
-                )
-
-                if result_response.status_code == 200:
-                    return jsonify(result_response.json()), 200
-                else:
-                    return jsonify({
-                        'success': False,
-                        'error': f'数据处理失败: {result_response.status_code}'
-                    }), result_response.status_code
-
-            except Exception as e:
-                logger.error(f"Error calling batch-result: {e}")
-                return jsonify({
-                    'success': False,
-                    'error': f'数据处理失败: {str(e)}'
-                }), 500
 
         except requests.exceptions.Timeout:
             logger.error("Timeout calling Emilia batch_process")
@@ -711,6 +732,7 @@ def admin_batch_import_result():
         "data": [
             {
                 "id": "recording_id",
+                "file_path": "文件路径",
                 "teochew_text": "潮州话文本",
                 "ip_address": "IP地址",
                 "file_size": 12345,
@@ -772,7 +794,7 @@ def admin_batch_import_result():
                 # 创建 Recording 记录
                 recording = Recording(
                     id=recording_id,
-                    file_path=f'{emilia_service_host}/audio/{recording_id}',
+                    file_path=item.get('file_path', ''),
                     mandarin_text=mandarin_text,
                     teochew_text=teochew_text,
                     ip_address=item.get('ip_address', ''),

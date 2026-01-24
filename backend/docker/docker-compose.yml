@@ -1,9 +1,9 @@
 services:
-  teorecord-backend:
+  teo-estuary-backend:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: teorecord-backend
+    container_name: teo-estuary-backend
     ports:
       - "5001:5000"
 
@@ -33,7 +33,11 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-your-admin-password}
 
-      # Flask-Limiter 配置
+      # 速率限制器开关配置
+      # 离线版设置为 False 禁用所有限制，线上版设置为 True 启用限制
+      - ENABLE_RATE_LIMITER=${ENABLE_RATE_LIMITER:-False}
+
+      # Flask-Limiter 配置（仅在 ENABLE_RATE_LIMITER=True 时生效）
       - RATELIMIT_STORAGE_URL=${RATELIMIT_STORAGE_URL:-redis://redis:6379}
       - RATELIMIT_DEFAULT=${RATELIMIT_DEFAULT:-1000 per day, 100 per hour}
 
@@ -59,7 +63,7 @@ services:
       start_period: 40s
 
     networks:
-      - teorecord-network
+      - teo-estuary-network
     depends_on:
       - redis
     extra_hosts:
@@ -68,14 +72,14 @@ services:
   # Redis服务用于Flask-Limiter存储
   redis:
     image: redis:7-alpine
-    container_name: teorecord-redis
+    container_name: teo-estuary-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
     networks:
-      - teorecord-network
+      - teo-estuary-network
     command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -87,19 +91,19 @@ services:
   # 如果需要在Docker中运行Emilia服务，取消下面的注释
   # emilia:
   #   image: your-emilia-image:latest
-  #   container_name: teorecord-emilia
+  #   container_name: teo-estuary-emilia
   #   ports:
   #     - "5029:5029"
   #   volumes:
   #     - emilia_data:/app/data
   #   restart: unless-stopped
   #   networks:
-  #     - teorecord-network
+  #     - teo-estuary-network
   #   environment:
   #     - EMILIA_CONFIG=/app/config.json
 
 networks:
-  teorecord-network:
+  teo-estuary-network:
     driver: bridge
 
 volumes:

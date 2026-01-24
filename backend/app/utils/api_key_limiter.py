@@ -1,17 +1,25 @@
 """基于API密钥的自定义限流器"""
 import time
+import os
 from datetime import timedelta
 from app.utils.timezone import now
 import logging
 from functools import wraps
+from flask import jsonify
 
 logger = logging.getLogger(__name__)
+
+# 是否启用速率限制器（可通过环境变量 ENABLE_RATE_LIMITER 控制）
+# 默认为 False（离线无限制版），线上版本可设置为 True
+ENABLE_RATE_LIMITER = os.environ.get('ENABLE_RATE_LIMITER', 'False').lower() in ('true', '1', 't', 'yes', 'y')
 
 # 内存存储用于跟踪API密钥使用情况
 _api_key_usage = {}
 
 def api_key_rate_limit(hourly_limit=300, daily_limit=750):
     """基于API密钥的速率限制装饰器
+
+    当 ENABLE_RATE_LIMITER=False 时，此装饰器不进行任何限制。
 
     Args:
         hourly_limit (int): 每小时请求限制
@@ -20,6 +28,10 @@ def api_key_rate_limit(hourly_limit=300, daily_limit=750):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # 如果禁用限流，直接调用原函数
+            if not ENABLE_RATE_LIMITER:
+                return f(*args, **kwargs)
+
             # 第一个参数应该是key_obj（来自api_key_required装饰器）
             key_obj = args[0] if args else None
 
@@ -89,6 +101,9 @@ def api_key_rate_limit(hourly_limit=300, daily_limit=750):
 
 def cleanup_old_usage():
     """清理过期的API密钥使用记录"""
+    if not ENABLE_RATE_LIMITER:
+        return
+
     current_time = now()
     one_day_ago = current_time - timedelta(days=1)
 

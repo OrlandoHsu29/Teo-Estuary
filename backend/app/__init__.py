@@ -2,10 +2,17 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 import os
 from pathlib import Path
+
+# 是否启用速率限制器（可通过环境变量 ENABLE_RATE_LIMITER 控制）
+# 默认为 False（离线无限制版），线上版本可设置为 True
+ENABLE_RATE_LIMITER = os.environ.get('ENABLE_RATE_LIMITER', 'False').lower() in ('true', '1', 't', 'yes', 'y')
+
+# 只在启用时导入 Flask-Limiter
+if ENABLE_RATE_LIMITER:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
 
 # 获取后端根目录
 BACKEND_ROOT = Path(__file__).parent.parent
@@ -25,6 +32,77 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+
+class NoopLimiter:
+    """无操作限流器 - 当禁用限流时使用
+
+    这个类提供了与 Flask-Limiter 兼容的接口，但所有方法都是空操作，
+    不会进行任何实际的限流。这样可以在不修改装饰器代码的情况下，
+    通过配置开关限流功能。
+    """
+
+    def exempt(self, view_func):
+        """豁免限流装饰器（空操作）"""
+        # 直接返回原函数，不做任何修改
+        return view_func
+
+    def limit(self, limit_value="", key_func=None, **kwargs):
+        """限流装饰器（空操作）"""
+
+        def decorator(f):
+            return f
+
+        return decorator
+
+    def __call__(self, *args, **kwargs):
+        """使实例可调用"""
+        return self
+
+
+def create_limiter(app):
+    """创建限流器实例
+
+    根据配置创建真正的限流器或无操作限流器
+
+    Args:
+        app: Flask应用实例
+
+    Returns:
+        Limiter实例或NoopLimiter实例
+    """
+    if not ENABLE_RATE_LIMITER:
+        logger.warning("⚠️ Rate limiter is DISABLED (ENABLE_RATE_LIMITER=False)")
+        return NoopLimiter()
+
+    # 启用限流器
+    rate_limit_storage = os.environ.get('RATELIMIT_STORAGE_URL', 'memory://')
+    rate_limit_default = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 100 per hour')
+
+    # 通过 Flask app config 配置 Flask-Limiter
+    app.config['RATELIMIT_STORAGE_URL'] = rate_limit_storage
+    app.config['RATELIMIT_DEFAULT'] = rate_limit_default
+    app.config['RATELIMIT_STRATEGY'] = 'fixed-window'
+
+    # 解析默认限制配置
+    default_limits = []
+    for limit in rate_limit_default.split(','):
+        limit = limit.strip()
+        if limit:
+            default_limits.append(limit)
+
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=default_limits,
+        storage_uri=rate_limit_storage,
+        headers_enabled=True
+    )
+
+    logger.info(f"✅ Rate limiter ENABLED with storage: {rate_limit_storage}")
+    logger.info(f"Default limits: {default_limits}")
+
+    return limiter
 
 
 def create_app():
@@ -85,39 +163,11 @@ def create_app():
         }
     })
 
-    # Flask-Limiter 配置
-    rate_limit_storage = os.environ.get('RATELIMIT_STORAGE_URL', 'memory://')
-    rate_limit_default = os.environ.get('RATELIMIT_DEFAULT', '1000 per day, 100 per hour')
-
-    # 通过 Flask app config 配置 Flask-Limiter
-    app.config['RATELIMIT_STORAGE_URL'] = rate_limit_storage
-    app.config['RATELIMIT_DEFAULT'] = rate_limit_default
-    app.config['RATELIMIT_STRATEGY'] = 'fixed-window'
-
-    # 重新创建 Limiter 实例并初始化（因为需要使用配置）
-    from flask_limiter import Limiter
-    from flask_limiter.util import get_remote_address
-
-    # 解析默认限制配置
-    default_limits = []
-    for limit in rate_limit_default.split(','):
-        limit = limit.strip()
-        if limit:
-            default_limits.append(limit)
-
-    limiter = Limiter(
-        app=app,
-        key_func=get_remote_address,
-        default_limits=default_limits,
-        storage_uri=rate_limit_storage,
-        headers_enabled=True
-    )
+    # 创建限流器（根据配置决定是否启用）
+    limiter = create_limiter(app)
 
     # 将 limiter 附加到 app 对象，以便其他模块可以使用
     app.limiter = limiter
-
-    logger.info(f"Flask-Limiter initialized with storage: {rate_limit_storage}")
-    logger.info(f"Default limits: {default_limits}")
 
     # 注册蓝图
     from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, dictionary_sync_bp, asr_bp
@@ -134,13 +184,14 @@ def create_app():
     app.register_blueprint(jieba_sync_bp)
     app.register_blueprint(admin_bp)
 
-    # 豁免特定路由的速率限制
+    # 豁免特定路由的速率限制（仅在启用limiter时）
     # Emilia 健康检查路由和统计路由会被前端频繁调用，需要豁免
     # validate-key 接口有自己的API密钥限流机制，不需要Flask-Limiter再限制
     # 注意：蓝图路由注册后，视图函数名格式为 {蓝图名}.{函数名}
-    limiter.exempt(app.view_functions['recordings.teo_emilia_health'])
-    limiter.exempt(app.view_functions['recordings.api_stats'])
-    limiter.exempt(app.view_functions['text.api_validate_key'])
+    if ENABLE_RATE_LIMITER:
+        limiter.exempt(app.view_functions.get('recordings.teo_emilia_health'))
+        limiter.exempt(app.view_functions.get('recordings.api_stats'))
+        limiter.exempt(app.view_functions.get('text.api_validate_key'))
 
     # 注册错误处理器
     register_error_handlers(app)

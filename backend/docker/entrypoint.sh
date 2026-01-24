@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
-echo "Starting TeoRecord Backend..."
+echo "=========================================="
+echo "Starting Teo-Estuary Backend..."
+echo "=========================================="
 echo "Debug mode: ${DEBUG:-False}"
+echo "Rate limiter: ${ENABLE_RATE_LIMITER:-False} ($(if [ "${ENABLE_RATE_LIMITER:-False}" = "True" ]; then echo 'ENABLED - 限制已启用'; else echo 'DISABLED - 无限制模式'; fi))"
+echo "=========================================="
 
 # 修复挂载目录的权限问题
 echo "Fixing directory permissions..."
