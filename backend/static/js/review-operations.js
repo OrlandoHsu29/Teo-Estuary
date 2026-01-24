@@ -353,10 +353,11 @@ async function approveCurrent() {
     }, 0); // 立即启动动画
 }
 
-// 更新记录状态
+// 更新记录状态（从列表视图审核）
 async function updateRecordingStatus(id, status) {
     try {
-        const response = await fetch(`/api/recording/${id}`, {
+        // 调用新的审核接口
+        const response = await fetch(`/api/recording/${id}/review`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -454,7 +455,7 @@ async function approveCurrent() {
 
     // 并行执行：API请求 + 300ms延迟
     // 1. 启动API请求（异步，不等待）
-    const apiPromise = fetch(`/api/recording/${record.id}`, {
+    const apiPromise = fetch(`/api/recording/${record.id}/review`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
@@ -552,7 +553,7 @@ async function rejectCurrent() {
     try {
         const teochewText = record.teochew_text || record.mandarin_text;
 
-        const response = await fetch(`/api/recording/${record.id}`, {
+        const response = await fetch(`/api/recording/${record.id}/review`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
