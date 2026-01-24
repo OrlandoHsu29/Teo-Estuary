@@ -1,9 +1,9 @@
 services:
-  TeoEstuary-backend:
+  teo-estuary-backend:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: TeoEstuary-backend
+    container_name: teo-estuary-backend
     ports:
       - "5001:5000"
 
@@ -59,7 +59,7 @@ services:
       start_period: 40s
 
     networks:
-      - TeoEstuary-network
+      - teo-estuary-network
     depends_on:
       - redis
     extra_hosts:
@@ -68,14 +68,14 @@ services:
   # Redis服务用于Flask-Limiter存储
   redis:
     image: redis:7-alpine
-    container_name: TeoEstuary-redis
+    container_name: teo-estuary-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
     networks:
-      - TeoEstuary-network
+      - teo-estuary-network
     command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -87,19 +87,19 @@ services:
   # 如果需要在Docker中运行Emilia服务，取消下面的注释
   # emilia:
   #   image: your-emilia-image:latest
-  #   container_name: TeoEstuary-emilia
+  #   container_name: teo-estuary-emilia
   #   ports:
   #     - "5029:5029"
   #   volumes:
   #     - emilia_data:/app/data
   #   restart: unless-stopped
   #   networks:
-  #     - TeoEstuary-network
+  #     - teo-estuary-network
   #   environment:
   #     - EMILIA_CONFIG=/app/config.json
 
 networks:
-  TeoEstuary-network:
+  teo-estuary-network:
     driver: bridge
 
 volumes:
