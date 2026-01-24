@@ -183,8 +183,8 @@ def api_update_recording(recording_id):
                         'error': '请先填写音频实际内容后再进行审核'
                     }), 400
 
-                # 检查 file_path 是否是 URL 形式（来自 Emilia 服务）
-                if recording.file_path and (recording.file_path.startswith('http://') or recording.file_path.startswith('https://')):
+                # 检查 file_path 是否来自 Emilia 服务
+                if recording.file_path and recording.upload_type == 1:
                     # 调用 Emilia 服务的 move_audio 接口
                     emilia_url = f'{emilia_service_host}/move_audio'
 
@@ -275,8 +275,8 @@ def api_delete_recording(recording_id):
 
         recording = Recording.query.get_or_404(recording_id)
 
-        # 检查 file_path 是否是 URL 形式（来自 Emilia 服务）
-        if recording.file_path and (recording.file_path.startswith('http://') or recording.file_path.startswith('https://')):
+        # 检查 file_path 是否来自 Emilia 服务
+        if recording.file_path and recording.upload_type == 1:
             # 调用 Emilia 服务的删除接口
             emilia_url = f'{emilia_service_host}/audio/{recording_id}'
 
@@ -354,8 +354,8 @@ def admin_download_recording(recording_id):
 
         recording = Recording.query.get_or_404(recording_id)
 
-        # 检查 file_path 是否是 URL 形式（来自 Emilia 服务）
-        if recording.file_path and (recording.file_path.startswith('http://') or recording.file_path.startswith('https://')):
+        # 检查 file_path 是否来自 Emilia 服务
+        if recording.file_path and recording.upload_type == 1:
             # 调用 Emilia 服务的获取音频接口
             emilia_url = recording.file_path
 
@@ -553,7 +553,7 @@ def api_upload_material(key_obj):
             logger.error("Timeout forwarding audio to Emilia service")
             return jsonify({'error': 'Emilia 服务响应超时，请稍后重试'}), 504
         except requests.exceptions.ConnectionError:
-            logger.error("Cannot connect to Emilia service at localhost:5029")
+            logger.error(f"Cannot connect to Emilia service at {emilia_service_host}")
             return jsonify({'error': '无法连接到 Emilia 服务，请确认服务已启动'}), 503
         except Exception as e:
             logger.error(f"Error forwarding to Emilia: {e}")
@@ -637,12 +637,6 @@ def admin_batch_import_emilia():
                     'task_id': result.get('task_id')
                 }), 409
 
-            if response.status_code != 200:
-                return jsonify({
-                    'success': False,
-                    'error': f'Emilia batch_process 返回错误: {response.status_code}'
-                }), response.status_code
-
             result = response.json()
 
             if not result.get('success'):
@@ -658,30 +652,6 @@ def admin_batch_import_emilia():
                     'message': '没有需要导入的数据',
                     'imported_count': 0
                 }), 200
-
-            # 如果立即返回了200，直接调用 batch-result 接口处理数据
-            try:
-                result_response = requests.post(
-                    'http://localhost:5000/admin/api/emilia/batch-result',
-                    json={'data': data_list},
-                    headers={'Content-Type': 'application/json'},
-                    timeout=300
-                )
-
-                if result_response.status_code == 200:
-                    return jsonify(result_response.json()), 200
-                else:
-                    return jsonify({
-                        'success': False,
-                        'error': f'数据处理失败: {result_response.status_code}'
-                    }), result_response.status_code
-
-            except Exception as e:
-                logger.error(f"Error calling batch-result: {e}")
-                return jsonify({
-                    'success': False,
-                    'error': f'数据处理失败: {str(e)}'
-                }), 500
 
         except requests.exceptions.Timeout:
             logger.error("Timeout calling Emilia batch_process")
