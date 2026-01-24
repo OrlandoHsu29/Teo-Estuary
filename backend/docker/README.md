@@ -138,7 +138,26 @@ EMILIA_SERVICE_URL=http://emilia:5029
 
 ## 速率限制配置
 
-### 默认配置
+### ⚠️ 重要：离线版 vs 线上版
+
+本项目的速率限制功能可以通过环境变量 `ENABLE_RATE_LIMITER` 快速开关：
+
+- **离线无限制版**（默认）：`ENABLE_RATE_LIMITER=False` - 禁用所有限制
+- **线上生产版**：`ENABLE_RATE_LIMITER=True` - 启用所有限制
+
+```env
+# 离线版配置（.env 文件）
+ENABLE_RATE_LIMITER=False  # 禁用所有限制，适合离线个人使用
+
+# 线上版配置（.env 文件）
+ENABLE_RATE_LIMITER=True   # 启用限制，适合公网部署
+```
+
+**快速切换**：
+- 从线上merge到离线版后，只需修改 `.env` 文件中的 `ENABLE_RATE_LIMITER=False`
+- 从离线版部署到线上时，修改为 `ENABLE_RATE_LIMITER=True`
+
+### 默认配置（仅当 ENABLE_RATE_LIMITER=True 时生效）
 
 - **全局限制**: 每天1000次，每小时100次请求
 - **上传接口**: 每天100次，每小时30次
@@ -152,9 +171,12 @@ EMILIA_SERVICE_URL=http://emilia:5029
 
 ### 自定义配置
 
-通过环境变量调整：
+通过环境变量调整（仅在 ENABLE_RATE_LIMITER=True 时生效）：
 
 ```env
+# 启用速率限制
+ENABLE_RATE_LIMITER=True
+
 # 更改默认全局限制
 RATELIMIT_DEFAULT=2000 per day, 200 per hour
 
@@ -346,6 +368,7 @@ docker run --rm -v docker_db_data:/data -v $(pwd):/backup alpine tar czf /backup
 | `ADMIN_USERNAME` | 管理员用户名 | admin | ❌ |
 | `ADMIN_PASSWORD` | 管理员密码 | - | ✅ |
 | `DATABASE_URL` | 数据库URL | sqlite:///instance/dialect_recorder.db | ❌ |
+| `ENABLE_RATE_LIMITER` | **启用速率限制（False=离线无限制，True=线上限制）** | **False** | ❌ |
 | `RATELIMIT_STORAGE_URL` | 速率限制存储 | redis://redis:6379 | ❌ |
 | `RATELIMIT_DEFAULT` | 默认速率限制 | 1000 per day, 100 per hour | ❌ |
 | `EMILIA_SERVICE_URL` | Emilia服务URL | http://localhost:5029 | ❌ |
