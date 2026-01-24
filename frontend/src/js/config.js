@@ -4,7 +4,7 @@
 
 // API配置（根据环境动态选择）
 const API_BASE_URL = window.location.protocol === 'file:' || window.location.hostname === 'localhost'
-    ? 'http://localhost:5000'
+    ? 'http://localhost:5001'
     : 'https://your-domain.com';
 
 
