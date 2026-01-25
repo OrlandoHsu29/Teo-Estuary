@@ -1,5 +1,7 @@
-"""teo_g2p 数据库配置 - 使用主数据库连接"""
+"""teo_g2p 数据库配置 - 使用独立的 SQLite 数据库"""
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy import create_engine
+from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,20 +13,28 @@ db_session = None
 
 def init_from_app(app):
     """
-    从Flask应用初始化数据库连接
-    teo_g2p 现在使用主数据库的引擎
+    初始化 teo_g2p 的独立 SQLite 数据库连接
+    使用独立的 translation_dict.db 文件
     """
     global engine, SessionLocal, db_session
 
-    # 使用主数据库的引擎
-    from app import db as main_db
-    engine = main_db.engine
+    # 获取 instance 目录路径
+    instance_path = Path(app.instance_path)
+
+    # 创建独立的 SQLite 数据库用于翻译词典
+    translation_db_path = instance_path / 'translation_dict.db'
+
+    # 创建 SQLite 引擎
+    engine = create_engine(
+        f'sqlite:///{translation_db_path}',
+        connect_args={'check_same_thread': False}
+    )
 
     # 创建会话工厂
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db_session = scoped_session(SessionLocal)
 
-    logger.info("teo_g2p is using the main database engine (recorder_manager.db)")
+    logger.info(f"teo_g2p is using independent SQLite database: {translation_db_path}")
 
 def init_db():
     """初始化数据库表（如果不存在）"""
@@ -34,7 +44,7 @@ def init_db():
         raise RuntimeError("Database engine not initialized. Call init_from_app() first.")
 
     Base.metadata.create_all(bind=engine)
-    logger.info("teo_g2p database tables created/verified in main database")
+    logger.info("teo_g2p database tables (mandarin2teochew) created/verified in translation_dict.db")
 
 def get_db():
     """获取数据库会话"""

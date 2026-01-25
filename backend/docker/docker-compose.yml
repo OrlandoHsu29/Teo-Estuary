@@ -1,4 +1,25 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: teo-estuary-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=teo_root_password
+      - MYSQL_DATABASE=teo_estuary
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - teo-estuary-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pteo_root_password"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
   teo-estuary-backend:
     build:
       context: ..
@@ -6,66 +27,46 @@ services:
     container_name: teo-estuary-backend
     ports:
       - "5001:5000"
-
     volumes:
-      # 持久化数据目录 - 挂载到宿主机便于访问和备份
-      - ./instance:/app/instance           # 统一数据库文件（recorder_manager.db，包含所有表）
-      - ./data/logs:/app/logs              # 日志文件
-      - ./data/data:/app/data              # 用户上传的音频文件
+      - ./instance:/app/instance
+      - ./data/logs:/app/logs
+      - ./data/data:/app/data
     environment:
-      # Flask配置
-      - HOST=0.0.0.0
-      - PORT=5000
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-      - DEBUG=${DEBUG:-False}
-
-      # 数据库配置 - 统一的 recorder_manager.db
-      - DATABASE_URL=sqlite:////app/instance/recorder_manager.db
-
-      # Redis配置 - 用于速率限制和翻译缓存
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=teo_root_password
+      - MYSQL_DATABASE=teo_estuary
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-
-      # 硅基流动API配置
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DEBUG=${DEBUG:-False}
       - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY:-}
-
-      # 管理员配置
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-your-admin-password}
-
-      # 速率限制器开关配置
-      # 离线版设置为 False 禁用所有限制，线上版设置为 True 启用限制
       - ENABLE_RATE_LIMITER=${ENABLE_RATE_LIMITER:-False}
-
-      # Flask-Limiter 配置（仅在 ENABLE_RATE_LIMITER=True 时生效）
       - RATELIMIT_STORAGE_URL=${RATELIMIT_STORAGE_URL:-redis://redis:6379}
       - RATELIMIT_DEFAULT=${RATELIMIT_DEFAULT:-1000 per day, 100 per hour}
-
-      # Emilia服务配置（可选）
       - EMILIA_SERVICE_URL=${EMILIA_SERVICE_URL:-http://host.docker.internal:5029}
-
-      # ASR语音识别服务配置（可选）
       - ASR_SERVICE_URL=${ASR_SERVICE_URL:-http://host.docker.internal:5026}
-
-      # Gunicorn配置（生产环境）
       - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
       - GUNICORN_THREADS=${GUNICORN_THREADS:-4}
       - GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-120}
       - GUNICORN_LOG_LEVEL=${GUNICORN_LOG_LEVEL:-info}
-
     restart: unless-stopped
-
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
     networks:
       - teo-estuary-network
     depends_on:
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -73,8 +74,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: teo-estuary-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -107,5 +106,6 @@ networks:
     driver: bridge
 
 volumes:
+  mysql_data:     # MySQL数据持久化（Docker命名卷）
   redis_data:     # Redis数据持久化（Docker命名卷）
   emilia_data:    # Emilia服务数据持久化（可选）

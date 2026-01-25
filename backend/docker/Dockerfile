@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
+    default-libmysqlclient-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制requirements.txt并安装Python依赖
@@ -34,8 +36,12 @@ COPY static ./static
 # 创建必要的目录
 RUN mkdir -p logs instance data/uploads data/good data/bad
 
-# 修复instance目录权限（当挂载宿主机目录时可能需要）
-RUN chmod -R 777 instance
+# 复制翻译词典数据库到根目录（不会被 volume 挂载覆盖）
+COPY instance/translation_dict.db ./translation_dict.db.init
+
+# 修复权限
+RUN chmod -R 777 instance && \
+    chmod 666 ./translation_dict.db.init
 
 # 暴露端口
 EXPOSE 5000
@@ -44,14 +50,12 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# 复制数据库初始化脚本和启动脚本
-COPY docker/init_db.py /tmp/init_db.py
+# 复制启动脚本
 COPY docker/entrypoint.sh /app/docker/entrypoint.sh
 
-# 转换换行符（CRLF -> LF）并设置执行权限
+# 转换换行符并设置执行权限
 RUN sed -i 's/\r$//' /app/docker/entrypoint.sh && \
-    chmod +x /app/docker/entrypoint.sh && \
-    sed -i 's/\r$//' /tmp/init_db.py
+    chmod +x /app/docker/entrypoint.sh
 
 # 设置entrypoint
 ENTRYPOINT ["/app/docker/entrypoint.sh"]

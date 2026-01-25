@@ -4,6 +4,10 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import os
 from pathlib import Path
+import pymysql
+
+# 安装 pymysql 作为 MySQL 驱动
+pymysql.install_as_MySQLdb()
 
 # 是否启用速率限制器（可通过环境变量 ENABLE_RATE_LIMITER 控制）
 # 默认为 False（离线无限制版），线上版本可设置为 True
@@ -72,7 +76,7 @@ def create_limiter(app):
         Limiter实例或NoopLimiter实例
     """
     if not ENABLE_RATE_LIMITER:
-        logger.warning("⚠️ Rate limiter is DISABLED (ENABLE_RATE_LIMITER=False)")
+        logger.warning("[WARNING] Rate limiter is DISABLED (ENABLE_RATE_LIMITER=False)")
         return NoopLimiter()
 
     # 启用限流器
@@ -99,7 +103,7 @@ def create_limiter(app):
         headers_enabled=True
     )
 
-    logger.info(f"✅ Rate limiter ENABLED with storage: {rate_limit_storage}")
+    logger.info(f"[OK] Rate limiter ENABLED with storage: {rate_limit_storage}")
     logger.info(f"Default limits: {default_limits}")
 
     return limiter
@@ -116,13 +120,23 @@ def create_app():
     # 配置
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
-    # 数据库配置 - 使用统一的 recorder_manager.db
-    default_db_path = BACKEND_ROOT / 'instance' / 'recorder_manager.db'
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL',
-        f'sqlite:///{default_db_path}'
-    )
+    # MySQL 数据库配置（用于 recordings 和 api_keys 表）
+    mysql_host = os.environ.get('MYSQL_HOST', 'localhost')
+    mysql_port = os.environ.get('MYSQL_PORT', '3306')
+    mysql_user = os.environ.get('MYSQL_USER', 'root')
+    mysql_password = os.environ.get('MYSQL_PASSWORD', '')
+    mysql_database = os.environ.get('MYSQL_DATABASE', 'teo_estuary')
+
+    # 构建 MySQL 连接字符串（确保密码部分正确）
+    if mysql_password:
+        database_url = f'mysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4'
+    else:
+        database_url = f'mysql://{mysql_user}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4'
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    logger.info(f"Using MySQL database: {mysql_user}@{mysql_host}:{mysql_port}/{mysql_database}")
     app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
@@ -202,9 +216,13 @@ def create_app():
     # 创建数据库表
     with app.app_context():
         from app.models import Recording, APIKey
-        db.create_all()
 
-        # 初始化 teo_g2p 使用主数据库连接
+        # 创建 MySQL 表（如果不存在）
+        # db.create_all() 默认会检查表是否存在，只创建不存在的表
+        db.create_all()
+        logger.info("MySQL tables initialized")
+
+        # 初始化 teo_g2p 使用独立数据库连接
         try:
             from app.teo_g2p.database import init_from_app, init_db
             from app.teo_g2p import models  # 确保导入模型以便注册
@@ -213,7 +231,7 @@ def create_app():
             init_from_app(app)
             # 然后创建表
             init_db()
-            logger.info("teo_g2p database tables initialized successfully in main database")
+            logger.info("teo_g2p database tables initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize teo_g2p database: {e}")
 

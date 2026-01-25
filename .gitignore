@@ -20,7 +20,8 @@ instance/
 !backend/docker/instance/
 
 *.db
-!backend/docker/instance/recorder_manager.db
+!backend/instance/translation_dict.db
+!backend/docker/instance/translation_dict.db
 *.sqlite
 *.sqlite3
 

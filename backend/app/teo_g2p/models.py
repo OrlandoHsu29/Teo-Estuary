@@ -9,7 +9,7 @@ class TranslationDict(Base):
     潮州话翻译词典表
     支持优先级匹配和多义词处理
     """
-    __tablename__ = 'translation_dict'
+    __tablename__ = 'mandarin2teochew'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     mandarin_text = Column(String(255), nullable=False, comment='普通话词语')
@@ -20,10 +20,10 @@ class TranslationDict(Base):
     is_active = Column(Integer, default=1, comment='是否启用，1启用，0禁用')
 
     # 创建复合索引以优化查询性能
+    # 注意：移除了 UniqueConstraint，允许 mandarin_text 和 variant 重复
     __table_args__ = (
         Index('idx_mandarin_length_priority', 'mandarin_text', 'word_length', 'priority'),
         Index('idx_mandarin_variant', 'mandarin_text', 'variant'),
-        UniqueConstraint('mandarin_text', 'variant', name='uq_mandarin_variant'),
     )
 
     def __repr__(self):
