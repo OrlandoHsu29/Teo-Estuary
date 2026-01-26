@@ -67,7 +67,13 @@ function switchSection(sectionName) {
     // 加载对应数据
     switch(sectionName) {
         case 'review':
-            loadRecordings();
+            // 只有在审核页面没有数据时才加载，避免切换页面时重置位置
+            if (recordingsData.length === 0) {
+                loadRecordings();
+            } else {
+                // 恢复显示当前记录（保持位置）
+                displayCurrentRecord();
+            }
             break;
         case 'apikeys':
             loadApiKeys();
