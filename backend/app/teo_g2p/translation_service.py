@@ -130,40 +130,41 @@ class TranslationService:
 
         return ' '.join(result)
 
-    def get_word_variants(self, word: str, lang: str) -> List[Tuple[int, str]]:
+    def get_word_variants(self, word: str, lang: str = 'teochew') -> List[Tuple[int, str]]:
         """
-        获取词的所有变体翻译
+        获取词的所有变体翻译（支持双向）
 
         Args:
             word: 要查询的词
-            lang: 语言类型（'mandarin' 或 'teochew'）
+            lang: 源词的语言类型（'mandarin'=源词是普通话，查询其潮州话变体；'teochew'=源词是潮州话，查询其普通话变体）
 
         Returns:
-            [(variant_number, teochew_text), ...]
+            [(variant_number, 目标语言文本), ...]
         """
         db = next(get_db())
 
         try:
             if lang == 'teochew':
-                # 反向查询：通过潮州话获取所有变体
+                # 源词是潮州话，查询其所有普通话变体
                 translations = db.query(TranslationDict).filter(
                     and_(
                         TranslationDict.teochew_text == word,
                         TranslationDict.is_active == 1
                     )
-                ).order_by(TranslationDict.variant).all()
+                ).order_by(TranslationDict.variant_teochew).all()
 
-                return [(t.variant, t.teochew_text) for t in translations]
-            else:
-                # 正向查询：通过普通话获取所有变体
+                return [(t.variant_teochew, t.mandarin_text) for t in translations]
+
+            else:  # lang == 'mandarin'
+                # 源词是普通话，查询其所有潮州话变体
                 translations = db.query(TranslationDict).filter(
                     and_(
                         TranslationDict.mandarin_text == word,
                         TranslationDict.is_active == 1
                     )
-                ).order_by(TranslationDict.variant).all()
+                ).order_by(TranslationDict.variant_mandarin).all()
 
-                return [(t.variant, t.teochew_text) for t in translations]
+                return [(t.variant_mandarin, t.teochew_text) for t in translations]
 
         finally:
             db.close()
@@ -199,10 +200,12 @@ class TranslationService:
                 # 普通话转潮州话
                 source_field = TranslationDict.mandarin_text
                 target_field = TranslationDict.teochew_text
+                variant_field = TranslationDict.variant_mandarin
             else:
                 # 潮州话转普通话
                 source_field = TranslationDict.teochew_text
                 target_field = TranslationDict.mandarin_text
+                variant_field = TranslationDict.variant_teochew
 
             # 查询基础词（没有数字后缀的）
             base_query = db.query(TranslationDict).filter(
@@ -219,7 +222,7 @@ class TranslationService:
                 variant_query = db.query(TranslationDict).filter(
                     and_(
                         source_field == base_word,
-                        TranslationDict.variant == int(variant_num),
+                        variant_field == int(variant_num),
                         TranslationDict.is_active == 1
                     )
                 )

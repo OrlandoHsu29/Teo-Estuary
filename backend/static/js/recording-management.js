@@ -703,27 +703,63 @@ async function handleVariantClick(button) {
     const baseWord = button.dataset.baseWord;
     const currentVariant = parseInt(button.dataset.currentVariant);
 
+    // 确定源词语言：根据按钮所在的容器判断
+    // - 在mandarinText容器中：baseWord是潮州话词，查询其普通话变体（lang='teochew'）
+    // - 在teochewText容器中：baseWord是普通话词，查询其潮州话变体（lang='mandarin'）
+    const parentContainer = button.closest('#mandarinText, #teochewText');
+    let lang = 'teochew'; // 默认源词是潮州话
+    if (parentContainer && parentContainer.id === 'teochewText') {
+        lang = 'mandarin'; // 在潮州话文本中，源词是普通话
+    }
+
+    console.log('[变体切换] baseWord:', baseWord, '源词语言:', lang, 'currentVariant:', currentVariant);
+
     // 添加切换动画
     button.classList.add('switching');
 
     try {
         // 获取所有变体
-        const variants = await getWordVariants(baseWord);
+        const variants = await getWordVariants(baseWord, lang);
+
+        console.log('[变体切换] 返回的variants:', variants);
 
         if (variants && variants.length > 0) {
             let nextVariant;
-            // 如果是初始状态（currentVariant = 0），直接选择第一个变体
+
+            // 获取当前显示的文本
+            const currentText = button.textContent.trim();
+
             if (currentVariant === 0) {
-                nextVariant = variants[0];
+                // 初始状态：检查第一个变体是否是当前显示的文本
+                if (variants.length > 1 && variants[0][1] === currentText) {
+                    // 第一个变体就是当前文本，跳到第二个
+                    nextVariant = variants[1];
+                } else {
+                    // 选择第一个变体
+                    nextVariant = variants[0];
+                }
             } else if (variants.length > 1) {
-                // 计算下一个变体
-                const currentIndex = variants.findIndex(v => v[0] === currentVariant);
-                const nextVariantIndex = (currentIndex + 1) % variants.length;
-                nextVariant = variants[nextVariantIndex];
+                // 计算下一个变体（跳过当前显示的）
+                let currentIndex = variants.findIndex(v => v[0] === currentVariant);
+
+                // 循环查找下一个不同的变体
+                let attempts = 0;
+                do {
+                    currentIndex = (currentIndex + 1) % variants.length;
+                    nextVariant = variants[currentIndex];
+                    attempts++;
+                } while (nextVariant[1] === currentText && attempts < variants.length);
+
+                // 如果所有变体都和当前文本相同（不应该发生），就选第一个
+                if (attempts >= variants.length) {
+                    nextVariant = variants[0];
+                }
             } else {
-                // 只有一个变体，保持当前状态
+                // 只有一个变体
                 nextVariant = variants[0];
             }
+
+            console.log('[变体切换] 选择的nextVariant:', nextVariant);
 
             // 更新按钮显示
             button.textContent = nextVariant[1];
@@ -735,6 +771,7 @@ async function handleVariantClick(button) {
             // 显示提示
             showToast(`切换到变体 ${nextVariant[0]}: ${nextVariant[1]}`, 'success');
         } else {
+            console.log('[变体切换] variants为空或null');
             showToast('该词没有其他变体', 'warning');
         }
     } catch (error) {
@@ -749,13 +786,17 @@ async function handleVariantClick(button) {
 }
 
 // 获取词的所有变体
-async function getWordVariants(word) {
+async function getWordVariants(word, lang = 'teochew') {
     // 检查缓存
-    if (wordVariantCache.has(word)) {
-        return wordVariantCache.get(word);
+    const cacheKey = `${word}:${lang}`;
+    if (wordVariantCache.has(cacheKey)) {
+        console.log('[getWordVariants] 从缓存获取:', cacheKey, wordVariantCache.get(cacheKey));
+        return wordVariantCache.get(cacheKey);
     }
 
     try {
+        console.log('[getWordVariants] 请求API:', {word, lang});
+
         // 使用管理员API端点，无需API密钥
         const response = await fetch(`/admin/api/word-variants`, {
             method: 'POST',
@@ -764,7 +805,7 @@ async function getWordVariants(word) {
             },
             body: JSON.stringify({
                 word: word,
-                lang: 'mandarin'
+                lang: lang
             })
         });
         if (!response.ok) {
@@ -772,9 +813,11 @@ async function getWordVariants(word) {
         }
 
         const data = await response.json();
+        console.log('[getWordVariants] API返回:', data);
+
         if (data.success) {
-            // 缓存结果
-            wordVariantCache.set(word, data.variants);
+            // 缓存结果（带语言标识）
+            wordVariantCache.set(cacheKey, data.variants);
             return data.variants;
         } else {
             throw new Error(data.error || '获取变体失败');

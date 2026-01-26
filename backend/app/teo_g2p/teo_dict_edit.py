@@ -18,25 +18,33 @@ _sync_service = JiebaSyncService(change_logger=_change_logger)
 _jieba_manager = JiebaTempManager()
 
 def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
-                   priority: float = 1.0, user: str = "system", reason: str = "") -> bool:
+                   priority: float = 1.0, user: str = "system", reason: str = "",
+                   variant_mandarin: int = None, variant_teochew: int = None) -> bool:
     """
     添加新的翻译条目
 
     Args:
         mandarin_text: 普通话词语
         teochew_text: 潮州话翻译
-        variant: 变体编号 (默认1)
+        variant: 变体编号 (默认1，向后兼容)
         priority: 优先级 (默认1.0)
         user: 操作用户 (默认"system")
         reason: 添加原因 (可选)
+        variant_mandarin: 普通话方向变体编号 (可选，默认使用variant值)
+        variant_teochew: 潮州话方向变体编号 (可选，默认自动计算)
 
     Returns:
         bool: 是否添加成功
     """
+    # 向后兼容：使用variant作为variant_mandarin的默认值
+    if variant_mandarin is None:
+        variant_mandarin = variant
+
     success = _dao.add_translation(
         mandarin_text=mandarin_text,
         teochew_text=teochew_text,
-        variant=variant,
+        variant_mandarin=variant_mandarin,
+        variant_teochew=variant_teochew,
         priority=priority,
         user=user,
         reason=reason
@@ -55,7 +63,8 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
 def update_translation(mandarin_text: str = None, entry_id: int = None,
                       teochew_text: str = None, variant: int = None,
                       priority: float = None, is_active: bool = None,
-                      user: str = "system", reason: str = "") -> bool:
+                      user: str = "system", reason: str = "",
+                      variant_mandarin: int = None, variant_teochew: int = None) -> bool:
     """
     更新翻译条目（支持更新内容和状态）
 
@@ -63,11 +72,13 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         mandarin_text: 普通话词语（可选）
         entry_id: 词条ID（可选，优先级高于mandarin_text）
         teochew_text: 新的潮州话翻译 (可选)
-        variant: 新的变体编号 (可选)
+        variant: 新的变体编号 (可选，向后兼容)
         priority: 新的优先级 (可选)
         is_active: 新的状态 (可选)
         user: 操作用户 (默认"system")
         reason: 更新原因 (可选)
+        variant_mandarin: 普通话方向变体编号 (可选)
+        variant_teochew: 潮州话方向变体编号 (可选)
 
     Returns:
         bool: 是否更新成功
@@ -83,8 +94,11 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         elif mandarin_text is not None:
             # 通过普通话文本获取旧词条
             old_entries = _dao.list_translations(mandarin_text, limit=100, include_inactive=True)
-            if variant is not None:
-                old_entries = [e for e in old_entries if e.variant == variant]
+            # 使用variant_mandarin进行筛选（向后兼容variant）
+            filter_variant = variant_mandarin if variant_mandarin is not None else variant
+            if filter_variant is not None:
+                # 检查是否有variant_mandarin属性（迁移后的数据）
+                old_entries = [e for e in old_entries if getattr(e, 'variant_mandarin', getattr(e, 'variant', None)) == filter_variant]
             old_teochew_texts = [e.teochew_text for e in old_entries]
 
     # 执行更新
@@ -92,7 +106,9 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         mandarin_text=mandarin_text,
         entry_id=entry_id,
         teochew_text=teochew_text,
-        variant=variant,
+        variant=variant,  # 传递variant以保持向后兼容
+        variant_mandarin=variant_mandarin,
+        variant_teochew=variant_teochew,
         priority=priority,
         is_active=is_active,
         user=user,
@@ -133,30 +149,35 @@ def update_translation_status(entry_id: int, is_active: bool,
     return _dao.update_translation_status(entry_id, is_active, user, reason)
 
 def delete_translation(mandarin_text: str, variant: int = None,
-                      user: str = "system", reason: str = "") -> bool:
+                      user: str = "system", reason: str = "",
+                      variant_mandarin: int = None) -> bool:
     """
     删除翻译条目（软删除，设置为不活跃）
 
     Args:
         mandarin_text: 普通话词语
-        variant: 变体编号，如果为None则删除所有变体
+        variant: 变体编号，如果为None则删除所有变体 (向后兼容)
         user: 操作用户 (默认"system")
         reason: 删除原因 (可选)
+        variant_mandarin: 普通话方向变体编号 (可选)
 
     Returns:
         bool: 是否删除成功
     """
     # 先获取要删除的词条的潮汕话文本
     entries_to_delete = _dao.list_translations(mandarin_text, limit=100, include_inactive=True)
-    if variant is not None:
-        entries_to_delete = [e for e in entries_to_delete if e.variant == variant]
+    filter_variant = variant_mandarin if variant_mandarin is not None else variant
+    if filter_variant is not None:
+        # 检查是否有variant_mandarin属性（迁移后的数据）
+        entries_to_delete = [e for e in entries_to_delete if getattr(e, 'variant_mandarin', getattr(e, 'variant', None)) == filter_variant]
 
     teochew_texts_to_delete = [e.teochew_text for e in entries_to_delete]
 
     # 执行删除
     success = _dao.delete_translation(
         mandarin_text=mandarin_text,
-        variant=variant,
+        variant=variant,  # 传递variant以保持向后兼容
+        variant_mandarin=variant_mandarin,
         user=user,
         reason=reason
     )

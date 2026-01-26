@@ -231,8 +231,10 @@ function displayDictEntry(entry) {
     document.getElementById('displayTeochew').textContent = entry.teochew_text;
     document.getElementById('displayMandarin').textContent = entry.mandarin_text;
 
-    // 更新元数据
-    document.getElementById('displayVariant').textContent = entry.variant.toString();
+    // 更新元数据 - 支持新旧字段格式
+    const variantMandarin = entry.variant_mandarin !== undefined ? entry.variant_mandarin : (entry.variant || 1);
+    const variantTeochew = entry.variant_teochew !== undefined ? entry.variant_teochew : 1;
+    document.getElementById('displayVariant').textContent = `M:${variantMandarin} / T:${variantTeochew}`;
     document.getElementById('displayPriority').textContent = entry.priority.toString();
     document.getElementById('displayStatus').textContent = entry.is_active ? '启用' : '禁用';
     document.getElementById('displayStatus').style.color = entry.is_active ? '#00ff88' : '#ff4757';
@@ -264,7 +266,8 @@ function showAddDictModal() {
     document.getElementById('dictId').value = '';
     document.getElementById('dictMandarin').value = '';
     document.getElementById('dictTeochew').value = '';
-    document.getElementById('dictVariant').value = '1';
+    document.getElementById('dictVariantMandarin').value = '1';
+    document.getElementById('dictVariantTeochew').value = '';
     document.getElementById('dictPriority').value = '1.0';
     document.getElementById('dictActive').checked = true;
 }
@@ -279,11 +282,14 @@ function editCurrentDictEntry() {
     document.getElementById('dictModalTitleText').textContent = '编辑词条';
     document.getElementById('dictModal').style.display = 'block';
 
-    // 填充表单
+    // 填充表单 - 支持新旧字段格式
     document.getElementById('dictId').value = currentDictEntry.id;
     document.getElementById('dictMandarin').value = currentDictEntry.mandarin_text;
     document.getElementById('dictTeochew').value = currentDictEntry.teochew_text;
-    document.getElementById('dictVariant').value = currentDictEntry.variant;
+    const variantMandarin = currentDictEntry.variant_mandarin !== undefined ? currentDictEntry.variant_mandarin : (currentDictEntry.variant || 1);
+    const variantTeochew = currentDictEntry.variant_teochew !== undefined ? currentDictEntry.variant_teochew : '';
+    document.getElementById('dictVariantMandarin').value = variantMandarin;
+    document.getElementById('dictVariantTeochew').value = variantTeochew;
     document.getElementById('dictPriority').value = currentDictEntry.priority;
     document.getElementById('dictActive').checked = currentDictEntry.is_active;
 }
@@ -341,7 +347,10 @@ async function saveDictEntry() {
     const id = document.getElementById('dictId').value;
     const mandarinText = document.getElementById('dictMandarin').value.trim();
     const teochewText = document.getElementById('dictTeochew').value.trim();
-    const variant = parseInt(document.getElementById('dictVariant').value);
+    const variantMandarinInput = document.getElementById('dictVariantMandarin');
+    const variantTeochewInput = document.getElementById('dictVariantTeochew');
+    const variantMandarin = variantMandarinInput ? parseInt(variantMandarinInput.value) || 1 : parseInt(document.getElementById('dictVariant').value) || 1;
+    const variantTeochew = variantTeochewInput ? (variantTeochewInput.value ? parseInt(variantTeochewInput.value) : null) : null;
     const priority = parseFloat(document.getElementById('dictPriority').value);
     const isActive = document.getElementById('dictActive').checked;
 
@@ -356,8 +365,13 @@ async function saveDictEntry() {
         return;
     }
 
-    if (isNaN(variant) || variant < 1) {
-        showToast('变体编号必须是大于0的整数', 'warning');
+    if (isNaN(variantMandarin) || variantMandarin < 1) {
+        showToast('普通话变体编号必须是大于0的整数', 'warning');
+        return;
+    }
+
+    if (variantTeochew !== null && (isNaN(variantTeochew) || variantTeochew < 1)) {
+        showToast('潮州话变体编号必须是大于0的整数', 'warning');
         return;
     }
 
@@ -370,20 +384,27 @@ async function saveDictEntry() {
         const url = id ? `/api/dictionary/${id}` : '/api/dictionary';
         const method = id ? 'PUT' : 'POST';
 
+        const payload = {
+            mandarin_text: mandarinText,
+            teochew_text: teochewText,
+            variant_mandarin: variantMandarin,
+            priority: priority,
+            is_active: isActive,
+            user: 'admin',
+            reason: id ? '通过管理界面编辑' : '通过管理界面添加'
+        };
+
+        // 只有当variant_teochew有值时才添加到payload
+        if (variantTeochew !== null) {
+            payload.variant_teochew = variantTeochew;
+        }
+
         const response = await fetch(url, {
             method: method,
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                mandarin_text: mandarinText,
-                teochew_text: teochewText,
-                variant: variant,
-                priority: priority,
-                is_active: isActive,
-                user: 'admin',
-                reason: id ? '通过管理界面编辑' : '通过管理界面添加'
-            })
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -397,7 +418,10 @@ async function saveDictEntry() {
                 // 更新当前词条的数据
                 currentDictEntry.mandarin_text = mandarinText;
                 currentDictEntry.teochew_text = teochewText;
-                currentDictEntry.variant = variant;
+                currentDictEntry.variant_mandarin = variantMandarin;
+                if (variantTeochew !== null) {
+                    currentDictEntry.variant_teochew = variantTeochew;
+                }
                 currentDictEntry.priority = priority;
                 currentDictEntry.is_active = isActive;
 

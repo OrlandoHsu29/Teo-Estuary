@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, func
 from app.teo_g2p.models import TranslationDict
 from app.teo_g2p.database import get_db
 
@@ -215,7 +215,8 @@ class TranslationDictDAO:
         """
         self.change_logger = change_logger or ChangeLog()
 
-    def add_translation(self, mandarin_text: str, teochew_text: str, variant: int = 1,
+    def add_translation(self, mandarin_text: str, teochew_text: str,
+                       variant_mandarin: int = 1, variant_teochew: int = None,
                        priority: float = 1.0, user: str = "system", reason: str = "") -> bool:
         """
         添加新的翻译条目
@@ -223,7 +224,8 @@ class TranslationDictDAO:
         Args:
             mandarin_text: 普通话词语
             teochew_text: 潮州话翻译
-            variant: 变体编号
+            variant_mandarin: 普通话方向的变体编号（向后兼容，旧的variant参数）
+            variant_teochew: 潮州话方向的变体编号（可选，默认自动计算）
             priority: 优先级
             user: 操作用户
             reason: 添加原因
@@ -234,23 +236,32 @@ class TranslationDictDAO:
         db = next(get_db())
 
         try:
-            # 检查是否已存在
+            # 检查是否已存在（按variant_mandarin检查）
             existing = db.query(TranslationDict).filter(
                 and_(
                     TranslationDict.mandarin_text == mandarin_text,
-                    TranslationDict.variant == variant
+                    TranslationDict.variant_mandarin == variant_mandarin
                 )
             ).first()
 
             if existing:
-                logger.warning(f"翻译条目已存在: {mandarin_text} (变体: {variant})")
+                logger.warning(f"翻译条目已存在: {mandarin_text} (variant_mandarin: {variant_mandarin})")
                 return False
             else:
+                # 如果没有指定variant_teochew，自动计算
+                if variant_teochew is None:
+                    # 查找相同teochew_text的最大variant_teochew值
+                    max_variant = db.query(func.max(TranslationDict.variant_teochew)).filter(
+                        TranslationDict.teochew_text == teochew_text
+                    ).scalar()
+                    variant_teochew = (max_variant or 0) + 1
+
                 # 创建新记录
                 translation = TranslationDict(
                     mandarin_text=mandarin_text,
                     teochew_text=teochew_text,
-                    variant=variant,
+                    variant_mandarin=variant_mandarin,
+                    variant_teochew=variant_teochew,
                     priority=priority,
                     word_length=len(mandarin_text),
                     is_active=1
@@ -259,13 +270,15 @@ class TranslationDictDAO:
 
                 new_data = {
                     "teochew_text": teochew_text,
+                    "variant_mandarin": variant_mandarin,
+                    "variant_teochew": variant_teochew,
                     "priority": priority,
                     "is_active": 1
                 }
 
                 self.change_logger.log_change(
                     operation="add",
-                    identifier={"mandarin_text": mandarin_text, "variant": variant},
+                    identifier={"mandarin_text": mandarin_text, "variant_mandarin": variant_mandarin},
                     new_data=new_data,
                     user=user,
                     reason=reason
@@ -282,8 +295,9 @@ class TranslationDictDAO:
             db.close()
 
     def update_translation(self, mandarin_text: str = None, entry_id: int = None,
-                          teochew_text: str = None, variant: int = None,
-                          priority: float = None, is_active: bool = None,
+                          teochew_text: str = None, variant_mandarin: int = None,
+                          variant_teochew: int = None, priority: float = None,
+                          is_active: bool = None, variant: int = None,
                           user: str = "system", reason: str = "") -> bool:
         """
         更新翻译条目（支持更新内容和状态）
@@ -292,15 +306,21 @@ class TranslationDictDAO:
             mandarin_text: 普通话词语（通过mandarin_text查找记录）
             entry_id: 词条ID（通过ID查找记录，优先级高于mandarin_text）
             teochew_text: 新的潮州话翻译
-            variant: 新的变体编号
+            variant_mandarin: 新的普通话方向变体编号
+            variant_teochew: 新的潮州话方向变体编号
             priority: 新的优先级
             is_active: 新的状态（None表示不更新状态）
+            variant: 向后兼容的参数，等同于variant_mandarin
             user: 操作用户
             reason: 修改原因
 
         Returns:
             是否更新成功
         """
+        # 向后兼容：如果传了variant但没有传variant_mandarin，使用variant作为variant_mandarin
+        if variant is not None and variant_mandarin is None:
+            variant_mandarin = variant
+
         db = next(get_db())
 
         try:
@@ -316,8 +336,8 @@ class TranslationDictDAO:
                     TranslationDict.mandarin_text == mandarin_text
                 )
 
-                if variant is not None:
-                    query = query.filter(TranslationDict.variant == variant)
+                if variant_mandarin is not None:
+                    query = query.filter(TranslationDict.variant_mandarin == variant_mandarin)
 
                 translations = query.all()
 
@@ -332,7 +352,8 @@ class TranslationDictDAO:
             for translation in translations:
                 old_data = {
                     "teochew_text": translation.teochew_text,
-                    "variant": translation.variant,
+                    "variant_mandarin": translation.variant_mandarin,
+                    "variant_teochew": translation.variant_teochew,
                     "priority": translation.priority,
                     "is_active": translation.is_active
                 }
@@ -340,8 +361,10 @@ class TranslationDictDAO:
                 # 更新内容字段
                 if teochew_text is not None:
                     translation.teochew_text = teochew_text
-                if variant is not None:
-                    translation.variant = variant
+                if variant_mandarin is not None:
+                    translation.variant_mandarin = variant_mandarin
+                if variant_teochew is not None:
+                    translation.variant_teochew = variant_teochew
                 if priority is not None:
                     translation.priority = priority
                 if is_active is not None:
@@ -349,19 +372,20 @@ class TranslationDictDAO:
 
                 new_data = {
                     "teochew_text": translation.teochew_text,
-                    "variant": translation.variant,
+                    "variant_mandarin": translation.variant_mandarin,
+                    "variant_teochew": translation.variant_teochew,
                     "priority": translation.priority,
                     "is_active": translation.is_active
                 }
 
                 # 根据更新内容确定操作类型
                 operation = "update"
-                if all(x is None for x in [teochew_text, variant, priority]) and is_active is not None:
+                if all(x is None for x in [teochew_text, variant_mandarin, variant_teochew, priority]) and is_active is not None:
                     operation = "status_update"
 
                 self.change_logger.log_change(
                     operation=operation,
-                    identifier={"mandarin_text": translation.mandarin_text, "variant": translation.variant},
+                    identifier={"mandarin_text": translation.mandarin_text, "variant_mandarin": translation.variant_mandarin},
                     old_data=old_data,
                     new_data=new_data,
                     user=user,
@@ -398,20 +422,25 @@ class TranslationDictDAO:
             reason=reason or "更新词条状态"
         )
 
-    def delete_translation(self, mandarin_text: str, variant: int = None,
-                          user: str = "system", reason: str = "") -> bool:
+    def delete_translation(self, mandarin_text: str, variant_mandarin: int = None,
+                          user: str = "system", reason: str = "", variant: int = None) -> bool:
         """
         删除翻译条目（直接删除）
 
         Args:
             mandarin_text: 普通话词语
-            variant: 变体编号，如果为None则删除所有变体
+            variant_mandarin: 变体编号，如果为None则删除所有变体
             user: 操作用户
             reason: 删除原因
+            variant: 向后兼容的参数，等同于variant_mandarin
 
         Returns:
             是否删除成功
         """
+        # 向后兼容：如果传了variant但没有传variant_mandarin，使用variant作为variant_mandarin
+        if variant is not None and variant_mandarin is None:
+            variant_mandarin = variant
+
         db = next(get_db())
 
         try:
@@ -420,8 +449,8 @@ class TranslationDictDAO:
                 TranslationDict.mandarin_text == mandarin_text
             )
 
-            if variant is not None:
-                query = query.filter(TranslationDict.variant == variant)
+            if variant_mandarin is not None:
+                query = query.filter(TranslationDict.variant_mandarin == variant_mandarin)
 
             translations = query.all()
 
@@ -433,7 +462,8 @@ class TranslationDictDAO:
             for translation in translations:
                 old_data = {
                     "teochew_text": translation.teochew_text,
-                    "variant": translation.variant,
+                    "variant_mandarin": translation.variant_mandarin,
+                    "variant_teochew": translation.variant_teochew,
                     "priority": translation.priority,
                     "is_active": translation.is_active
                 }
@@ -447,7 +477,7 @@ class TranslationDictDAO:
 
                 self.change_logger.log_change(
                     operation="delete",
-                    identifier={"mandarin_text": mandarin_text, "variant": translation.variant},
+                    identifier={"mandarin_text": mandarin_text, "variant_mandarin": translation.variant_mandarin},
                     old_data=old_data,
                     new_data=new_data,
                     user=user,
@@ -464,17 +494,22 @@ class TranslationDictDAO:
         finally:
             db.close()
 
-    def get_translation(self, mandarin_text: str, variant: int = None) -> Optional[TranslationDict]:
+    def get_translation(self, mandarin_text: str, variant_mandarin: int = None, variant: int = None) -> Optional[TranslationDict]:
         """
         获取翻译条目
 
         Args:
             mandarin_text: 普通话词语
-            variant: 变体编号
+            variant_mandarin: 变体编号
+            variant: 向后兼容的参数，等同于variant_mandarin
 
         Returns:
             翻译条目或None
         """
+        # 向后兼容：如果传了variant但没有传variant_mandarin，使用variant作为variant_mandarin
+        if variant is not None and variant_mandarin is None:
+            variant_mandarin = variant
+
         db = next(get_db())
 
         try:
@@ -485,8 +520,8 @@ class TranslationDictDAO:
                 )
             )
 
-            if variant is not None:
-                query = query.filter(TranslationDict.variant == variant)
+            if variant_mandarin is not None:
+                query = query.filter(TranslationDict.variant_mandarin == variant_mandarin)
 
             return query.first()
 
@@ -549,7 +584,7 @@ class TranslationDictDAO:
 
             self.change_logger.log_change(
                 operation="status_update",
-                identifier={"mandarin_text": translation.mandarin_text, "variant": translation.variant},
+                identifier={"mandarin_text": translation.mandarin_text, "variant_mandarin": translation.variant_mandarin},
                 old_data=old_data,
                 new_data=new_data,
                 user=user,
