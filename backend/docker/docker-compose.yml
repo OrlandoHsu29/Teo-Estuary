@@ -3,17 +3,17 @@ services:
     image: mysql:8.0
     container_name: teo-estuary-mysql
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=teo_root_password
-      - MYSQL_DATABASE=teo_estuary
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-teo_root_password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-teo_estuary}
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
     networks:
       - teo-estuary-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pteo_root_password"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-teo_root_password}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -32,11 +32,11 @@ services:
       - ./data/logs:/app/logs
       - ./data/data:/app/data
     environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=teo_root_password
-      - MYSQL_DATABASE=teo_estuary
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-teo_root_password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-teo_estuary}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
