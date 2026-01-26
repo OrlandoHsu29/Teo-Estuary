@@ -13,6 +13,7 @@ from app import db
 from app.utils.combined_decorators import api_key_required_with_rate_limit
 from app.utils.decorators import admin_required, get_client_ip
 from app.utils.helpers import generate_id, get_next_audio_name, move_audio_file
+from app.utils.timezone import now
 from app.teo_g2p.translation_service import translation_service
 
 recordings_bp = Blueprint('recordings', __name__)
@@ -139,8 +140,15 @@ def api_recordings():
                 (Recording.teochew_text.like(search_pattern))
             )
 
-        # 优化：只选择必要的字段
-        recordings = query.order_by(Recording.upload_time.desc())\
+        # 根据状态选择排序字段
+        # 待审核：按上传时间倒序
+        # 已通过/已拒绝：按操作时间倒序（最新操作的在最前面）
+        if status in ['approved', 'rejected']:
+            order_field = Recording.reviewed_at.desc()
+        else:
+            order_field = Recording.upload_time.desc()
+
+        recordings = query.order_by(order_field)\
             .paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify({
@@ -254,8 +262,9 @@ def api_review_recording(recording_id):
                 )
 
                 if response.status_code == 200:
-                    # Emilia 服务移动成功，只需更新状态
+                    # Emilia 服务移动成功，更新状态和操作时间
                     recording.status = new_status
+                    recording.reviewed_at = now()
                     logger.info(f"{old_status} → {new_status}: Emilia recording {recording_id} moved via Emilia service")
                 else:
                     logger.error(f"Emilia move_audio returned error: {response.status_code} - {response.text}")
@@ -296,6 +305,7 @@ def api_review_recording(recording_id):
 
             if target_path:
                 recording.status = new_status
+                recording.reviewed_at = now()
                 # 转化为相对于data根目录的路径: good/S001/F001/S001F001C001.webm
                 relative_path = os.path.relpath(target_path, current_app.config['DATA_FOLDER'])
 
