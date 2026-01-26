@@ -510,6 +510,44 @@ body {
 }
 
 
+/* 所有状态 - 主题色（青色） */
+.status-filter-btn[data-status="all"].active {
+    background:
+        radial-gradient(circle at 30% 30%, #00ffff, #00e5e5 20%, var(--primary-color)),
+        linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+
+    box-shadow:
+        0 20px 45px rgba(0, 255, 255, 0.6),
+        0 12px 25px rgba(0, 255, 255, 0.4),
+        0 6px 15px rgba(0, 255, 255, 0.3),
+        0 2px 8px rgba(0, 0, 0, 0.2),
+
+        inset 0 1px 3px rgba(255, 255, 255, 0.4),
+        inset 0 -1px 4px rgba(0, 0, 0, 0.3),
+        inset 0 2px 6px rgba(255, 255, 255, 0.3);
+
+    border: 2px solid rgba(0, 255, 255, 0.8);
+}
+
+/* 待审核状态 - 黄色 */
+.status-filter-btn[data-status="pending"].active {
+    background:
+        radial-gradient(circle at 30% 30%, #ffe066, #ffd54f 20%, #ffc107),
+        linear-gradient(135deg, #ffca28, #ffb300);
+
+    box-shadow:
+        0 20px 45px rgba(255, 193, 7, 0.6),
+        0 12px 25px rgba(255, 193, 7, 0.4),
+        0 6px 15px rgba(255, 193, 7, 0.3),
+        0 2px 8px rgba(0, 0, 0, 0.2),
+
+        inset 0 1px 3px rgba(255, 255, 255, 0.4),
+        inset 0 -1px 4px rgba(0, 0, 0, 0.3),
+        inset 0 2px 6px rgba(255, 255, 255, 0.3);
+
+    border: 2px solid rgba(255, 193, 7, 0.8);
+}
+
 /* 已通过状态 - 绿色 */
 .status-filter-btn[data-status="approved"].active {
     background:
@@ -562,6 +600,18 @@ body {
     filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6));
 }
 
+/* 所有状态箭头 - 主题色（青色） */
+.status-filter-btn[data-status="all"].active::after {
+    border-left: 12px solid var(--primary-color);
+    filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6));
+}
+
+/* 待审核状态箭头 - 黄色 */
+.status-filter-btn[data-status="pending"].active::after {
+    border-left: 12px solid #ffc107;
+    filter: drop-shadow(0 0 6px rgba(255, 193, 7, 0.6));
+}
+
 /* 已通过状态箭头 - 绿色 */
 .status-filter-btn[data-status="approved"].active::after {
     border-left: 12px solid #27ae60;
@@ -572,12 +622,6 @@ body {
 .status-filter-btn[data-status="rejected"].active::after {
     border-left: 12px solid #e74c3c;
     filter: drop-shadow(0 0 6px rgba(231, 76, 60, 0.6));
-}
-
-/* 待审核状态箭头 - 主题蓝色 */
-.status-filter-btn[data-status="pending"].active::after {
-    border-left: 12px solid var(--primary-color);
-    filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6));
 }
 
 .status-filter-btn i {

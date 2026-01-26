@@ -137,6 +137,10 @@
                     <!-- 左侧状态筛选按钮 - 竖直布局 -->
                     <div class="status-filter-sidebar">
                         <div class="filter-panel">
+                            <button class="status-filter-btn" data-status="all" onclick="filterByStatus('all')">
+                                <i class="fas fa-list"></i>
+                                <span>所有状态</span>
+                            </button>
                             <button class="status-filter-btn active" data-status="pending" onclick="filterByStatus('pending')">
                                 <i class="fas fa-clock"></i>
                                 <span>待审核</span>

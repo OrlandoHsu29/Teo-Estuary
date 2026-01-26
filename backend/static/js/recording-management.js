@@ -76,8 +76,15 @@ async function loadRecordings(status = null) {
         // 显示加载动画
         showDataLoading('正在加载记录...', `状态: ${getStatusText(filterStatus)}`);
 
-        // API期望字符串状态，不需要映射
-        const response = await fetch(`/api/recordings?status=${filterStatus}&page=${currentPage}&per_page=50`);
+        // 构建API URL
+        let apiUrl = `/api/recordings?page=${currentPage}&per_page=50`;
+
+        // 只有在不是 'all' 时才添加 status 参数
+        if (filterStatus !== 'all') {
+            apiUrl += `&status=${filterStatus}`;
+        }
+
+        const response = await fetch(apiUrl);
 
         if (!response.ok) {
             // 处理HTTP错误
@@ -162,10 +169,10 @@ async function loadRecordings(status = null) {
 // 获取状态文本
 function getStatusText(status) {
     const statusMap = {
+        'all': '所有状态',
         'pending': '待审核',
         'approved': '已通过',
-        'rejected': '已拒绝',
-        'all': '全部'
+        'rejected': '已拒绝'
     };
     return statusMap[status] || status;
 }

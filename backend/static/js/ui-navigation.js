@@ -163,8 +163,12 @@ function filterByStatus(status) {
     // 同步更新列表视图的筛选器下拉菜单
     const statusFilter = document.getElementById('statusFilter');
     if (statusFilter) {
-        statusFilter.value = status;
+        // 如果是"所有状态"，则设为空字符串
+        statusFilter.value = status === 'all' ? '' : status;
     }
+
+    // 保存详细视图状态（用于切换回列表视图时恢复）
+    deviceViewActiveStatus = status;
 
     // 重置页码并重新加载录音数据
     currentPage = 1;
