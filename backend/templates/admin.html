@@ -404,6 +404,9 @@
                             <!-- 搜索控制区域 -->
                             <div class="dict-search-area">
                                 <div class="dict-search-control">
+                                    <button class="dict-search-type-toggle mandarin-mode" onclick="toggleSearchType()" id="dictSearchTypeBtn" title="切换搜索的语言类型">
+                                        <span id="dictSearchTypeLabel">普</span>
+                                    </button>
                                     <div class="dict-search-input-group">
                                         <svg class="dict-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -463,12 +466,12 @@
                                         <div class="dict-words-section">
                                             <div class="dict-word-pair">
                                                 <div class="dict-word-item">
-                                                    <label class="dict-word-label">普通话词条</label>
+                                                    <label class="dict-word-label" id="dictMandarinLabel">普通话词条</label>
                                                     <div class="dict-word-value" id="displayMandarin">-</div>
                                                 </div>
                                                 <div class="dict-word-item">
                                                     <div class="dict-word-label-with-variant">
-                                                        <label class="dict-word-label">潮汕话对应</label>
+                                                        <label class="dict-word-label" id="dictTeochewLabel">潮汕话对应</label>
                                                         <div class="neumorphic-status-light variant-inline" id="dictEntryVariantStatus">
                                                             <div class="status-light-core"></div>
                                                             <span class="status-text" id="dictEntryVariantStatusText">-</span>
@@ -734,7 +737,6 @@
                     <div class="dict-form-group">
                         <label for="dictVariantMandarin" title="普通话方向的变体编号（普通话转潮汕话时使用）">普通话变体 (M):</label>
                         <input type="number" id="dictVariantMandarin" placeholder="默认为1" min="1" value="1" class="dict-form-input">
-                        <input type="number" id="dictVariant" style="display:none;" min="1" value="1">  <!-- 向后兼容 -->
                     </div>
                     <div class="dict-form-group">
                         <label for="dictVariantTeochew" title="潮汕话方向的变体编号（潮汕话转普通话时使用，留空则自动计算）">潮汕话变体 (T):</label>

@@ -4,6 +4,7 @@
 let dictionaryResults = [];
 let currentDictIndex = 0;
 let currentDictEntry = null;
+let currentSearchType = 'mandarin';  // 'mandarin' 或 'teochew'
 
 // 搜索字典词条
 async function searchDictionary() {
@@ -18,7 +19,7 @@ async function searchDictionary() {
         // 显示加载状态
         showSearchLoading();
 
-        const response = await fetch(`/api/dictionary/search?keyword=${encodeURIComponent(keyword)}`);
+        const response = await fetch(`/api/dictionary/search?keyword=${encodeURIComponent(keyword)}&search_type=${currentSearchType}`);
         const data = await response.json();
 
         if (data.success) {
@@ -219,6 +220,39 @@ function updateDictionaryInfo() {
     document.getElementById('dictNextBtn').disabled = currentDictIndex >= totalCount - 1;
 }
 
+// 切换搜索的语言类型
+function toggleSearchType() {
+    // 切换搜索的语言类型
+    currentSearchType = currentSearchType === 'mandarin' ? 'teochew' : 'mandarin';
+
+    // 更新按钮显示和状态
+    const btn = document.getElementById('dictSearchTypeBtn');
+    const btnLabel = document.getElementById('dictSearchTypeLabel');
+    const searchInput = document.getElementById('dictSearchInput');
+
+    // 移除旧的状态类
+    btn.classList.remove('mandarin-mode', 'teochew-mode');
+
+    if (currentSearchType === 'mandarin') {
+        btnLabel.textContent = '普';
+        btn.classList.add('mandarin-mode');
+        searchInput.placeholder = '输入普通话词汇进行查询...';
+    } else {
+        btnLabel.textContent = '潮';
+        btn.classList.add('teochew-mode');
+        searchInput.placeholder = '输入潮汕话词汇进行查询...';
+    }
+
+    // 如果有搜索内容，重新搜索
+    const keyword = searchInput.value.trim();
+    if (keyword) {
+        searchDictionary();
+    } else {
+        // 清空显示
+        clearDictionaryDisplay();
+    }
+}
+
 // 显示词条详情
 function displayDictEntry(entry) {
     currentDictEntry = entry;
@@ -227,17 +261,35 @@ function displayDictEntry(entry) {
     document.getElementById('dictEmptyWord').style.display = 'none';
     document.getElementById('dictWordContent').style.display = 'block';
 
-    // 更新词汇显示
-    document.getElementById('displayTeochew').textContent = entry.teochew_text;
-    document.getElementById('displayMandarin').textContent = entry.mandarin_text;
+    // 根据搜索类型决定显示内容
+    if (currentSearchType === 'mandarin') {
+        // 搜索普通话时：显示普通话→潮汕话
+        document.getElementById('displayTeochew').textContent = entry.teochew_text;
+        document.getElementById('displayMandarin').textContent = entry.mandarin_text;
 
-    // 更新元数据 - 支持新旧字段格式
-    const variantMandarin = entry.variant_mandarin !== undefined ? entry.variant_mandarin : (entry.variant || 1);
-    const variantTeochew = entry.variant_teochew !== undefined ? entry.variant_teochew : 1;
-    document.getElementById('displayVariant').textContent = `M:${variantMandarin} / T:${variantTeochew}`;
+        // 更新标签文本
+        document.getElementById('dictMandarinLabel').textContent = '普通话词条';
+        document.getElementById('dictTeochewLabel').textContent = '潮汕话对应';
 
-    // 优先级 - 支持新旧字段
-    const priority = entry.teochew_priority !== undefined ? entry.teochew_priority : (entry.priority || 1);
+        // 显示普通话方向的变体编号
+        const variantMandarin = entry.variant_mandarin !== undefined ? entry.variant_mandarin : (entry.variant || 1);
+        document.getElementById('displayVariant').textContent = `M${variantMandarin}`;
+    } else {
+        // 搜索潮汕话时：显示潮汕话→普通话
+        document.getElementById('displayTeochew').textContent = entry.mandarin_text;
+        document.getElementById('displayMandarin').textContent = entry.teochew_text;
+
+        // 更新标签文本
+        document.getElementById('dictMandarinLabel').textContent = '潮汕话词条';
+        document.getElementById('dictTeochewLabel').textContent = '普通话对应';
+
+        // 显示潮汕话方向的变体编号
+        const variantTeochew = entry.variant_teochew !== undefined ? entry.variant_teochew : 1;
+        document.getElementById('displayVariant').textContent = `T${variantTeochew}`;
+    }
+
+    // 优先级
+    const priority = entry.teochew_priority !== undefined ? entry.teochew_priority : 1;
     document.getElementById('displayPriority').textContent = priority.toString();
 
     // 状态
@@ -301,8 +353,8 @@ function editCurrentDictEntry() {
     document.getElementById('dictVariantMandarin').value = variantMandarin;
     document.getElementById('dictVariantTeochew').value = variantTeochew;
 
-    // 优先级 - 支持新旧字段
-    const priority = currentDictEntry.teochew_priority !== undefined ? currentDictEntry.teochew_priority : (currentDictEntry.priority || 1);
+    // 优先级
+    const priority = currentDictEntry.teochew_priority !== undefined ? currentDictEntry.teochew_priority : 1;
     document.getElementById('dictTeochewPriority').value = priority;
 
     // 状态
@@ -529,20 +581,42 @@ function updateVariantStatusForEntry(currentEntry, allResults) {
     // 移除所有状态类
     statusElement.classList.remove('has-variant', 'no-variant');
 
-    const currentMandarin = currentEntry.mandarin_text;
-    const currentVariantMandarin = currentEntry.variant_mandarin !== undefined ?
-        currentEntry.variant_mandarin : (currentEntry.variant || 1);
+    let hasVariants = false;
+    let isVariantItself = false;
 
-    // 检查当前词条是否有其他变体（基于variant_mandarin）
-    const hasVariants = allResults.some(result => {
-        const resultVariantMandarin = result.variant_mandarin !== undefined ?
-            result.variant_mandarin : (result.variant || 1);
-        return result.mandarin_text === currentMandarin &&
-            resultVariantMandarin !== currentVariantMandarin;
-    });
+    if (currentSearchType === 'mandarin') {
+        // 搜索普通话时：检查普通话方向的变体
+        const currentMandarin = currentEntry.mandarin_text;
+        const currentVariantMandarin = currentEntry.variant_mandarin !== undefined ?
+            currentEntry.variant_mandarin : (currentEntry.variant || 1);
 
-    // 或者当前词条本身变体编号不为1
-    const isVariantItself = currentVariantMandarin > 1;
+        // 检查当前词条是否有其他普通话方向的变体
+        hasVariants = allResults.some(result => {
+            const resultVariantMandarin = result.variant_mandarin !== undefined ?
+                result.variant_mandarin : (result.variant || 1);
+            return result.mandarin_text === currentMandarin &&
+                resultVariantMandarin !== currentVariantMandarin;
+        });
+
+        // 或者当前词条本身变体编号不为1
+        isVariantItself = currentVariantMandarin > 1;
+    } else {
+        // 搜索潮汕话时：检查潮汕话方向的变体
+        const currentTeochew = currentEntry.teochew_text;
+        const currentVariantTeochew = currentEntry.variant_teochew !== undefined ?
+            currentEntry.variant_teochew : 1;
+
+        // 检查当前词条是否有其他潮汕话方向的变体
+        hasVariants = allResults.some(result => {
+            const resultVariantTeochew = result.variant_teochew !== undefined ?
+                result.variant_teochew : 1;
+            return result.teochew_text === currentTeochew &&
+                resultVariantTeochew !== currentVariantTeochew;
+        });
+
+        // 或者当前词条本身变体编号不为1
+        isVariantItself = currentVariantTeochew > 1;
+    }
 
     if (hasVariants || isVariantItself) {
         // 有变体
@@ -659,9 +733,9 @@ async function loadUnsyncedLogs() {
                     changesArray.push(`「变体编号」 ${oldData.variant || 1} → ${newData.variant || 1}`);
                 }
 
-                // 优先级变化 - 支持新旧字段
-                const oldPriority = oldData.teochew_priority !== undefined ? oldData.teochew_priority : (oldData.priority || 1);
-                const newPriority = newData.teochew_priority !== undefined ? newData.teochew_priority : (newData.priority || 1);
+                // 优先级变化
+                const oldPriority = oldData.teochew_priority !== undefined ? oldData.teochew_priority : 1;
+                const newPriority = newData.teochew_priority !== undefined ? newData.teochew_priority : 1;
                 if (oldPriority !== newPriority) {
                     changesArray.push(`「优先级」 ${oldPriority} → ${newPriority}`);
                 }

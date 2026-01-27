@@ -18,12 +18,16 @@ def api_test_dictionary():
 
 @dictionary_bp.route('/api/dictionary/search', methods=['GET'])
 def api_search_dictionary():
-    """搜索字典词条"""
+    """搜索字典词条（支持普通话和潮汕话双向搜索）"""
     try:
         from app.teo_g2p.teo_dict_edit import search_translations
+        from app.teo_g2p.database import get_db
+        from app.teo_g2p.models import TranslationDict
+        from sqlalchemy import or_
 
         keyword = request.args.get('keyword', '').strip()
         limit = int(request.args.get('limit', 100))
+        search_type = request.args.get('search_type', 'mandarin').strip()  # 'mandarin' or 'teochew'
 
         if not keyword:
             return jsonify({
@@ -31,29 +35,48 @@ def api_search_dictionary():
                 'error': '搜索关键词不能为空'
             }), 400
 
-        # 使用teo_dict_edit的搜索功能，只支持普通话搜索
-        # 管理界面需要能看到所有词条（包括已禁用的）以便管理
-        results = search_translations(keyword, limit, include_inactive=True)
+        # 根据搜索类型执行不同的搜索
+        db = next(get_db())
 
-        # 转换为字典格式
-        translations = []
-        for item in results:
-            translations.append({
-                'id': item.id,
-                'mandarin_text': item.mandarin_text,
-                'teochew_text': item.teochew_text,
-                'variant_mandarin': getattr(item, 'variant_mandarin', getattr(item, 'variant', 1)),
-                'variant_teochew': getattr(item, 'variant_teochew', 1),
-                'teochew_priority': getattr(item, 'teochew_priority', getattr(item, 'priority', 1.0)),
-                'is_active': item.is_active
+        try:
+            if search_type == 'teochew':
+                # 搜索潮汕话
+                query = db.query(TranslationDict).filter(
+                    TranslationDict.teochew_text.like(f'%{keyword}%')
+                )
+            else:
+                # 搜索普通话（默认）
+                query = db.query(TranslationDict).filter(
+                    TranslationDict.mandarin_text.like(f'%{keyword}%')
+                )
+
+            # 显示所有词条（包括已禁用的）
+            # 按优先级升序排序（优先级低的在前，这样搜索"一"时，"一"会排在"五一"前面）
+            results = query.order_by(TranslationDict.teochew_priority.asc()).limit(limit).all()
+
+            # 转换为字典格式
+            translations = []
+            for item in results:
+                translations.append({
+                    'id': item.id,
+                    'mandarin_text': item.mandarin_text,
+                    'teochew_text': item.teochew_text,
+                    'variant_mandarin': getattr(item, 'variant_mandarin', 1),
+                    'variant_teochew': getattr(item, 'variant_teochew', 1),
+                    'teochew_priority': getattr(item, 'teochew_priority', 1),
+                    'is_active': item.is_active
+                })
+
+            return jsonify({
+                'success': True,
+                'translations': translations,
+                'count': len(translations),
+                'keyword': keyword,
+                'search_type': search_type
             })
 
-        return jsonify({
-            'success': True,
-            'translations': translations,
-            'count': len(translations),
-            'keyword': keyword
-        })
+        finally:
+            db.close()
 
     except Exception as e:
         logger.error(f"Search dictionary error: {e}")

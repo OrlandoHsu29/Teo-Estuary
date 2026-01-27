@@ -115,15 +115,13 @@ class JiebaSyncService:
             word_map = {}
             for t in translations:
                 key = t.mandarin_text
-                # 兼容旧字段名priority和新字段名teochew_priority
                 priority = getattr(t, 'teochew_priority', None)
-                if priority is None:
-                    priority = getattr(t, 'priority', 1)
-                if key not in word_map or priority > word_map[key].priority:
-                    t.priority = priority  # 临时存储以便后续使用
+
+                if key not in word_map or priority > word_map[key].teochew_priority:
+                    t.teochew_priority = priority  # 临时存储以便后续使用
                     word_map[key] = t
 
-            return [(t.mandarin_text, t.teochew_text, t.priority) for t in word_map.values()]
+            return [(t.mandarin_text, t.teochew_text, t.teochew_priority) for t in word_map.values()]
 
         except Exception as e:
             logger.error(f"获取活跃翻译条目失败: {e}")

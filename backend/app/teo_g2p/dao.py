@@ -349,10 +349,7 @@ class TranslationDictDAO:
 
             # 更新每条记录
             for translation in translations:
-                # 兼容旧字段名priority和新字段名teochew_priority
                 old_priority = getattr(translation, 'teochew_priority', None)
-                if old_priority is None:
-                    old_priority = getattr(translation, 'priority', 1)
 
                 old_data = {
                     "teochew_text": translation.teochew_text,
@@ -384,7 +381,7 @@ class TranslationDictDAO:
 
                 # 根据更新内容确定操作类型
                 operation = "update"
-                if all(x is None for x in [teochew_text, variant_mandarin, variant_teochew, priority]) and is_active is not None:
+                if all(x is None for x in [teochew_text, variant_mandarin, variant_teochew]) and is_active is not None:
                     operation = "status_update"
 
                 self.change_logger.log_change(
@@ -468,7 +465,7 @@ class TranslationDictDAO:
                     "teochew_text": translation.teochew_text,
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
-                    "priority": translation.priority,
+                    "teochew_priority": translation.teochew_priority,
                     "is_active": translation.is_active
                 }
 
