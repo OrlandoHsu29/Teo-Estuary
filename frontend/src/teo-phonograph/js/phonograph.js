@@ -272,15 +272,16 @@ function updateNavigationButtons() {
     // 根据Emilia服务状态决定是否启用提交按钮
     elements.submitBtn.disabled = !emiliaServiceHealthy;
 
-    // 启用/禁用翻页按钮和播放列表按钮
+    // 播放列表按钮始终启用（只要有音频）
+    elements.playlistToggleBtn.disabled = false;
+
+    // 启用/禁用翻页按钮
     if (hasMultipleFiles) {
         elements.prevBtn.disabled = false;
         elements.nextBtn.disabled = false;
-        elements.playlistToggleBtn.disabled = false;
     } else {
         elements.prevBtn.disabled = true;
         elements.nextBtn.disabled = true;
-        elements.playlistToggleBtn.disabled = true;
     }
 }
 
@@ -328,8 +329,12 @@ function loadAudioByIndex(index) {
     audioElement.src = audioData.url;
     audioElement.volume = currentVolume;
 
-    // 更新黑胶标签显示文件名
-    elements.labelText.textContent = audioData.name;
+    // 更新黑胶标签显示文件名（最多显示5个字符，超出加...）
+    const displayName = audioData.name.length > 5
+        ? audioData.name.substring(0, 5) + '...'
+        : audioData.name;
+    elements.labelText.textContent = displayName;
+    elements.labelText.title = audioData.name; // 悬停显示完整名称
 
     // 显示加载状态
     elements.statusText.textContent = '加载中...';
@@ -379,7 +384,7 @@ function updatePlaylistUI() {
 
         item.innerHTML = `
             <span class="playlist-item-index">${String(index + 1).padStart(2, '0')}</span>
-            <span class="playlist-item-title">${audioData.name}</span>
+            <span class="playlist-item-title" title="${audioData.name}">${audioData.name}</span>
         `;
 
         item.addEventListener('click', () => {
@@ -446,6 +451,12 @@ function handlePlayPause() {
     if (!audioElement) return;
 
     if (isPlaying) {
+        // 先停止动画帧，防止暂停后再执行一次旋转
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+
         // 暂停
         audioElement.pause();
         isPlaying = false;
@@ -458,12 +469,6 @@ function handlePlayPause() {
         // 更新按钮文本为"播放"
         if (elements.playBtnText) {
             elements.playBtnText.textContent = '播放';
-        }
-
-        // 停止手动动画
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
         }
     } else {
         // 播放
@@ -499,8 +504,8 @@ function animateVinyl() {
     const deltaTime = now - lastAnimationTime;
     lastAnimationTime = now;
 
-    // 每秒旋转180度（2秒一圈）
-    const rotationSpeed = 180; // 度/秒
+    // 每秒旋转60度（6秒一圈）
+    const rotationSpeed = 60; // 度/秒
     currentRotation += (rotationSpeed * deltaTime) / 1000;
 
     // 应用旋转（保持居中）
@@ -914,11 +919,9 @@ function handleRotateStart(event) {
     if (clientX < centerX || clientX > centerX + radius) return;
 
     event.preventDefault();
-    isDragging = true;
 
-    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
-    startY = clientY;
-    startRotation = currentRotation; // 记录当前角度
+    // 先添加拖拽类禁用CSS动画，防止跳变
+    elements.vinylRecord.classList.add('dragging');
 
     // 停止正在播放的动画
     if (isPlaying) {
@@ -929,8 +932,11 @@ function handleRotateStart(event) {
         }
     }
 
-    // 添加拖拽类，禁用CSS动画
-    elements.vinylRecord.classList.add('dragging');
+    isDragging = true;
+
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    startY = clientY;
+    startRotation = currentRotation; // 记录当前角度（在禁用transition后）
 
     // 隐藏提示箭头
     if (elements.dragHint) {
@@ -995,16 +1001,16 @@ function handleRotateEnd(event) {
 
     isDragging = false;
 
-    // 移除拖拽类
-    elements.vinylRecord.classList.remove('dragging');
-
-    // 如果之前在播放，恢复播放和手动动画
+    // 如果之前在播放，恢复播放和手动动画（在移除dragging类之前）
     if (isRotating && isPlaying) {
         lastAnimationTime = performance.now();
         animateVinyl();
         audioElement.play();
         isRotating = false;
     }
+
+    // 移除拖拽类（在恢复动画后）
+    elements.vinylRecord.classList.remove('dragging');
 
     // 恢复光标样式
     elements.vinylRecord.style.cursor = 'grab';

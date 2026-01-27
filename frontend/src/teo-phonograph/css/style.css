@@ -163,7 +163,7 @@ body {
     box-shadow:
         0 10px 30px rgba(0, 0, 0, 0.5),
         inset 0 0 0 2px rgba(255, 255, 255, 0.1);
-    transition: transform 0.3s ease;
+    /* 移除 transition，因为旋转由 JavaScript requestAnimationFrame 控制 */
     cursor: grab;
 }
 
@@ -279,12 +279,12 @@ body {
 }
 
 .label-text {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(8px, 2.5%, 14px);
-    font-weight: 900;
+    font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+    font-size: clamp(12px, 4.5%, 22px);
+    font-weight: bold;
     color: #ffffff;
-    letter-spacing: 1px;
-    max-width: 80%;
+    letter-spacing: 0;
+    max-width: 85%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
