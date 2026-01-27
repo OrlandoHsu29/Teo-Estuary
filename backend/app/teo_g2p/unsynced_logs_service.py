@@ -8,8 +8,11 @@
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
+
+# 定义中国时区 (UTC+8)
+CHINA_TZ = timezone(timedelta(hours=8))
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +44,9 @@ class UnsyncedLogsService:
         获取最新的同步时间
 
         Returns:
-            最新的同步时间，如果没有同步记录则返回datetime.min
+            最新的同步时间，如果没有同步记录则返回带时区的最小时间
         """
-        latest_time = datetime.min
+        latest_time = datetime(1970, 1, 1, tzinfo=CHINA_TZ)
 
         try:
             if os.path.exists(self.sync_log_file_path):
@@ -135,7 +138,7 @@ class UnsyncedLogsService:
         unsynced_logs = self.get_unsynced_logs(exclude_property_updates=True)
 
         # 如果没有同步记录，或者有未同步的日志，则需要同步
-        if latest_sync_time == datetime.min:
+        if latest_sync_time == datetime(1970, 1, 1, tzinfo=CHINA_TZ):
             return len(unsynced_logs) > 0
         else:
             return len(unsynced_logs) > 0

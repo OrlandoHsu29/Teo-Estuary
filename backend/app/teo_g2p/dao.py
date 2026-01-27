@@ -8,12 +8,15 @@
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc, func
 from app.teo_g2p.models import TranslationDict
 from app.teo_g2p.database import get_db
+
+# 定义中国时区 (UTC+8)
+CHINA_TZ = timezone(timedelta(hours=8))
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +61,7 @@ class ChangeLog:
         """
         try:
             log_entry = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(CHINA_TZ).isoformat(),
                 "operation": operation,
                 "identifier": identifier or {},
                 "changes": {
@@ -236,25 +239,31 @@ class TranslationDictDAO:
         db = next(get_db())
 
         try:
-            # 检查是否已存在（按variant_mandarin检查）
+            # 检查是否已存在（按mandarin_text和teochew_text的组合检查）
             existing = db.query(TranslationDict).filter(
                 and_(
                     TranslationDict.mandarin_text == mandarin_text,
-                    TranslationDict.variant_mandarin == variant_mandarin
+                    TranslationDict.teochew_text == teochew_text
                 )
             ).first()
 
             if existing:
-                logger.warning(f"翻译条目已存在: {mandarin_text} (variant_mandarin: {variant_mandarin})")
+                logger.warning(f"翻译条目已存在: {mandarin_text} -> {teochew_text}")
                 return False
             else:
+                # 如果没有指定variant_mandarin，自动计算
+                # 查找相同mandarin_text的最大variant_mandarin值
+                max_mandarin_variant = db.query(func.max(TranslationDict.variant_mandarin)).filter(
+                    TranslationDict.mandarin_text == mandarin_text
+                ).scalar()
+                variant_mandarin = (max_mandarin_variant or 0) + 1
+
                 # 如果没有指定variant_teochew，自动计算
-                if variant_teochew is None:
-                    # 查找相同teochew_text的最大variant_teochew值
-                    max_variant = db.query(func.max(TranslationDict.variant_teochew)).filter(
-                        TranslationDict.teochew_text == teochew_text
-                    ).scalar()
-                    variant_teochew = (max_variant or 0) + 1
+                # 查找相同teochew_text的最大variant_teochew值
+                max_teochew_variant = db.query(func.max(TranslationDict.variant_teochew)).filter(
+                    TranslationDict.teochew_text == teochew_text
+                ).scalar()
+                variant_teochew = (max_teochew_variant or 0) + 1
 
                 # 创建新记录
                 translation = TranslationDict(
@@ -268,6 +277,7 @@ class TranslationDictDAO:
                 db.add(translation)
 
                 new_data = {
+                    "mandarin_text": mandarin_text,
                     "teochew_text": teochew_text,
                     "variant_mandarin": variant_mandarin,
                     "variant_teochew": variant_teochew,
@@ -352,6 +362,7 @@ class TranslationDictDAO:
                 old_priority = getattr(translation, 'teochew_priority', None)
 
                 old_data = {
+                    "mandarin_text": translation.mandarin_text,
                     "teochew_text": translation.teochew_text,
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
@@ -372,6 +383,7 @@ class TranslationDictDAO:
                     translation.is_active = is_active
 
                 new_data = {
+                    "mandarin_text": translation.mandarin_text,
                     "teochew_text": translation.teochew_text,
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
@@ -462,6 +474,7 @@ class TranslationDictDAO:
             # 统一删除：直接删除记录
             for translation in translations:
                 old_data = {
+                    "mandarin_text": translation.mandarin_text,
                     "teochew_text": translation.teochew_text,
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
@@ -574,12 +587,14 @@ class TranslationDictDAO:
                 return False
 
             old_data = {
+                "mandarin_text": translation.mandarin_text,
                 "is_active": translation.is_active
             }
 
             translation.is_active = 1 if is_active else 0
 
             new_data = {
+                "mandarin_text": translation.mandarin_text,
                 "is_active": translation.is_active
             }
 
