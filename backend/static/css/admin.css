@@ -189,7 +189,9 @@ body {
 }
 
 .content-section.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .section-header {
@@ -644,8 +646,7 @@ body {
 /* 审核区域 - 拟物化设备设计 */
 .review-container {
     max-width: 1200px;
-    margin: 120px auto;
-    margin-top: 180px;
+    margin: auto;
     perspective: 1000px;
     position: relative;
     padding-left: 160px; /* 为左侧圆形按钮栏留出空间 */
@@ -659,6 +660,7 @@ body {
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     padding: 15px;
+    width: 1025px;
     position: relative;
     transform: rotateX(2deg);
     transform-style: preserve-3d;
@@ -1116,7 +1118,7 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 2rem;
-    padding: 1rem;
+    padding: 2rem 0 2rem 0;
 }
 
 /* API密钥卡片 - 拟物暗色风格，更紧凑 */
@@ -2446,7 +2448,7 @@ s
     }
 
     .section-header h1 {
-        font-size: 1.5rem;
+        font-size: 2rem;
 
     }
 
@@ -4035,7 +4037,7 @@ mark {
 /* 词条显示屏幕 */
 .dict-word-display {
     background: rgba(0, 0, 0, 0.15);
-    min-height: 380px;
+    height: 424px;
     padding: 24px;
     display: flex;
     align-items: center;
@@ -5293,15 +5295,16 @@ mark {
    =================================== */
 
 .dict-management-container {
-    
+
     display: flex;
     gap: 40px;
     align-items: flex-start;
-    max-width: 1400px;
-    margin: 0 auto;
-    margin-top: 130px;
+    width: 1400px;
+    margin: auto;
     transform-style: preserve-3d;
     perspective: 1000px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 /* 字典查询设备主容器 */
@@ -5314,7 +5317,7 @@ mark {
 /* Jieba同步设备 - 统一拟物风格 */
 .dict-management-container .sync-device {
     flex: 0 0 400px;
-    max-width: 400px;
+    width: 400px;
     margin: 0;
 }
 
