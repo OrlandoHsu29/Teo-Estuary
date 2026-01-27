@@ -227,6 +227,7 @@ async function checkEmiliaHealth() {
 
             // 检查批处理任务状态
             const batchTask = result.batch_task;
+
             if (batchTask && importBtn && importText) {
                 if (batchTask.status === 'processing' || batchTask.status === 'pending') {
                     // 任务正在处理中
@@ -236,7 +237,8 @@ async function checkEmiliaHealth() {
                     importText.textContent = total > 0 ? `转录中 ${processed}/${total}` : "转录中...";
                 } else if (batchTask.status === 'completed') {
                     // 任务完成
-                    importBtn.disabled = false;
+                    // 只有当pendingCount大于0时才启用按钮
+                    importBtn.disabled = pendingCount === 0;
                     // 不再显示成功条数，因为已转录数量会自动增加
                     importText.textContent = "数据转录";
                     // 刷新统计数据以更新已转录数量
@@ -245,21 +247,24 @@ async function checkEmiliaHealth() {
                     }
                 } else if (batchTask.status === 'failed') {
                     // 任务失败
-                    importBtn.disabled = false;
+                    // 只有当pendingCount大于0时才启用按钮
+                    importBtn.disabled = pendingCount === 0;
                     importText.textContent = "转录失败";
                     setTimeout(() => {
                         importText.textContent = "数据转录";
                     }, 3000);
                 } else {
                     // 无任务或其他状态
-                    importBtn.disabled = false;
+                    // 只有当pendingCount大于0时才启用按钮
+                    importBtn.disabled = pendingCount === 0;
                     if (importText.textContent.includes("转录中")) {
                         importText.textContent = "数据转录";
                     }
                 }
             } else if (importBtn && importText) {
                 // 没有批处理任务
-                importBtn.disabled = false;
+                // 只有当pendingCount大于0时才启用按钮
+                importBtn.disabled = pendingCount === 0;
                 if (importText.textContent.includes("转录中")) {
                     importText.textContent = "数据转录";
                 }

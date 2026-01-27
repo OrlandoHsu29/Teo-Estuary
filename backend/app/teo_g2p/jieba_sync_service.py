@@ -97,12 +97,12 @@ class JiebaSyncService:
             logger.error(f"保存jieba词典失败: {e}")
             return False
 
-    def get_active_translations(self) -> List[Tuple[str, str]]:
+    def get_active_translations(self) -> List[Tuple[str, str, int]]:
         """
         获取数据库中所有活跃的翻译条目
 
         Returns:
-            [(普通话词语, 潮州话翻译), ...] 的列表
+            [(普通话词语, 潮州话翻译, 优先级), ...] 的列表
         """
         db = next(get_db())
 
@@ -114,11 +114,16 @@ class JiebaSyncService:
             # 按优先级排序，取优先级最高的
             word_map = {}
             for t in translations:
-                key = f"{t.mandarin_text}_{t.variant}"
-                if key not in word_map or t.priority > word_map[key].priority:
+                key = t.mandarin_text
+                # 兼容旧字段名priority和新字段名teochew_priority
+                priority = getattr(t, 'teochew_priority', None)
+                if priority is None:
+                    priority = getattr(t, 'priority', 1)
+                if key not in word_map or priority > word_map[key].priority:
+                    t.priority = priority  # 临时存储以便后续使用
                     word_map[key] = t
 
-            return [(t.mandarin_text, t.teochew_text) for t in word_map.values()]
+            return [(t.mandarin_text, t.teochew_text, t.priority) for t in word_map.values()]
 
         except Exception as e:
             logger.error(f"获取活跃翻译条目失败: {e}")
@@ -155,10 +160,12 @@ class JiebaSyncService:
         synced_items = []
 
         # 处理添加和更新
-        for mandarin, teochew in active_translations:
+        for mandarin, teochew, priority in active_translations:
             # 使用普通话词语作为jieba词典的词
             word = mandarin
-            freq = "100000"  # 默认词频
+            # 根据priority计算词频：基础词频10000，priority每增加1，词频增加5000
+            # priority范围1-10，词频范围15000-60000
+            freq = str(10000 + priority * 5000)
 
             if word in new_dict:
                 # 更新现有条目
@@ -183,7 +190,7 @@ class JiebaSyncService:
                 })
 
         # 处理删除（数据库中不存在的词语需要从jieba词典中删除）
-        db_words = set(mandarin for mandarin, _ in active_translations)
+        db_words = set(mandarin for mandarin, _, _ in active_translations)
         jieba_words = set(new_dict.keys())
 
         words_to_delete = jieba_words - db_words

@@ -44,8 +44,7 @@ def api_search_dictionary():
                 'teochew_text': item.teochew_text,
                 'variant_mandarin': getattr(item, 'variant_mandarin', getattr(item, 'variant', 1)),
                 'variant_teochew': getattr(item, 'variant_teochew', 1),
-                'priority': item.priority,
-                'word_length': item.word_length,
+                'teochew_priority': getattr(item, 'teochew_priority', getattr(item, 'priority', 1.0)),
                 'is_active': item.is_active
             })
 
@@ -77,7 +76,7 @@ def api_add_dictionary():
         variant = data.get('variant', 1)  # 向后兼容
         variant_mandarin = data.get('variant_mandarin', variant)  # 优先使用variant_mandarin
         variant_teochew = data.get('variant_teochew')  # 可选，默认自动计算
-        priority = data.get('priority', 1.0)
+        teochew_priority = data.get('teochew_priority')  # 可选，未提供则自动计算
         user = data.get('user', 'admin')
         reason = data.get('reason', '通过管理界面添加')
 
@@ -94,6 +93,31 @@ def api_add_dictionary():
                 'error': '潮语词汇不能为空'
             }), 400
 
+        # 验证长度（字词最多10个字符）
+        if len(mandarin_text) > 10:
+            return jsonify({
+                'success': False,
+                'error': '普通话词语长度不能超过10个字符'
+            }), 400
+
+        if len(teochew_text) > 10:
+            return jsonify({
+                'success': False,
+                'error': '潮语词汇长度不能超过10个字符'
+            }), 400
+
+        # 验证优先级（如果提供了的话）
+        if teochew_priority is not None and (teochew_priority < 1 or teochew_priority > 10):
+            return jsonify({
+                'success': False,
+                'error': '潮语优先级必须是1-10之间的整数'
+            }), 400
+
+        # 自动计算priority：如果未提供，根据潮汕话词语长度设置（1-10整数）
+        if teochew_priority is None:
+            word_len = len(teochew_text)
+            teochew_priority = min(word_len, 10)  # 1字=1, 2字=2, ..., 10字=10，最大不超过10
+
         # 使用teo_dict_edit的添加功能
         success = add_translation(
             mandarin_text=mandarin_text,
@@ -101,7 +125,7 @@ def api_add_dictionary():
             variant=variant,  # 传递variant以保持向后兼容
             variant_mandarin=variant_mandarin,
             variant_teochew=variant_teochew,
-            priority=priority,
+            teochew_priority=teochew_priority,
             user=user,
             reason=reason
         )
@@ -136,10 +160,29 @@ def api_update_dictionary(entry_id):
         new_variant = data.get('variant')  # 向后兼容
         new_variant_mandarin = data.get('variant_mandarin')  # 优先使用variant_mandarin
         new_variant_teochew = data.get('variant_teochew')
-        new_priority = data.get('priority')
+        new_teochew_priority = data.get('teochew_priority')
         new_is_active = data.get('is_active')
         user = data.get('user', 'admin')
         reason = data.get('reason', '通过管理界面编辑')
+
+        # 验证潮语文本长度（字词最多10个字符）
+        if new_teochew_text and len(new_teochew_text) > 10:
+            return jsonify({
+                'success': False,
+                'error': '潮语词汇长度不能超过10个字符'
+            }), 400
+
+        # 验证优先级（如果提供了的话）
+        if new_teochew_priority is not None and (new_teochew_priority < 1 or new_teochew_priority > 10):
+            return jsonify({
+                'success': False,
+                'error': '潮语优先级必须是1-10之间的整数'
+            }), 400
+
+        # 自动计算priority：如果更新了潮汕话文本且未提供priority，则重新计算
+        if new_teochew_text and new_teochew_priority is None:
+            word_len = len(new_teochew_text)
+            new_teochew_priority = min(word_len, 10)  # 1字=1, 2字=2, ..., 最大10
 
         # 使用合并后的更新功能，通过entry_id更新记录
         success = update_translation(
@@ -148,7 +191,7 @@ def api_update_dictionary(entry_id):
             variant=new_variant,  # 传递variant以保持向后兼容
             variant_mandarin=new_variant_mandarin,
             variant_teochew=new_variant_teochew,
-            priority=new_priority,
+            teochew_priority=new_teochew_priority,
             is_active=new_is_active,
             user=user,
             reason=reason

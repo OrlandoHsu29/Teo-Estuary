@@ -10,8 +10,8 @@ class Recording(db.Model):
 
     id = db.Column(db.String(32), primary_key=True)
     file_path = db.Column(db.String(500), nullable=False)
-    mandarin_text = db.Column(db.Text, nullable=False)
-    teochew_text = db.Column(db.Text)
+    mandarin_text = db.Column(db.String(300), nullable=False)
+    teochew_text = db.Column(db.String(300))
     upload_time = db.Column(db.DateTime, default=now)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(500))
@@ -20,6 +20,10 @@ class Recording(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     upload_type = db.Column(db.Integer, nullable=False)  # 0: 录音上传, 1: 素材提取 (不允许为空)
     reviewed_at = db.Column(db.DateTime)  # 审核操作时间（approved或rejected的时间）
+
+    __table_args__ = (
+        db.UniqueConstraint('mandarin_text', 'teochew_text', name='uq_mandarin_teochew'),
+    )
 
     def to_dict(self):
         from app.utils.timezone import format_time

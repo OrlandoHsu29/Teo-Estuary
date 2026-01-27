@@ -18,7 +18,7 @@ _sync_service = JiebaSyncService(change_logger=_change_logger)
 _jieba_manager = JiebaTempManager()
 
 def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
-                   priority: float = 1.0, user: str = "system", reason: str = "",
+                   teochew_priority: int = None, user: str = "system", reason: str = "",
                    variant_mandarin: int = None, variant_teochew: int = None) -> bool:
     """
     添加新的翻译条目
@@ -27,7 +27,7 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
         mandarin_text: 普通话词语
         teochew_text: 潮州话翻译
         variant: 变体编号 (默认1，向后兼容)
-        priority: 优先级 (默认1.0)
+        teochew_priority: 潮州话翻译优先级 1-10整数 (可选，未提供则自动计算)
         user: 操作用户 (默认"system")
         reason: 添加原因 (可选)
         variant_mandarin: 普通话方向变体编号 (可选，默认使用variant值)
@@ -40,12 +40,17 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
     if variant_mandarin is None:
         variant_mandarin = variant
 
+    # 自动计算priority：如果未提供，根据潮汕话词语长度设置
+    if teochew_priority is None:
+        word_len = len(teochew_text)
+        teochew_priority = min(word_len, 10)  # 1字=1, 2字=2, ..., 最大10
+
     success = _dao.add_translation(
         mandarin_text=mandarin_text,
         teochew_text=teochew_text,
         variant_mandarin=variant_mandarin,
         variant_teochew=variant_teochew,
-        priority=priority,
+        teochew_priority=teochew_priority,
         user=user,
         reason=reason
     )
@@ -62,7 +67,7 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
 
 def update_translation(mandarin_text: str = None, entry_id: int = None,
                       teochew_text: str = None, variant: int = None,
-                      priority: float = None, is_active: bool = None,
+                      teochew_priority: int = None, is_active: bool = None,
                       user: str = "system", reason: str = "",
                       variant_mandarin: int = None, variant_teochew: int = None) -> bool:
     """
@@ -73,7 +78,7 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         entry_id: 词条ID（可选，优先级高于mandarin_text）
         teochew_text: 新的潮州话翻译 (可选)
         variant: 新的变体编号 (可选，向后兼容)
-        priority: 新的优先级 (可选)
+        teochew_priority: 新的潮州话翻译优先级 1-10整数 (可选)
         is_active: 新的状态 (可选)
         user: 操作用户 (默认"system")
         reason: 更新原因 (可选)
@@ -83,6 +88,11 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
     Returns:
         bool: 是否更新成功
     """
+    # 如果要更新潮汕话文本且未提供priority，自动计算
+    if teochew_text is not None and teochew_priority is None:
+        word_len = len(teochew_text)
+        teochew_priority = min(word_len, 10)  # 1字=1, 2字=2, ..., 最大10
+
     # 如果要更新潮汕话文本，先获取旧的文本
     old_teochew_texts = []
     if teochew_text is not None:
@@ -109,7 +119,7 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         variant=variant,  # 传递variant以保持向后兼容
         variant_mandarin=variant_mandarin,
         variant_teochew=variant_teochew,
-        priority=priority,
+        teochew_priority=teochew_priority,
         is_active=is_active,
         user=user,
         reason=reason
@@ -294,7 +304,7 @@ def add_translations_batch(words: List[Dict], user: str = "system", reason: str 
     批量添加翻译条目
 
     Args:
-        words: 词语列表 [{"mandarin": "...", "teochew": "...", "variant": 1, "priority": 1.0}, ...]
+        words: 词语列表 [{"mandarin": "...", "teochew": "...", "variant": 1, "teochew_priority": 1}, ...]
         user: 操作用户 (默认"system")
         reason: 添加原因 (默认"批量添加")
 
@@ -308,9 +318,9 @@ def add_translations_batch(words: List[Dict], user: str = "system", reason: str 
         mandarin = word_data.get("mandarin", "")
         teochew = word_data.get("teochew", "")
         variant = word_data.get("variant", 1)
-        priority = word_data.get("priority", 1.0)
+        teochew_priority = word_data.get("teochew_priority")  # 可选，未提供则自动计算
 
-        if add_translation(mandarin, teochew, variant, priority, user, reason):
+        if add_translation(mandarin, teochew, variant, teochew_priority, user, reason):
             success_count += 1
         else:
             failed_count += 1

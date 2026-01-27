@@ -235,9 +235,17 @@ function displayDictEntry(entry) {
     const variantMandarin = entry.variant_mandarin !== undefined ? entry.variant_mandarin : (entry.variant || 1);
     const variantTeochew = entry.variant_teochew !== undefined ? entry.variant_teochew : 1;
     document.getElementById('displayVariant').textContent = `M:${variantMandarin} / T:${variantTeochew}`;
-    document.getElementById('displayPriority').textContent = entry.priority.toString();
-    document.getElementById('displayStatus').textContent = entry.is_active ? '启用' : '禁用';
-    document.getElementById('displayStatus').style.color = entry.is_active ? '#00ff88' : '#ff4757';
+
+    // 优先级 - 支持新旧字段
+    const priority = entry.teochew_priority !== undefined ? entry.teochew_priority : (entry.priority || 1);
+    document.getElementById('displayPriority').textContent = priority.toString();
+
+    // 状态
+    const isActive = entry.is_active !== undefined ? entry.is_active : (entry.is_active !== 0);
+    document.getElementById('displayStatus').textContent = isActive ? '启用' : '禁用';
+    document.getElementById('displayStatus').style.color = isActive ? '#00ff88' : '#ff4757';
+
+    // 词条ID
     document.getElementById('displayId').textContent = entry.id.toString();
 
     // 更新变体状态指示器（基于整个搜索结果）
@@ -266,9 +274,9 @@ function showAddDictModal() {
     document.getElementById('dictId').value = '';
     document.getElementById('dictMandarin').value = '';
     document.getElementById('dictTeochew').value = '';
-    document.getElementById('dictVariantMandarin').value = '1';
+    document.getElementById('dictVariantMandarin').value = '';  // 留空则自动计算
     document.getElementById('dictVariantTeochew').value = '';
-    document.getElementById('dictPriority').value = '1.0';
+    document.getElementById('dictTeochewPriority').value = '';  // 留空则自动计算
     document.getElementById('dictActive').checked = true;
 }
 
@@ -286,12 +294,20 @@ function editCurrentDictEntry() {
     document.getElementById('dictId').value = currentDictEntry.id;
     document.getElementById('dictMandarin').value = currentDictEntry.mandarin_text;
     document.getElementById('dictTeochew').value = currentDictEntry.teochew_text;
+
+    // 变体编号
     const variantMandarin = currentDictEntry.variant_mandarin !== undefined ? currentDictEntry.variant_mandarin : (currentDictEntry.variant || 1);
     const variantTeochew = currentDictEntry.variant_teochew !== undefined ? currentDictEntry.variant_teochew : '';
     document.getElementById('dictVariantMandarin').value = variantMandarin;
     document.getElementById('dictVariantTeochew').value = variantTeochew;
-    document.getElementById('dictPriority').value = currentDictEntry.priority;
-    document.getElementById('dictActive').checked = currentDictEntry.is_active;
+
+    // 优先级 - 支持新旧字段
+    const priority = currentDictEntry.teochew_priority !== undefined ? currentDictEntry.teochew_priority : (currentDictEntry.priority || 1);
+    document.getElementById('dictTeochewPriority').value = priority;
+
+    // 状态
+    const isActive = currentDictEntry.is_active !== undefined ? currentDictEntry.is_active : (currentDictEntry.is_active !== 0);
+    document.getElementById('dictActive').checked = isActive;
 }
 
 // 删除当前词条
@@ -349,9 +365,18 @@ async function saveDictEntry() {
     const teochewText = document.getElementById('dictTeochew').value.trim();
     const variantMandarinInput = document.getElementById('dictVariantMandarin');
     const variantTeochewInput = document.getElementById('dictVariantTeochew');
-    const variantMandarin = variantMandarinInput ? parseInt(variantMandarinInput.value) || 1 : parseInt(document.getElementById('dictVariant').value) || 1;
-    const variantTeochew = variantTeochewInput ? (variantTeochewInput.value ? parseInt(variantTeochewInput.value) : null) : null;
-    const priority = parseFloat(document.getElementById('dictPriority').value);
+    const teochewPriorityInput = document.getElementById('dictTeochewPriority');
+
+    // 处理变体：如果为空则传null，让后端自动计算
+    const variantMandarin = variantMandarinInput && variantMandarinInput.value ?
+        parseInt(variantMandarinInput.value) : null;
+    const variantTeochew = variantTeochewInput && variantTeochewInput.value ?
+        parseInt(variantTeochewInput.value) : null;
+
+    // 处理优先级：如果为空则传null，让后端自动计算
+    const teochewPriority = teochewPriorityInput && teochewPriorityInput.value ?
+        parseInt(teochewPriorityInput.value) : null;
+
     const isActive = document.getElementById('dictActive').checked;
 
     // 验证表单
@@ -365,7 +390,8 @@ async function saveDictEntry() {
         return;
     }
 
-    if (isNaN(variantMandarin) || variantMandarin < 1) {
+    // 验证变体编号（如果提供了的话）
+    if (variantMandarin !== null && (isNaN(variantMandarin) || variantMandarin < 1)) {
         showToast('普通话变体编号必须是大于0的整数', 'warning');
         return;
     }
@@ -375,8 +401,9 @@ async function saveDictEntry() {
         return;
     }
 
-    if (isNaN(priority) || priority < 0) {
-        showToast('优先级必须是非负数', 'warning');
+    // 验证优先级（如果提供了的话）
+    if (teochewPriority !== null && (isNaN(teochewPriority) || teochewPriority < 1 || teochewPriority > 10)) {
+        showToast('潮语优先级必须是1-10之间的整数', 'warning');
         return;
     }
 
@@ -387,16 +414,20 @@ async function saveDictEntry() {
         const payload = {
             mandarin_text: mandarinText,
             teochew_text: teochewText,
-            variant_mandarin: variantMandarin,
-            priority: priority,
             is_active: isActive,
             user: 'admin',
             reason: id ? '通过管理界面编辑' : '通过管理界面添加'
         };
 
-        // 只有当variant_teochew有值时才添加到payload
+        // 只有当提供了值时才添加到payload
+        if (variantMandarin !== null) {
+            payload.variant_mandarin = variantMandarin;
+        }
         if (variantTeochew !== null) {
             payload.variant_teochew = variantTeochew;
+        }
+        if (teochewPriority !== null) {
+            payload.teochew_priority = teochewPriority;
         }
 
         const response = await fetch(url, {
@@ -418,11 +449,15 @@ async function saveDictEntry() {
                 // 更新当前词条的数据
                 currentDictEntry.mandarin_text = mandarinText;
                 currentDictEntry.teochew_text = teochewText;
-                currentDictEntry.variant_mandarin = variantMandarin;
+                if (variantMandarin !== null) {
+                    currentDictEntry.variant_mandarin = variantMandarin;
+                }
                 if (variantTeochew !== null) {
                     currentDictEntry.variant_teochew = variantTeochew;
                 }
-                currentDictEntry.priority = priority;
+                if (teochewPriority !== null) {
+                    currentDictEntry.teochew_priority = teochewPriority;
+                }
                 currentDictEntry.is_active = isActive;
 
                 displayDictEntry(currentDictEntry);
@@ -495,15 +530,19 @@ function updateVariantStatusForEntry(currentEntry, allResults) {
     statusElement.classList.remove('has-variant', 'no-variant');
 
     const currentMandarin = currentEntry.mandarin_text;
+    const currentVariantMandarin = currentEntry.variant_mandarin !== undefined ?
+        currentEntry.variant_mandarin : (currentEntry.variant || 1);
 
-    // 检查当前词条是否有其他变体
-    const hasVariants = allResults.some(result =>
-        result.mandarin_text === currentMandarin &&
-        result.variant !== currentEntry.variant
-    );
+    // 检查当前词条是否有其他变体（基于variant_mandarin）
+    const hasVariants = allResults.some(result => {
+        const resultVariantMandarin = result.variant_mandarin !== undefined ?
+            result.variant_mandarin : (result.variant || 1);
+        return result.mandarin_text === currentMandarin &&
+            resultVariantMandarin !== currentVariantMandarin;
+    });
 
     // 或者当前词条本身变体编号不为1
-    const isVariantItself = currentEntry.variant > 1;
+    const isVariantItself = currentVariantMandarin > 1;
 
     if (hasVariants || isVariantItself) {
         // 有变体
@@ -620,8 +659,11 @@ async function loadUnsyncedLogs() {
                     changesArray.push(`「变体编号」 ${oldData.variant || 1} → ${newData.variant || 1}`);
                 }
 
-                if (oldData.priority !== newData.priority) {
-                    changesArray.push(`「优先级」 ${oldData.priority || 1.0} → ${newData.priority || 1.0}`);
+                // 优先级变化 - 支持新旧字段
+                const oldPriority = oldData.teochew_priority !== undefined ? oldData.teochew_priority : (oldData.priority || 1);
+                const newPriority = newData.teochew_priority !== undefined ? newData.teochew_priority : (newData.priority || 1);
+                if (oldPriority !== newPriority) {
+                    changesArray.push(`「优先级」 ${oldPriority} → ${newPriority}`);
                 }
 
                 // 状态判断，处理数字和布尔值的转换

@@ -26,13 +26,39 @@ db = SQLAlchemy()
 
 # 配置日志
 import logging
+
+# 创建自定义 Formatter，使用中国时区
+class ChinaTimeFormatter(logging.Formatter):
+    """使用中国时区的日志格式化器"""
+    def __init__(self, fmt=None, datefmt=None, style='%'):
+        super().__init__(fmt, datefmt, style)
+        # 中国时区 (UTC+8)
+        from datetime import timezone, timedelta
+        self.china_tz = timezone(timedelta(hours=8))
+
+    def formatTime(self, record, datefmt=None):
+        """格式化时间为中国时区"""
+        from datetime import datetime
+        # 将 UTC 时间转换为中国时区
+        ct = datetime.fromtimestamp(record.created, tz=self.china_tz)
+        if datefmt:
+            return ct.strftime(datefmt)
+        else:
+            return ct.strftime('%Y-%m-%d %H:%M:%S')
+
+# 创建 formatter
+formatter = ChinaTimeFormatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# 配置日志
+file_handler = logging.FileHandler(str(BACKEND_ROOT / 'logs' / 'app.log'), encoding='utf-8')
+file_handler.setFormatter(formatter)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(str(BACKEND_ROOT / 'logs' / 'app.log'), encoding='utf-8'),
-        logging.StreamHandler()
-    ]
+    handlers=[file_handler, stream_handler]
 )
 
 logger = logging.getLogger(__name__)
@@ -129,9 +155,9 @@ def create_app():
 
     # 构建 MySQL 连接字符串（确保密码部分正确）
     if mysql_password:
-        database_url = f'mysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4'
+        database_url = f'mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4'
     else:
-        database_url = f'mysql://{mysql_user}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4'
+        database_url = f'mysql+pymysql://{mysql_user}@{mysql_host}:{mysql_port}/{mysql_database}?charset=utf8mb4'
 
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -148,8 +174,8 @@ def create_app():
     app.config['ADMIN_USERNAME'] = os.environ.get('ADMIN_USERNAME', 'admin')
     app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'your-admin-password')
 
-    # 文本验证配置
-    app.config['MAX_TEXT_LENGTH'] = 500
+    # 文本验证配置（30秒录音最多约300字）
+    app.config['MAX_TEXT_LENGTH'] = 300
 
     # 设置instance_path为instance目录
     app.instance_path = str(BACKEND_ROOT / 'instance')

@@ -232,8 +232,8 @@ class TranslationService:
             else:
                 translations = base_query.all()
 
-            # 按优先级和词语长度排序（优先级高的在前，长度长的在前）
-            translations.sort(key=lambda x: (x.priority, x.word_length), reverse=True)
+            # 按优先级排序（优先级高的在前）
+            translations.sort(key=lambda x: x.teochew_priority, reverse=True)
 
             result = [getattr(t, 'teochew_text' if target_lang == 'teochew' else 'mandarin_text') for t in translations]
             has_multiple = len(result) > 1

@@ -217,7 +217,7 @@ class TranslationDictDAO:
 
     def add_translation(self, mandarin_text: str, teochew_text: str,
                        variant_mandarin: int = 1, variant_teochew: int = None,
-                       priority: float = 1.0, user: str = "system", reason: str = "") -> bool:
+                       teochew_priority: int = None, user: str = "system", reason: str = "") -> bool:
         """
         添加新的翻译条目
 
@@ -226,7 +226,7 @@ class TranslationDictDAO:
             teochew_text: 潮州话翻译
             variant_mandarin: 普通话方向的变体编号（向后兼容，旧的variant参数）
             variant_teochew: 潮州话方向的变体编号（可选，默认自动计算）
-            priority: 优先级
+            teochew_priority: 潮州话翻译优先级 1-10整数
             user: 操作用户
             reason: 添加原因
 
@@ -262,8 +262,7 @@ class TranslationDictDAO:
                     teochew_text=teochew_text,
                     variant_mandarin=variant_mandarin,
                     variant_teochew=variant_teochew,
-                    priority=priority,
-                    word_length=len(mandarin_text),
+                    teochew_priority=teochew_priority,
                     is_active=1
                 )
                 db.add(translation)
@@ -272,7 +271,7 @@ class TranslationDictDAO:
                     "teochew_text": teochew_text,
                     "variant_mandarin": variant_mandarin,
                     "variant_teochew": variant_teochew,
-                    "priority": priority,
+                    "teochew_priority": teochew_priority,
                     "is_active": 1
                 }
 
@@ -296,7 +295,7 @@ class TranslationDictDAO:
 
     def update_translation(self, mandarin_text: str = None, entry_id: int = None,
                           teochew_text: str = None, variant_mandarin: int = None,
-                          variant_teochew: int = None, priority: float = None,
+                          variant_teochew: int = None, teochew_priority: int = None,
                           is_active: bool = None, variant: int = None,
                           user: str = "system", reason: str = "") -> bool:
         """
@@ -308,7 +307,7 @@ class TranslationDictDAO:
             teochew_text: 新的潮州话翻译
             variant_mandarin: 新的普通话方向变体编号
             variant_teochew: 新的潮州话方向变体编号
-            priority: 新的优先级
+            teochew_priority: 新的潮州话翻译优先级 1-10整数
             is_active: 新的状态（None表示不更新状态）
             variant: 向后兼容的参数，等同于variant_mandarin
             user: 操作用户
@@ -350,11 +349,16 @@ class TranslationDictDAO:
 
             # 更新每条记录
             for translation in translations:
+                # 兼容旧字段名priority和新字段名teochew_priority
+                old_priority = getattr(translation, 'teochew_priority', None)
+                if old_priority is None:
+                    old_priority = getattr(translation, 'priority', 1)
+
                 old_data = {
                     "teochew_text": translation.teochew_text,
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
-                    "priority": translation.priority,
+                    "teochew_priority": old_priority,
                     "is_active": translation.is_active
                 }
 
@@ -365,8 +369,8 @@ class TranslationDictDAO:
                     translation.variant_mandarin = variant_mandarin
                 if variant_teochew is not None:
                     translation.variant_teochew = variant_teochew
-                if priority is not None:
-                    translation.priority = priority
+                if teochew_priority is not None:
+                    translation.teochew_priority = teochew_priority
                 if is_active is not None:
                     translation.is_active = is_active
 
@@ -374,7 +378,7 @@ class TranslationDictDAO:
                     "teochew_text": translation.teochew_text,
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
-                    "priority": translation.priority,
+                    "teochew_priority": translation.teochew_priority,
                     "is_active": translation.is_active
                 }
 
@@ -628,7 +632,8 @@ class TranslationDictDAO:
                 # 只支持普通话搜索
                 query = query.filter(TranslationDict.mandarin_text.like(f'%{keyword}%'))
 
-            return query.order_by(TranslationDict.word_length, desc(TranslationDict.priority)).limit(limit).all()
+            # 按优先级降序排序（优先级高的在前）
+            return query.order_by(desc(TranslationDict.teochew_priority)).limit(limit).all()
 
         except Exception as e:
             logger.error(f"列出翻译条目失败: {e}")
