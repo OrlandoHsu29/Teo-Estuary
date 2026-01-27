@@ -51,8 +51,48 @@ def api_search_dictionary():
                 )
 
             # 显示所有词条（包括已禁用的）
-            # 按优先级升序排序（优先级低的在前，这样搜索"一"时，"一"会排在"五一"前面）
-            results = query.order_by(TranslationDict.teochew_priority.asc()).limit(limit).all()
+            # 先获取所有结果，然后在Python中排序
+            all_results = query.limit(limit * 2).all()  # 多取一些，因为后面会过滤
+
+            # 在Python中进行多级排序
+            # 1. 按搜索文本的匹配度排序（完全匹配 > 前缀匹配 > 包含匹配）
+            # 2. 按普通话文本长度排序（从短到长）
+            # 3. 按潮汕话优先级排序（从低到高）
+            def sort_key(item):
+                mandarin_text = item.mandarin_text
+                teochew_text = item.teochew_text
+
+                # 计算匹配度得分（越低越好）
+                if search_type == 'teochew':
+                    # 搜索潮汕话
+                    if teochew_text == keyword:
+                        match_score = 0  # 完全匹配
+                    elif teochew_text.startswith(keyword):
+                        match_score = 1  # 前缀匹配
+                    else:
+                        match_score = 2  # 包含匹配
+                    search_text_length = len(teochew_text)
+                else:
+                    # 搜索普通话
+                    if mandarin_text == keyword:
+                        match_score = 0  # 完全匹配
+                    elif mandarin_text.startswith(keyword):
+                        match_score = 1  # 前缀匹配
+                    else:
+                        match_score = 2  # 包含匹配
+                    search_text_length = len(mandarin_text)
+
+                return (
+                    match_score,  # 匹配度（越小越好）
+                    search_text_length,  # 文本长度（越短越好）
+                    item.teochew_priority  # 优先级（越低越好）
+                )
+
+            # 排序
+            all_results.sort(key=sort_key)
+
+            # 限制结果数量
+            results = all_results[:limit]
 
             # 转换为字典格式
             translations = []
@@ -161,7 +201,7 @@ def api_add_dictionary():
         else:
             return jsonify({
                 'success': False,
-                'error': '词条添加失败，可能已存在相同词语和变体'
+                'error': '词条添加失败，该普通话和潮汕话组合已存在'
             }), 400
 
     except Exception as e:
