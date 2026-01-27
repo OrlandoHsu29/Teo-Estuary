@@ -396,12 +396,6 @@ async function jumpToDetailView(recordId, listIndex, listPage) {
     }
 }
 
-// 保留旧函数名作为兼容（已弃用）
-async function jumpTodeviceView(recordId) {
-    console.warn('[已弃用] jumpTodeviceView 已弃用，请使用 jumpToDetailView');
-    // 由于参数变化，这个函数已经无法兼容，提示用户刷新页面
-    showToast('功能已更新，请刷新页面后重试', 'warning');
-}
 
 // 初始化搜索功能
 function initializeSearch() {

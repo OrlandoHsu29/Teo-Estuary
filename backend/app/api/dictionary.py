@@ -136,8 +136,7 @@ def api_add_dictionary():
 
         mandarin_text = data.get('mandarin_text', '').strip()
         teochew_text = data.get('teochew_text', '').strip()
-        variant = data.get('variant', 1)  # 向后兼容
-        variant_mandarin = data.get('variant_mandarin', variant)  # 优先使用variant_mandarin
+        variant_mandarin = data.get('variant_mandarin', 1)  
         variant_teochew = data.get('variant_teochew')  # 可选，默认自动计算
         teochew_priority = data.get('teochew_priority')  # 可选，未提供则自动计算
         user = data.get('user', 'admin')

@@ -17,7 +17,7 @@ _dao = TranslationDictDAO(_change_logger)
 _sync_service = JiebaSyncService(change_logger=_change_logger)
 _jieba_manager = JiebaTempManager()
 
-def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
+def add_translation(mandarin_text: str, teochew_text: str,
                    teochew_priority: int = None, user: str = "system", reason: str = "",
                    variant_mandarin: int = None, variant_teochew: int = None) -> bool:
     """
@@ -26,7 +26,6 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
     Args:
         mandarin_text: 普通话词语
         teochew_text: 潮州话翻译
-        variant: 变体编号 (默认1，向后兼容)
         teochew_priority: 潮州话翻译优先级 1-10整数 (可选，未提供则自动计算)
         user: 操作用户 (默认"system")
         reason: 添加原因 (可选)
@@ -36,9 +35,6 @@ def add_translation(mandarin_text: str, teochew_text: str, variant: int = 1,
     Returns:
         bool: 是否添加成功
     """
-    # 向后兼容：使用variant作为variant_mandarin的默认值
-    if variant_mandarin is None:
-        variant_mandarin = variant
 
     # 自动计算priority：如果未提供，根据潮汕话词语长度设置
     if teochew_priority is None:

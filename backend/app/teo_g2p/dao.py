@@ -227,7 +227,7 @@ class TranslationDictDAO:
         Args:
             mandarin_text: 普通话词语
             teochew_text: 潮州话翻译
-            variant_mandarin: 普通话方向的变体编号（向后兼容，旧的variant参数）
+            variant_mandarin: 普通话方向的变体编号
             variant_teochew: 潮州话方向的变体编号（可选，默认自动计算）
             teochew_priority: 潮州话翻译优先级 1-10整数
             user: 操作用户
