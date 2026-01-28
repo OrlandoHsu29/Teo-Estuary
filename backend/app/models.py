@@ -86,3 +86,31 @@ class ReferenceText(db.Model):
             'created_time': self.created_time.isoformat(),
             'created_time_formatted': format_time(self.created_time)
         }
+
+
+class GenerationTask(db.Model):
+    """参考文本生成任务表 - 记录OLNDIO异步任务状态"""
+    __tablename__ = 'generation_tasks'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    status = db.Column(db.String(20), nullable=False, default='processing')  # processing, completed, failed
+    result = db.Column(db.Text)  # 生成结果（JSON字符串）
+    error_message = db.Column(db.Text)  # 错误信息
+    created_time = db.Column(db.DateTime, default=now)  # 创建时间
+    updated_time = db.Column(db.DateTime, default=now, onupdate=now)  # 更新时间
+    completed_time = db.Column(db.DateTime)  # 完成时间
+
+    def to_dict(self):
+        from app.utils.timezone import format_time
+        return {
+            'id': self.id,
+            'status': self.status,
+            'result': self.result,
+            'error_message': self.error_message,
+            'created_time': self.created_time.isoformat(),
+            'created_time_formatted': format_time(self.created_time),
+            'updated_time': self.updated_time.isoformat() if self.updated_time else None,
+            'updated_time_formatted': format_time(self.updated_time) if self.updated_time else None,
+            'completed_time': self.completed_time.isoformat() if self.completed_time else None,
+            'completed_time_formatted': format_time(self.completed_time) if self.completed_time else None
+        }

@@ -170,6 +170,12 @@ def create_app():
     app.config['SILICONFLOW_API_KEY'] = os.environ.get('SILICONFLOW_API_KEY', 'sk-dqfrbwdryedhuzxwtgdzfffxjstlkkjgenatmuwmembcdjhb')
     app.config['SILICONFLOW_BASE_URL'] = 'https://api.siliconflow.cn/v1'
 
+    # Dify Webhook配置（用于生成参考文本）
+    app.config['DIFY_WEBHOOK_URL'] = os.environ.get('DIFY_WEBHOOK_URL', 'your-Dify-workflow-webhook-trigger-URL')
+
+    # Webhook密钥（Dify回调认证）
+    app.config['WEBHOOK_KEY'] = os.environ.get('WEBHOOK_KEY', '')
+
     # 管理员配置
     app.config['ADMIN_USERNAME'] = os.environ.get('ADMIN_USERNAME', 'admin')
     app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'your-admin-password')
@@ -242,7 +248,7 @@ def create_app():
 
     # 创建数据库表
     with app.app_context():
-        from app.models import Recording, APIKey, ReferenceText
+        from app.models import Recording, APIKey, ReferenceText, GenerationTask
 
         # 创建 MySQL 表（如果不存在）
         # db.create_all() 默认会检查表是否存在，只创建不存在的表
