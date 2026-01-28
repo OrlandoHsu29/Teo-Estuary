@@ -769,6 +769,7 @@ def admin_batch_import_result():
 
         # 处理返回的数据
         imported_count = 0
+        skipped_count = 0
         failed_count = 0
         errors = []
 
@@ -782,11 +783,18 @@ def admin_batch_import_result():
                     errors.append(f"缺少 id 或 teochew_text: {item}")
                     continue
 
-                # 检查是否已存在
+                # 检查 recording_id 是否已存在
                 existing = Recording.query.get(recording_id)
                 if existing:
                     logger.info(f"Recording {recording_id} already exists, skipping")
-                    failed_count += 1
+                    skipped_count += 1
+                    continue
+
+                # 检查 teochew_text 是否已存在
+                existing_teochew = Recording.query.filter_by(teochew_text=teochew_text).first()
+                if existing_teochew:
+                    logger.info(f"Teochew text already exists: {teochew_text[:30]}..., skipping")
+                    skipped_count += 1
                     continue
 
                 # 将潮州话翻译为普通话
@@ -800,6 +808,14 @@ def admin_batch_import_result():
                     logger.error(f"Translation failed for {recording_id}: {e}")
                     # 翻译失败时使用空字符串
                     mandarin_text = ''
+
+                # 检查 mandarin_text 是否已存在
+                if mandarin_text:
+                    existing_mandarin = Recording.query.filter_by(mandarin_text=mandarin_text).first()
+                    if existing_mandarin:
+                        logger.info(f"Mandarin text already exists: {mandarin_text[:30]}..., skipping")
+                        skipped_count += 1
+                        continue
 
                 # 创建 Recording 记录
                 recording = Recording(
@@ -815,10 +831,12 @@ def admin_batch_import_result():
                 )
 
                 db.session.add(recording)
+                db.session.flush()  # 立即执行以捕获唯一约束冲突
                 imported_count += 1
                 logger.info(f"Imported recording {recording_id}: {teochew_text[:30]}...")
 
             except Exception as e:
+                db.session.rollback()
                 failed_count += 1
                 errors.append(f"{recording_id}: {str(e)}")
                 logger.error(f"Failed to import {recording_id}: {e}")
@@ -837,8 +855,9 @@ def admin_batch_import_result():
 
         return jsonify({
             'success': True,
-            'message': f'批量导入完成：成功{imported_count}条，失败{failed_count}条',
+            'message': f'批量导入完成：成功{imported_count}条，跳过{skipped_count}条重复，失败{failed_count}条',
             'imported_count': imported_count,
+            'skipped_count': skipped_count,
             'failed_count': failed_count,
             'errors': errors[:10] if errors else []  # 最多返回10个错误
         }), 200

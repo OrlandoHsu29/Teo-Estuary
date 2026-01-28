@@ -210,7 +210,7 @@ def create_app():
     app.limiter = limiter
 
     # 注册蓝图
-    from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, dictionary_sync_bp, asr_bp
+    from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, dictionary_sync_bp, asr_bp, reference_bp
     from app.api.jieba_sync import jieba_sync_bp
     from app.admin.routes import admin_bp
 
@@ -221,6 +221,7 @@ def create_app():
     app.register_blueprint(dictionary_bp)
     app.register_blueprint(dictionary_sync_bp)
     app.register_blueprint(asr_bp)
+    app.register_blueprint(reference_bp)
     app.register_blueprint(jieba_sync_bp)
     app.register_blueprint(admin_bp)
 
@@ -241,7 +242,7 @@ def create_app():
 
     # 创建数据库表
     with app.app_context():
-        from app.models import Recording, APIKey
+        from app.models import Recording, APIKey, ReferenceText
 
         # 创建 MySQL 表（如果不存在）
         # db.create_all() 默认会检查表是否存在，只创建不存在的表
