@@ -138,6 +138,9 @@ def _generate_reference_text_async(webhook_url, task_id):
         webhook_url: Dify webhook触发URL
         task_id: 任务ID，用于更新任务状态
     """
+    # 在启动线程前获取app引用，避免在后台线程中使用current_app
+    app = current_app._get_current_object()
+
     def send_request():
         try:
             # 准备请求数据
@@ -162,7 +165,7 @@ def _generate_reference_text_async(webhook_url, task_id):
                 # 这里不更新任务状态，保持processing状态
             else:
                 # Webhook触发失败，更新任务状态为failed
-                with current_app.app_context():
+                with app.app_context():
                     task = GenerationTask.query.get(task_id)
                     if task and task.status == 'processing':
                         task.status = 'failed'
@@ -175,7 +178,7 @@ def _generate_reference_text_async(webhook_url, task_id):
             logger.error(f"Dify Webhook触发异常, 任务ID {task_id}: {e}")
             # 更新任务状态为failed
             try:
-                with current_app.app_context():
+                with app.app_context():
                     task = GenerationTask.query.get(task_id)
                     if task and task.status == 'processing':
                         task.status = 'failed'
