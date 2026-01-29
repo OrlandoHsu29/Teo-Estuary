@@ -1261,6 +1261,28 @@ body {
         padding: 5px;
     }
 
+    .footer-line {
+        flex-wrap: wrap;
+    }
+
+    .footer-line .icp-link:last-child {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .footer-line .icp-separator:last-of-type {
+        display: none;
+    }
+
+    .icp-link {
+        font-size: 10px;
+    }
+
+    .icp-separator {
+        font-size: 10px;
+        margin: 0 6px;
+    }
+
     .icp-text {
         font-size: 8px;
     }

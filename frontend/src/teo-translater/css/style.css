@@ -931,6 +931,19 @@ body {
         padding: 5px;
     }
 
+    .footer-line {
+        flex-wrap: wrap;
+    }
+
+    .footer-line .icp-link:last-child {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .footer-line .icp-separator:last-of-type {
+        display: none;
+    }
+
     .footer-divider {
         width: 220px;
     }
