@@ -287,7 +287,7 @@ body {
 }
 
 /* 分组间隔 - 使用更大的间隙来分隔不同的功能组 */
-.stat-item:nth-child(4)::after {
+.stat-item:nth-child(5)::after {
     /* 审核数据组和参考文本组之间的分隔 */
     content: '';
     position: absolute;
@@ -299,7 +299,7 @@ body {
     background: rgba(153, 153, 170, 0.15);
 }
 
-.stat-item:nth-child(5)::after {
+.stat-item:nth-child(6)::after {
     /* 参考文本组和转录状态组之间的分隔 */
     content: '';
     position: absolute;
@@ -1281,7 +1281,8 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.3rem;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
 }
 
 .key-name {

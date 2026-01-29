@@ -981,6 +981,7 @@ def api_stats():
     """获取统计信息和系统状态"""
     try:
         from app.models import Recording, ReferenceText, GenerationTask
+        from sqlalchemy import func
 
         # 录音数据统计
         total_recordings = Recording.query.count()
@@ -989,6 +990,12 @@ def api_stats():
         rejected_recordings = Recording.query.filter_by(status='rejected').count()
         transcribed_recordings = Recording.query.filter_by(upload_type=1).count()
         reference_count = ReferenceText.query.count()
+
+        # 计算所有已通过音频的总时长（秒）
+        approved_duration_result = db.session.query(
+            func.sum(Recording.duration)
+        ).filter_by(status='approved').first()
+        total_approved_duration = approved_duration_result[0] or 0 if approved_duration_result else 0
 
         yesterday = datetime.now() - timedelta(days=1)
         recent_uploads = Recording.query.filter(
@@ -1030,6 +1037,7 @@ def api_stats():
                 'rejected': rejected_recordings,
                 'transcribed': transcribed_recordings,
                 'reference_count': reference_count,
+                'total_approved_duration': total_approved_duration,
                 'recent_uploads': recent_uploads,
                 'processing_task': processing_task_dict,
                 'emilia': emilia_status

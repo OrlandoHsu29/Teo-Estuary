@@ -118,12 +118,17 @@ function closeCreateKeyModal() {
 // 创建API密钥
 async function createKey() {
     const name = document.getElementById('keyName').value.trim();
-    const description = document.getElementById('keyDescription').value.trim();
+    let description = document.getElementById('keyDescription').value.trim();
     const maxRequests = document.getElementById('maxRequests').value;
 
     if (!name) {
         showToast('请输入密钥名称', 'warning');
         return;
+    }
+
+    // 如果描述为空，默认填充"暂无描述"
+    if (!description) {
+        description = '暂无描述';
     }
 
     try {
@@ -225,7 +230,7 @@ function closeEditKeyModal() {
 async function updateKey() {
     const id = document.getElementById('editKeyId').value;
     const name = document.getElementById('editKeyName').value.trim();
-    const description = document.getElementById('editKeyDescription').value.trim();
+    let description = document.getElementById('editKeyDescription').value.trim();
     const maxRequests = document.getElementById('editMaxRequests').value;
 
     if (!name) {
@@ -236,6 +241,11 @@ async function updateKey() {
     if (!id) {
         showToast('密钥ID无效', 'error');
         return;
+    }
+
+    // 如果描述为空，默认填充"暂无描述"
+    if (!description) {
+        description = '暂无描述';
     }
 
     try {

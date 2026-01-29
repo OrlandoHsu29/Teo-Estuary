@@ -30,6 +30,7 @@ async function initializeStats() {
             updateStatNumber('stat-total', stats.total || 0);
             updateStatNumber('stat-transcribed', stats.transcribed || 0);
             updateStatNumber('stat-reference', stats.reference_count || 0);
+            updateDurationDisplay(stats.total_approved_duration || 0);
         } else {
             // 处理业务逻辑错误
             console.error('统计数据错误:', data.error);
@@ -70,6 +71,7 @@ async function loadStats() {
             updateStatNumber('stat-total', stats.total || 0);
             updateStatNumber('stat-transcribed', stats.transcribed || 0);
             updateStatNumber('stat-reference', stats.reference_count || 0);
+            updateDurationDisplay(stats.total_approved_duration || 0);
 
             // 更新 Emilia 服务状态
             updateEmiliaStatus(stats.emilia);
@@ -262,4 +264,20 @@ function updateReviewCounter() {
         // 优先显示总数据量，如果没有则显示当前页数据量
         totalRecordsElement.textContent = window.totalDataCount || recordingsData.length;
     }
+}
+
+// 更新有效时长显示
+function updateDurationDisplay(totalSeconds) {
+    const element = document.getElementById('stat-duration');
+    if (!element) return;
+
+    // 转换为小时（整数）
+    const totalHours = Math.floor(totalSeconds / 3600);
+
+    // 更新显示
+    element.textContent = totalHours;
+
+    // 设置title属性，鼠标悬停时显示三位小数
+    const totalHoursPrecise = (totalSeconds / 3600).toFixed(3);
+    element.parentElement.title = `总有效时长: ${totalHoursPrecise} 小时`;
 }
