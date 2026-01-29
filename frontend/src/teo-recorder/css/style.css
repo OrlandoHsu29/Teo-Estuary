@@ -1317,6 +1317,11 @@ body {
         animation: none !important;
     }
 
+    /* 禁用屏幕扫描动画 */
+    .power-on .recorder-screen::before {
+        animation: none !important;
+    }
+
     /* 简化阴影和过渡 */
     .recorder-body {
         box-shadow:
