@@ -101,10 +101,10 @@ class DialectRecorder {
             // 禁用所有按钮并显示生成状态
             this.setAllButtonsDisabled(true);
             this.elements.textDisplay.textContent = '......';
-            this.updateStatus('正在生成句子', 'processing');
+            this.updateStatus('正在获取参考文本', 'processing');
 
-            const response = await fetch(`${API_BASE_URL}/api/generate-text`, {
-                method: 'POST',
+            const response = await fetch(`${API_BASE_URL}/api/reference-text/random?count=1`, {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-API-Key': apiKey
@@ -128,7 +128,13 @@ class DialectRecorder {
             }
 
             const data = await response.json();
-            this.currentText = data.text;
+
+            // 检查返回的数据是否有效
+            if (!data.success || !data.data || data.data.length === 0) {
+                throw new Error('暂无可用的参考文本，请联系管理员添加');
+            }
+
+            this.currentText = data.data[0].discourse;
             this.elements.textDisplay.textContent = this.currentText;
             this.fullResetRecording(); // 使用完全重置
 

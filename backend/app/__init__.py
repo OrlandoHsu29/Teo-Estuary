@@ -166,10 +166,6 @@ def create_app():
     app.config['DATA_FOLDER'] = str(BACKEND_ROOT / 'data')
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
-    # 硅基流动API配置
-    app.config['SILICONFLOW_API_KEY'] = os.environ.get('SILICONFLOW_API_KEY', 'sk-dqfrbwdryedhuzxwtgdzfffxjstlkkjgenatmuwmembcdjhb')
-    app.config['SILICONFLOW_BASE_URL'] = 'https://api.siliconflow.cn/v1'
-
     # Dify Webhook配置（用于生成参考文本）
     app.config['DIFY_WEBHOOK_URL'] = os.environ.get('DIFY_WEBHOOK_URL', 'your-Dify-workflow-webhook-trigger-URL')
 
@@ -267,10 +263,6 @@ def create_app():
             logger.info("teo_g2p database tables initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize teo_g2p database: {e}")
-
-        # 初始化AI文本生成器
-        from app.ai_generator import create_text_generator
-        app.text_generator = create_text_generator(api_key=app.config['SILICONFLOW_API_KEY'])
 
     return app
 

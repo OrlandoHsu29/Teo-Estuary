@@ -63,7 +63,7 @@ def api_get_reference_text(key_obj):
 @reference_bp.route('/api/reference-text/random', methods=['GET'])
 @api_key_required_with_rate_limit(hourly_limit=50, daily_limit=200)
 def api_get_random_reference_text(key_obj):
-    """随机获取一条参考话语
+    """随机获取一条参考话语（获取后自动删除，一次性使用）
 
     查询参数:
     - count: 获取数量，默认1，最多10条
@@ -90,6 +90,7 @@ def api_get_random_reference_text(key_obj):
             })
 
         results = []
+        item_ids = []
         used_indices = set()
 
         for _ in range(count):
@@ -106,6 +107,13 @@ def api_get_random_reference_text(key_obj):
             item = ReferenceText.query.offset(random_offset).first()
             if item:
                 results.append(item.to_dict())
+                item_ids.append(item.id)
+
+        # 删除已获取的记录（一次性使用）
+        if item_ids:
+            ReferenceText.query.filter(ReferenceText.id.in_(item_ids)).delete(synchronize_session=False)
+            db.session.commit()
+            logger.info(f"已删除 {len(item_ids)} 条已使用的参考话语")
 
         return jsonify({
             'success': True,
@@ -114,6 +122,7 @@ def api_get_random_reference_text(key_obj):
 
     except Exception as e:
         logger.error(f"获取随机参考话语失败: {e}")
+        db.session.rollback()
         return jsonify({
             'success': False,
             'error': '获取随机话语失败，请重试'

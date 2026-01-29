@@ -41,7 +41,6 @@ services:
       - REDIS_PORT=6379
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - DEBUG=${DEBUG:-False}
-      - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY:-}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-your-admin-password}
       - ENABLE_RATE_LIMITER=${ENABLE_RATE_LIMITER:-False}
