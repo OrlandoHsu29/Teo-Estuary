@@ -1,7 +1,6 @@
 """参考话语API蓝图"""
 from flask import Blueprint, jsonify, request, current_app
 import logging
-import threading
 import requests
 import json
 from sqlalchemy.exc import IntegrityError
@@ -129,76 +128,12 @@ def api_get_random_reference_text(key_obj):
         }), 500
 
 
-def _generate_reference_text_async(webhook_url, task_id):
-    """后台线程函数：调用Dify Webhook触发参考文本生成
-
-    这个函数会在后台线程中运行，不阻塞主线程的响应
-
-    Args:
-        webhook_url: Dify webhook触发URL
-        task_id: 任务ID，用于更新任务状态
-    """
-    # 在启动线程前获取app引用，避免在后台线程中使用current_app
-    app = current_app._get_current_object()
-
-    def send_request():
-        try:
-            # 准备请求数据
-            data = {
-                'task_id': task_id
-            }
-
-            headers = {
-                'Content-Type': 'application/json'
-            }
-
-            logger.info(f"触发Dify Webhook: {webhook_url}, 任务ID: {task_id}")
-            logger.info(f"请求数据: {data}")
-
-            # 发送POST请求触发Dify工作流
-            response = requests.post(webhook_url, json=data, headers=headers, timeout=30)
-            logger.info(f"Dify Webhook响应状态码: {response.status_code}, 任务ID: {task_id}")
-
-            if response.status_code == 201:
-                logger.info(f"Dify Webhook触发成功, 任务ID: {task_id}")
-                # Dify已成功触发，等待Dify通过webhook回调更新任务状态
-                # 这里不更新任务状态，保持processing状态
-            else:
-                # Webhook触发失败，更新任务状态为failed
-                with app.app_context():
-                    task = GenerationTask.query.get(task_id)
-                    if task and task.status == 'processing':
-                        task.status = 'failed'
-                        task.error_message = f"触发失败: HTTP {response.status_code}"
-                        task.completed_time = task.updated_time
-                        db.session.commit()
-                        logger.error(f"任务 {task_id} Webhook触发失败: {response.status_code}")
-
-        except Exception as e:
-            logger.error(f"Dify Webhook触发异常, 任务ID {task_id}: {e}")
-            # 更新任务状态为failed
-            try:
-                with app.app_context():
-                    task = GenerationTask.query.get(task_id)
-                    if task and task.status == 'processing':
-                        task.status = 'failed'
-                        task.error_message = str(e)
-                        task.completed_time = task.updated_time
-                        db.session.commit()
-            except:
-                pass
-
-    # 在新线程中执行请求
-    thread = threading.Thread(target=send_request, daemon=True)
-    thread.start()
-
-
 @reference_bp.route('/api/reference-text/generate', methods=['GET'])
 @admin_required
 def api_generate_reference_text():
     """触发生成参考文本的异步任务（需要管理员权限）
 
-    此接口会立即返回任务信息，实际的Dify Webhook触发在后台线程中执行
+    此接口会先调用Dify Webhook，成功后再创建任务
 
     如果存在正在处理中的任务，则不会创建新任务
 
@@ -228,15 +163,47 @@ def api_generate_reference_text():
                 'task': processing_task.to_dict()
             })
 
-        # 创建新任务
+        # 先创建任务（用于获取task_id）
         task = GenerationTask(status='processing')
         db.session.add(task)
         db.session.commit()
+        task_id = task.id
 
-        logger.info(f"创建新任务: {task.id}")
+        # 同步调用Dify Webhook
+        data = {
+            'task_id': task_id
+        }
+        headers = {
+            'Content-Type': 'application/json'
+        }
 
-        # 在后台线程中触发Dify Webhook
-        _generate_reference_text_async(webhook_url, task.id)
+        logger.info(f"触发Dify Webhook: {webhook_url}, 任务ID: {task_id}")
+
+        try:
+            response = requests.post(webhook_url, json=data, headers=headers, timeout=30)
+            logger.info(f"Dify Webhook响应状态码: {response.status_code}, 任务ID: {task_id}")
+
+            if response.status_code not in [200, 201]:
+                # Dify调用失败，删除任务并返回错误
+                db.session.delete(task)
+                db.session.commit()
+                logger.error(f"Dify Webhook调用失败: {response.status_code}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Dify服务返回错误: HTTP {response.status_code}'
+                }), 500
+
+        except Exception as e:
+            # Dify调用失败，删除任务并返回错误
+            db.session.delete(task)
+            db.session.commit()
+            logger.error(f"Dify Webhook调用异常: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'调用Dify服务失败: {str(e)}'
+            }), 500
+
+        logger.info(f"Dify Webhook触发成功, 任务ID: {task_id}")
 
         return jsonify({
             'success': True,
