@@ -251,22 +251,46 @@ body {
     text-align: center;
 }
 
-/* 状态指示点 */
+/* 状态指示点 - 默认黄色（检查中） */
 .status-dot {
     width: 8px;
     height: 8px;
-    background: #00ff88;
+    background: #ffaa00;
     border-radius: 50%;
     position: absolute;
     top: 20px;
     right: 20px;
+    box-shadow: 0 0 10px #ffaa00;
+    animation: statusPulseOrange 2s ease-in-out infinite;
+}
+
+/* 健康状态 - 绿色 */
+.status-dot.healthy {
+    background: #00ff88;
     box-shadow: 0 0 10px #00ff88;
     animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* 不健康状态 - 红色 */
+.status-dot.unhealthy {
+    background: #ff4444;
+    box-shadow: 0 0 10px #ff4444;
+    animation: statusPulseRed 2s ease-in-out infinite;
 }
 
 @keyframes statusPulse {
     0%, 100% { box-shadow: 0 0 10px #00ff88; }
     50% { box-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88; }
+}
+
+@keyframes statusPulseRed {
+    0%, 100% { box-shadow: 0 0 10px #ff4444; }
+    50% { box-shadow: 0 0 20px #ff4444, 0 0 30px #ff4444; }
+}
+
+@keyframes statusPulseOrange {
+    0%, 100% { box-shadow: 0 0 10px #ffaa00; }
+    50% { box-shadow: 0 0 20px #ffaa00, 0 0 30px #ffaa00; }
 }
 
 /* 底部信息 */

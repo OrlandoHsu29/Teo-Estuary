@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olndio - Orlando's Studio</title>
+    <title>Teo Estuary - 潮汇语料收集平台</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="./js/config.js"></script>
     <link rel="stylesheet" href="./css/toast.css">
@@ -36,28 +36,28 @@
 
         <div class="title-section">
             <h1 class="main-title">潮汇</h1>
-            <h2 class="main-title">Teo-Estuary</h2>
+            <h2 class="main-title">Teo Estuary</h2>
             <p class="main-subtitle">潮汕话语料收集平台</span></p>
         </div>
 
 
         <div class="projects-grid">
             <a href="./teo-recorder/index.html" class="option-card">
-                <span class="status-dot"></span>
+                <span class="status-dot" id="status-recorder"></span>
                 <div class="option-icon">R</div>
                 <h3 class="option-title">Teo Recorder</h3>
                 <p class="option-description">潮汕话录音应用<br>人工录制潮汕话数据集</p>
             </a>
 
             <a href="./teo-translater/index.html" class="option-card">
-                <span class="status-dot"></span>
+                <span class="status-dot" id="status-asr"></span>
                 <div class="option-icon">T</div>
                 <h3 class="option-title">Teo Translater</h3>
                 <p class="option-description">潮汕话翻译器<br>当前阶段的潮汕话ASR效果展示</p>
             </a>
 
             <a href="./teo-phonograph/index.html" class="option-card">
-                <span class="status-dot"></span>
+                <span class="status-dot" id="status-emilia"></span>
                 <div class="option-icon">P</div>
                 <h3 class="option-title">Teo Phonograph</h3>
                 <p class="option-description">潮汕话音频处理<br>将潮汕话音频转录为数据集</p>
@@ -149,6 +149,111 @@
     </div>
 
     <script>
+
+        // 服务健康检查功能
+        async function checkServiceHealth() {
+            const recorderStatusDot = document.getElementById('status-recorder');
+            const asrStatusDot = document.getElementById('status-asr');
+            const emiliaStatusDot = document.getElementById('status-emilia');
+
+            // 首先验证 API key
+            const apiKey = localStorage.getItem('apiKey');
+
+            if (!apiKey) {
+                // 没有 API key，所有状态点设为红色
+                if (recorderStatusDot) recorderStatusDot.className = 'status-dot unhealthy';
+                if (asrStatusDot) asrStatusDot.className = 'status-dot unhealthy';
+                if (emiliaStatusDot) emiliaStatusDot.className = 'status-dot unhealthy';
+                return;
+            }
+
+            // 验证 API key 是否有效
+            try {
+                const response = await fetch(`${KeyManager.API_BASE_URL}/api/validate-key`, {
+                    method: 'GET',
+                    headers: {
+                        'X-API-Key': apiKey
+                    },
+                    signal: AbortSignal.timeout(10000) // 10秒超时
+                });
+
+                if (!response.ok) {
+                    // API key 无效，所有状态点设为红色
+                    if (recorderStatusDot) recorderStatusDot.className = 'status-dot unhealthy';
+                    if (asrStatusDot) asrStatusDot.className = 'status-dot unhealthy';
+                    if (emiliaStatusDot) emiliaStatusDot.className = 'status-dot unhealthy';
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data.success || !data.valid) {
+                    // API key 验证失败，所有状态点设为红色
+                    if (recorderStatusDot) recorderStatusDot.className = 'status-dot unhealthy';
+                    if (asrStatusDot) asrStatusDot.className = 'status-dot unhealthy';
+                    if (emiliaStatusDot) emiliaStatusDot.className = 'status-dot unhealthy';
+                    return;
+                }
+
+                // API key 验证通过
+                // Teo Recorder 直接设为绿色
+                if (recorderStatusDot) recorderStatusDot.className = 'status-dot healthy';
+
+            } catch (error) {
+                console.warn('API key 验证失败:', error);
+                // 验证出错，所有状态点设为红色
+                if (recorderStatusDot) recorderStatusDot.className = 'status-dot unhealthy';
+                if (asrStatusDot) asrStatusDot.className = 'status-dot unhealthy';
+                if (emiliaStatusDot) emiliaStatusDot.className = 'status-dot unhealthy';
+                return;
+            }
+
+            // API key 验证通过后，检查 ASR 服务健康状态
+            try {
+                const response = await fetch(`${KeyManager.API_BASE_URL}/api/asr/health`, {
+                    method: 'GET',
+                    headers: {
+                        'X-API-Key': apiKey
+                    },
+                    signal: AbortSignal.timeout(10000) // 10秒超时
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'healthy' || response.status === 200) {
+                        asrStatusDot.className = 'status-dot healthy';
+                    } else {
+                        asrStatusDot.className = 'status-dot unhealthy';
+                    }
+                } else {
+                    asrStatusDot.className = 'status-dot unhealthy';
+                }
+            } catch (error) {
+                console.warn('ASR服务健康检查失败:', error);
+                asrStatusDot.className = 'status-dot unhealthy';
+            }
+
+            // 检查 Emilia 服务健康状态
+            try {
+                const response = await fetch(`${KeyManager.API_BASE_URL}/teo_emilia_health`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(10000) // 10秒超时
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'healthy' || response.status === 200) {
+                        emiliaStatusDot.className = 'status-dot healthy';
+                    } else {
+                        emiliaStatusDot.className = 'status-dot unhealthy';
+                    }
+                } else {
+                    emiliaStatusDot.className = 'status-dot unhealthy';
+                }
+            } catch (error) {
+                console.warn('Emilia服务健康检查失败:', error);
+                emiliaStatusDot.className = 'status-dot unhealthy';
+            }
+        }
 
         // 简介弹窗功能
         function openIntroModal() {
@@ -295,6 +400,9 @@
 
             // 验证API密钥并显示状态
             await validateAndShowKeyStatus();
+
+            // 检查服务健康状态
+            await checkServiceHealth();
 
             // 检查是否需要打开密钥配置
             checkOpenKeyConfig();
