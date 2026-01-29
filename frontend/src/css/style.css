@@ -783,13 +783,19 @@ body {
 }
 
 @media (max-width: 1024px) {
-    .main-title {
-        font-size: 6.5rem;
-        letter-spacing: 4px;
-        margin-top: 200px;
-
+    .title-section h1 {
+        font-size: 8rem;
+        letter-spacing: 2px;
+    }
+    .title-section h2 {
+        font-size: 2rem;
+        letter-spacing: 2px;
     }
 
+    .main-subtitle {
+        margin-bottom: 100px;
+
+    }
     .key-config-btn {
         position: absolute;
         top: 140px;
@@ -799,10 +805,6 @@ body {
     }
 
 
-    .main-subtitle {
-        margin-bottom: 150px;
-
-    }
 
     .projects-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -811,11 +813,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .main-title {
-        font-size: 5.5rem;
-        letter-spacing: 4px;
-        margin-top: 120px;
-    }
+
 
     
     .key-config-btn {
@@ -826,12 +824,6 @@ body {
         height: 50px;
     }
 
-    .main-subtitle {
-        font-size: 1rem;
-        letter-spacing: 2px;
-        margin-bottom: 100px;
-
-    }
 
     .projects-grid {
         grid-template-columns: 1fr;
@@ -869,10 +861,8 @@ body {
 }
 
 @media (max-width: 480px) {
-    .main-title {
-        font-size: 4.5rem;
-        letter-spacing: 2px;
-    }
+
+
 
     .key-config-btn {
         position: absolute;
@@ -904,6 +894,19 @@ body {
 
     .footer-divider {
         width: 220px;
+    }
+
+    .footer-line {
+        flex-wrap: wrap;
+    }
+
+    .footer-line .icp-link:last-child {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .footer-line .icp-separator:last-of-type {
+        display: none;
     }
 
     .icp-link {
