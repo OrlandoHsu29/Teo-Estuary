@@ -375,3 +375,61 @@ document.addEventListener("DOMContentLoaded", function() {
     }, 1000);
 });
 
+// ==================== 参考文本生成功能 ====================
+
+// 生成参考文本功能
+async function generateReferenceText() {
+    const generateBtn = document.getElementById("referenceGenerateBtn");
+    const generateText = document.getElementById("referenceGenerateText");
+
+    if (!generateBtn || !generateText) return;
+
+    // 检查是否正在处理中
+    if (generateBtn.disabled) {
+        showToast("任务正在处理中，请稍候", "warning");
+        return;
+    }
+
+    // 禁用按钮，显示状态
+    generateBtn.disabled = true;
+    generateText.textContent = "生成中...";
+
+    try {
+        const response = await fetch("/api/reference-text/generate", {
+            method: "GET"
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            generateText.textContent = "已触发";
+            showToast(result.message || "参考文本生成任务已启动", "success");
+
+            // 3秒后恢复按钮状态
+            setTimeout(() => {
+                generateBtn.disabled = false;
+                generateText.textContent = "生成文本";
+                // 刷新统计数据
+                if (typeof loadStats === 'function') {
+                    loadStats();
+                }
+            }, 3000);
+        } else {
+            throw new Error(result.error || "生成失败");
+        }
+
+    } catch (error) {
+        console.error("生成参考文本失败:", error);
+        generateText.textContent = "失败";
+        generateBtn.disabled = false;
+        setTimeout(() => {
+            generateText.textContent = "生成文本";
+        }, 2000);
+        showToast("生成参考文本失败: " + error.message, "error");
+    }
+}
+

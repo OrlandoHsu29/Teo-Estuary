@@ -6,6 +6,7 @@ import requests
 import json
 from sqlalchemy.exc import IntegrityError
 from app.utils.combined_decorators import api_key_required_with_rate_limit
+from app.utils.decorators import admin_required
 from app import db
 from app.models import ReferenceText, GenerationTask
 
@@ -181,9 +182,9 @@ def _generate_reference_text_async(webhook_url, task_id):
 
 
 @reference_bp.route('/api/reference-text/generate', methods=['GET'])
-@api_key_required_with_rate_limit(hourly_limit=10, daily_limit=20)
-def api_generate_reference_text(key_obj):
-    """触发生成参考文本的异步任务
+@admin_required
+def api_generate_reference_text():
+    """触发生成参考文本的异步任务（需要管理员权限）
 
     此接口会立即返回任务信息，实际的Dify Webhook触发在后台线程中执行
 

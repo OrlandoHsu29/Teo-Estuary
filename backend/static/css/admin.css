@@ -276,12 +276,39 @@ body {
 .stats {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 1.5rem;
 }
 
 .stats-container {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
+    gap: 2rem;
+}
+
+/* 分组间隔 - 使用更大的间隙来分隔不同的功能组 */
+.stat-item:nth-child(4)::after {
+    /* 审核数据组和参考文本组之间的分隔 */
+    content: '';
+    position: absolute;
+    right: -1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 32px;
+    background: rgba(153, 153, 170, 0.15);
+}
+
+.stat-item:nth-child(5)::after {
+    /* 参考文本组和转录状态组之间的分隔 */
+    content: '';
+    position: absolute;
+    right: -1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 32px;
+    background: rgba(153, 153, 170, 0.15);
 }
 
 .stat-item {
@@ -329,16 +356,58 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* 简单的分隔符 */
-.stat-item:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    right: -1.25rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1px;
-    height: 24px;
-    background: rgba(153, 153, 170, 0.2);
+/* 操作按钮组 */
+.stats-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 0.5rem;
+}
+
+/* 参考文本生成按钮 */
+.reference-generate-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(145deg, #667788, #556677);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow:
+        4px 4px 8px rgba(0, 0, 0, 0.3),
+        -2px -2px 4px rgba(255, 255, 255, 0.05),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.reference-generate-action:hover:not(:disabled) {
+    background: linear-gradient(145deg, #6c7f92, #5e7083);
+    transform: translateY(-2px);
+    box-shadow:
+        6px 6px 12px rgba(0, 0, 0, 0.4),
+        -2px -2px 4px rgba(255, 255, 255, 0.05);
+}
+
+.reference-generate-action:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.reference-generate-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reference-generate-action i {
+    font-size: 14px;
+}
+
+/* 参考文本数量特殊颜色（默认主题色，JS会根据数量动态调整） */
+.reference-stat .stat-number {
+    color: #00ffff;
 }
 
 /* 按钮样式 */
@@ -5949,7 +6018,6 @@ textarea::-webkit-scrollbar-thumb:hover {
         4px 4px 8px rgba(0, 0, 0, 0.3),
         -2px -2px 4px rgba(255, 255, 255, 0.05),
         inset 1px 1px 2px rgba(255, 255, 255, 0.1);
-    margin-left: 20px;
 }
 
 .emilia-import-action:hover:not(:disabled) {
@@ -5995,12 +6063,13 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 /* 响应式调整 */
 @media (max-width: 1200px) {
-    .emilia-import-action span {
+    .emilia-import-action span,
+    .reference-generate-action span {
         display: none;
     }
-    
-    .emilia-import-action {
+
+    .emilia-import-action,
+    .reference-generate-action {
         padding: 12px;
-        margin-left: 10px;
     }
 }

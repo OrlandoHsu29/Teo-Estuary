@@ -980,13 +980,14 @@ def api_batch_update_text(key_obj):
 def api_stats():
     """获取统计信息"""
     try:
-        from app.models import Recording
+        from app.models import Recording, ReferenceText
 
         total_recordings = Recording.query.count()
         pending_recordings = Recording.query.filter_by(status='pending').count()
         approved_recordings = Recording.query.filter_by(status='approved').count()
         rejected_recordings = Recording.query.filter_by(status='rejected').count()
         transcribed_recordings = Recording.query.filter_by(upload_type=1).count()
+        reference_count = ReferenceText.query.count()
 
         yesterday = datetime.now() - timedelta(days=1)  # 使用中国时间
         recent_uploads = Recording.query.filter(
@@ -1001,6 +1002,7 @@ def api_stats():
                 'approved': approved_recordings,
                 'rejected': rejected_recordings,
                 'transcribed': transcribed_recordings,
+                'reference_count': reference_count,
                 'recent_uploads': recent_uploads
             }
         })

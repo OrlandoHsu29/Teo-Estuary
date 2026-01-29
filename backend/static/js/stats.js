@@ -29,6 +29,7 @@ async function initializeStats() {
             updateStatNumber('stat-rejected', stats.rejected || 0);
             updateStatNumber('stat-total', stats.total || 0);
             updateStatNumber('stat-transcribed', stats.transcribed || 0);
+            updateStatNumber('stat-reference', stats.reference_count || 0);
         } else {
             // 处理业务逻辑错误
             console.error('统计数据错误:', data.error);
@@ -68,6 +69,7 @@ async function loadStats() {
             updateStatNumber('stat-rejected', stats.rejected || 0);
             updateStatNumber('stat-total', stats.total || 0);
             updateStatNumber('stat-transcribed', stats.transcribed || 0);
+            updateStatNumber('stat-reference', stats.reference_count || 0);
         } else {
             console.error('统计数据错误:', data.error);
             showToast(data.error || '更新统计数据失败', 'error');
@@ -100,6 +102,17 @@ function updateStatNumber(elementId, newValue) {
     setTimeout(() => {
         element.classList.remove('updating');
     }, 300);
+
+    // 参考文本数量特殊颜色处理
+    if (elementId === 'stat-reference') {
+        if (newValue <= 20) {
+            element.style.color = '#ff4d4f'; // 红色
+        } else if (newValue <= 100) {
+            element.style.color = '#FBC55B'; // 黄色
+        } else {
+            element.style.color = '#00ffff'; // 主题色
+        }
+    }
 }
 
 // 更新记录计数器
