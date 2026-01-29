@@ -405,6 +405,20 @@ body {
     font-size: 14px;
 }
 
+.reference-generate-action svg {
+    width: 16px;
+    height: 16px;
+}
+
+.emilia-import-action i {
+    font-size: 14px;
+}
+
+.emilia-import-action svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* 参考文本数量特殊颜色（默认主题色，JS会根据数量动态调整） */
 .reference-stat .stat-number {
     color: #00ffff;
@@ -5784,13 +5798,11 @@ textarea::-webkit-scrollbar-thumb:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 25px;
-    padding: 30px;
     max-width: 1400px;
     margin: 0 auto;
     /* 垂直居中 */
     align-items: center;
     height:85%;
-    padding-top: 0px;
 
 }
 

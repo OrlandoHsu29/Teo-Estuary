@@ -39,3 +39,23 @@ async function exportTrainDataset() {
         showToast('导出失败', 'error');
     }
 }
+
+// 导出数据库SQL备份
+async function exportDatabaseSQL() {
+    try {
+        showToast('正在生成SQL文件...', 'info');
+
+        // 创建一个隐藏的a标签来触发下载
+        const link = document.createElement('a');
+        link.href = '/admin/api/export/database-sql';
+        link.download = `teo_estuary_backup_${new Date().toISOString().slice(0,10)}.sql`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('SQL文件导出成功', 'success');
+    } catch (error) {
+        console.error('导出数据库SQL失败:', error);
+        showToast('导出失败', 'error');
+    }
+}

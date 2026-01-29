@@ -23,9 +23,8 @@
                 <ul>
                     <li class="nav-item active" data-section="review">
                         <a href="#" class="nav-link">
-                            <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100-4h2a1 1 0 100-2 2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H6z"/>
+                            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             <span>音频数据审核</span>
                         </a>
@@ -80,9 +79,13 @@
                             </svg>
                         </button>
                         <button class="toggle-view-btn subtle" onclick="toggleView()">
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100-4h2a1 1 0 100-2 2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V5a2 2 0 00-2-2H6z"/>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"/>
+                                <line x1="8" y1="12" x2="21" y2="12"/>
+                                <line x1="8" y1="18" x2="21" y2="18"/>
+                                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                                <line x1="3" y1="18" x2="3.01" y2="18"/>
                             </svg>
                             <span>列表视图</span>
                         </button>
@@ -141,7 +144,10 @@
 
                             <!-- 参考文本生成按钮 -->
                             <button class="reference-generate-action" id="referenceGenerateBtn" onclick="generateReferenceText()" title="生成参考文本">
-                                <i class="fas fa-magic"></i>
+                                <svg class="action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" width="20" height="20">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 16h6M9 8h6"/>
+                                    <rect x="5" y="4" width="16" height="20" rx="2"/>
+                                </svg>
                                 <span id="referenceGenerateText">生成文本</span>
                             </button>
                         </div>
@@ -656,6 +662,29 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
                                 <span>导出模型训练数据集</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="export-card">
+                        <div class="export-card-header">
+                            <div class="export-icon">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                                    <path d="M21 12c0 1.66-3.34 3-9 3s-9-1.34-9-3"/>
+                                    <path d="M3 5v14c0 1.66 3.34 3 9 3s9-1.34 9-3"/>
+                                    <path d="M21 5v14"/>
+                                </svg>
+                            </div>
+                            <h2>数据库SQL备份</h2>
+                        </div>
+                        <div class="export-card-body">
+                            <p class="export-description">导出所有数据库表的数据为SQL文件，包含录音数据、参考文本、API密钥等，用于数据备份和迁移。</p>
+                            <button class="export-btn" onclick="exportDatabaseSQL()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>导出数据库SQL</span>
                             </button>
                         </div>
                     </div>

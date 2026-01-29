@@ -1127,3 +1127,109 @@ def export_jieba_dict():
     except Exception as e:
         logger.error(f"Export jieba dictionary error: {e}")
         return jsonify({'error': '导出失败'}), 500
+
+
+@recordings_bp.route('/admin/api/export/database-sql', methods=['GET'])
+@admin_required
+def export_database_sql():
+    """导出数据库所有数据为SQL文件"""
+    try:
+        from app.models import Recording, ReferenceText, APIKey, GenerationTask
+        from app.utils.timezone import format_time
+        from sqlalchemy import inspect
+
+        sql_lines = []
+        sql_lines.append("-- Teo Estuary Database Export")
+        sql_lines.append(f"-- Export Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        sql_lines.append("-- This file contains all data from the database")
+        sql_lines.append("-- Execute this file to restore/import the data")
+        sql_lines.append("")
+        sql_lines.append("SET FOREIGN_KEY_CHECKS = 0;")
+        sql_lines.append("")
+
+        # 导出 recordings 表
+        sql_lines.append("-- ============================================")
+        sql_lines.append("-- Table: recordings")
+        sql_lines.append("-- ============================================")
+        recordings = Recording.query.all()
+        if recordings:
+            for r in recordings:
+                # 转义单引号
+                mandarin_text_escaped = r.mandarin_text.replace("'", "''") if r.mandarin_text else ''
+                teochew_text_escaped = r.teochew_text.replace("'", "''") if r.teochew_text else None
+                file_path_escaped = r.file_path.replace("'", "''") if r.file_path else ''
+                user_agent_escaped = r.user_agent.replace("'", "''") if r.user_agent else None
+
+                teochew_sql = f"NULL" if teochew_text_escaped is None else f"'{teochew_text_escaped}'"
+                user_agent_sql = f"NULL" if user_agent_escaped is None else f"'{user_agent_escaped}'"
+                reviewed_at_sql = f"'{r.reviewed_at.isoformat()}'" if r.reviewed_at else 'NULL'
+                ip_address_sql = r.ip_address if r.ip_address else ''
+
+                sql_lines.append(f"INSERT INTO recordings (id, file_path, mandarin_text, teochew_text, upload_time, ip_address, user_agent, file_size, duration, status, upload_type, reviewed_at) VALUES ('{r.id}', '{file_path_escaped}', '{mandarin_text_escaped}', {teochew_sql}, '{r.upload_time.isoformat()}', '{ip_address_sql}', {user_agent_sql}, {r.file_size}, {r.duration}, '{r.status}', {r.upload_type}, {reviewed_at_sql});")
+
+        sql_lines.append("")
+
+        # 导出 reference_text 表
+        sql_lines.append("-- ============================================")
+        sql_lines.append("-- Table: reference_text")
+        sql_lines.append("-- ============================================")
+        refs = ReferenceText.query.all()
+        if refs:
+            for ref in refs:
+                discourse_escaped = ref.discourse.replace("'", "''")
+                sql_lines.append(f"INSERT INTO reference_text (id, discourse, created_time) VALUES ({ref.id}, '{discourse_escaped}', '{ref.created_time.isoformat()}');")
+
+        sql_lines.append("")
+
+        # 导出 api_keys 表
+        sql_lines.append("-- ============================================")
+        sql_lines.append("-- Table: api_keys")
+        sql_lines.append("-- ============================================")
+        api_keys = APIKey.query.all()
+        if api_keys:
+            for key in api_keys:
+                name_escaped = key.name.replace("'", "''")
+                description_escaped = key.description.replace("'", "''") if key.description else None
+                description_sql = f"NULL" if description_escaped is None else f"'{description_escaped}'"
+                is_active_sql = 1 if key.is_active else 0
+                last_used_sql = f"'{key.last_used.isoformat()}'" if key.last_used else 'NULL'
+
+                sql_lines.append(f"INSERT INTO api_keys (id, name, key, description, is_active, created_time, last_used, usage_count, max_requests) VALUES ({key.id}, '{name_escaped}', '{key.key}', {description_sql}, {is_active_sql}, '{key.created_time.isoformat()}', {last_used_sql}, {key.usage_count}, {key.max_requests});")
+
+        sql_lines.append("")
+
+        # 导出 generation_tasks 表
+        sql_lines.append("-- ============================================")
+        sql_lines.append("-- Table: generation_tasks")
+        sql_lines.append("-- ============================================")
+        tasks = GenerationTask.query.all()
+        if tasks:
+            for task in tasks:
+                result_escaped = task.result.replace("'", "''") if task.result else None
+                error_escaped = task.error_message.replace("'", "''") if task.error_message else None
+
+                result_sql = f"NULL" if result_escaped is None else f"'{result_escaped}'"
+                error_sql = f"NULL" if error_escaped is None else f"'{error_escaped}'"
+                completed_time_sql = f"'{task.completed_time.isoformat()}'" if task.completed_time else 'NULL'
+
+                sql_lines.append(f"INSERT INTO generation_tasks (id, status, result, error_message, created_time, updated_time, completed_time) VALUES ({task.id}, '{task.status}', {result_sql}, {error_sql}, '{task.created_time.isoformat()}', '{task.updated_time.isoformat()}', {completed_time_sql});")
+
+        sql_lines.append("")
+        sql_lines.append("SET FOREIGN_KEY_CHECKS = 1;")
+
+        # 生成SQL内容
+        sql_content = '\n'.join(sql_lines)
+
+        logger.info(f"Exported database SQL: {len(recordings)} recordings, {len(refs)} reference texts, {len(api_keys)} API keys, {len(tasks)} tasks")
+
+        return Response(
+            sql_content,
+            mimetype='text/plain',
+            headers={
+                'Content-Disposition': f'attachment; filename=teo_estuary_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.sql'
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Export database SQL error: {e}")
+        return jsonify({'error': '导出失败'}), 500
