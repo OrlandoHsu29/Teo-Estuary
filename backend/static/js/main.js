@@ -200,94 +200,6 @@ function deleteCurrentRecording() {
 
 // ==================== Emilia 服务控制台功能 ====================
 
-// Emilia 健康检查和待处理素材检查
-async function checkEmiliaHealth() {
-    try {
-        const response = await fetch("/teo_emilia_health");
-        const result = await response.json();
-
-        const healthDot = document.getElementById("emiliaHealthDot");
-        const pendingNumber = document.getElementById("emiliaPendingNumber");
-        const importBtn = document.getElementById("emiliaImportBtn");
-        const importText = document.getElementById("emiliaImportText");
-
-        if (result.status === "healthy") {
-            // 服务健康 - 绿色
-            healthDot.className = "health-dot online";
-
-            // 待处理素材
-            const pendingCount = result.pending_count || 0;
-            pendingNumber.textContent = pendingCount;
-
-            if (pendingCount > 0) {
-                pendingNumber.style.color = "#D7AD59";
-            } else {
-                pendingNumber.style.color = "#5EE11E";
-            }
-
-            // 检查批处理任务状态
-            const batchTask = result.batch_task;
-
-            if (batchTask && importBtn && importText) {
-                if (batchTask.status === 'processing' || batchTask.status === 'pending') {
-                    // 任务正在处理中
-                    importBtn.disabled = true;
-                    const processed = batchTask.processed_files || 0;
-                    const total = batchTask.total_files || 0;
-                    importText.textContent = total > 0 ? `转录中 ${processed}/${total}` : "转录中...";
-                } else if (batchTask.status === 'completed') {
-                    // 任务完成
-                    // 只有当pendingCount大于0时才启用按钮
-                    importBtn.disabled = pendingCount === 0;
-                    // 不再显示成功条数，因为已转录数量会自动增加
-                    importText.textContent = "数据转录";
-                    // 刷新统计数据以更新已转录数量
-                    if (typeof loadStats === 'function') {
-                        loadStats();
-                    }
-                } else if (batchTask.status === 'failed') {
-                    // 任务失败
-                    // 只有当pendingCount大于0时才启用按钮
-                    importBtn.disabled = pendingCount === 0;
-                    importText.textContent = "转录失败";
-                    setTimeout(() => {
-                        importText.textContent = "数据转录";
-                    }, 3000);
-                } else {
-                    // 无任务或其他状态
-                    // 只有当pendingCount大于0时才启用按钮
-                    importBtn.disabled = pendingCount === 0;
-                    if (importText.textContent.includes("转录中")) {
-                        importText.textContent = "数据转录";
-                    }
-                }
-            } else if (importBtn && importText) {
-                // 没有批处理任务
-                // 只有当pendingCount大于0时才启用按钮
-                importBtn.disabled = pendingCount === 0;
-                if (importText.textContent.includes("转录中")) {
-                    importText.textContent = "数据转录";
-                }
-            }
-        } else {
-            // 服务异常 - 红色
-            healthDot.className = "health-dot offline";
-            pendingNumber.textContent = "X";
-            pendingNumber.style.color = "#FF4D4F";
-        }
-
-    } catch (error) {
-        console.error("Emilia 健康检查失败:", error);
-        const healthDot = document.getElementById("emiliaHealthDot");
-        const pendingNumber = document.getElementById("emiliaPendingNumber");
-
-        // 连接失败 - 红色
-        healthDot.className = "health-dot offline";
-        pendingNumber.textContent = "X";
-        pendingNumber.style.color = "#FF4D4F";
-    }
-}
-
 // 数据转录功能
 async function importEmiliaData() {
     const importBtn = document.getElementById("emiliaImportBtn");
@@ -364,17 +276,6 @@ async function importEmiliaData() {
     }
 }
 
-// 页面加载时初始化 Emilia 状态检查
-document.addEventListener("DOMContentLoaded", function() {
-    // 延迟1秒后开始检查，避免影响页面加载
-    setTimeout(() => {
-        checkEmiliaHealth();
-
-        // 每5秒检查一次 Emilia 状态（更实时）
-        setInterval(checkEmiliaHealth, 5000);
-    }, 1000);
-});
-
 // ==================== 参考文本生成功能 ====================
 
 // 生成参考文本功能
@@ -392,7 +293,7 @@ async function generateReferenceText() {
 
     // 禁用按钮，显示状态
     generateBtn.disabled = true;
-    generateText.textContent = "生成中...";
+    generateText.textContent = "启动中...";
 
     try {
         const response = await fetch("/api/reference-text/generate", {
@@ -406,18 +307,14 @@ async function generateReferenceText() {
         const result = await response.json();
 
         if (result.success) {
-            generateText.textContent = "已触发";
+            generateText.textContent = "生成中...";
             showToast(result.message || "参考文本生成任务已启动", "success");
-
-            // 3秒后恢复按钮状态
+            // 立即检查一次状态获取最新信息
             setTimeout(() => {
-                generateBtn.disabled = false;
-                generateText.textContent = "生成文本";
-                // 刷新统计数据
                 if (typeof loadStats === 'function') {
                     loadStats();
                 }
-            }, 3000);
+            }, 1000);
         } else {
             throw new Error(result.error || "生成失败");
         }

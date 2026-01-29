@@ -978,10 +978,11 @@ def api_batch_update_text(key_obj):
 
 @recordings_bp.route('/api/stats')
 def api_stats():
-    """获取统计信息"""
+    """获取统计信息和系统状态"""
     try:
-        from app.models import Recording, ReferenceText
+        from app.models import Recording, ReferenceText, GenerationTask
 
+        # 录音数据统计
         total_recordings = Recording.query.count()
         pending_recordings = Recording.query.filter_by(status='pending').count()
         approved_recordings = Recording.query.filter_by(status='approved').count()
@@ -989,10 +990,36 @@ def api_stats():
         transcribed_recordings = Recording.query.filter_by(upload_type=1).count()
         reference_count = ReferenceText.query.count()
 
-        yesterday = datetime.now() - timedelta(days=1)  # 使用中国时间
+        yesterday = datetime.now() - timedelta(days=1)
         recent_uploads = Recording.query.filter(
             Recording.upload_time >= yesterday
         ).count()
+
+        # 获取正在处理中的参考文本生成任务
+        processing_task = GenerationTask.query.filter_by(status='processing').first()
+        processing_task_dict = processing_task.to_dict() if processing_task else None
+
+        # 获取Emilia服务状态
+        emilia_status = {
+            'status': 'unhealthy',
+            'pending_count': 0,
+            'batch_task': None
+        }
+
+        try:
+            emilia_url = f'{emilia_service_host}/health'
+            response = requests.get(emilia_url, timeout=5)
+
+            if response.status_code == 200:
+                result = response.json()
+                emilia_status = {
+                    'status': 'healthy',
+                    'pending_count': result.get('pending_count', 0),
+                    'batch_task': result.get('batch_task')
+                }
+        except Exception as e:
+            # Emilia服务不可用，保持unhealthy状态
+            logger.debug(f"Emilia service check failed: {e}")
 
         return jsonify({
             'success': True,
@@ -1003,7 +1030,9 @@ def api_stats():
                 'rejected': rejected_recordings,
                 'transcribed': transcribed_recordings,
                 'reference_count': reference_count,
-                'recent_uploads': recent_uploads
+                'recent_uploads': recent_uploads,
+                'processing_task': processing_task_dict,
+                'emilia': emilia_status
             }
         })
 

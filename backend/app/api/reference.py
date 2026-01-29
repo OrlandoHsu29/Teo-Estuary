@@ -64,6 +64,8 @@ def api_get_reference_text(key_obj):
 def api_get_random_reference_text(key_obj):
     """随机获取一条参考话语（获取后自动删除，一次性使用）
 
+    如果数据库中没有数据，会自动触发生成
+
     查询参数:
     - count: 获取数量，默认1，最多10条
 
@@ -79,15 +81,28 @@ def api_get_random_reference_text(key_obj):
         count = request.args.get('count', 1, type=int)
         count = min(max(count, 1), 10)  # 限制在1-10之间
 
-        # 使用随机偏移量获取随机记录
+        # 检查数据库中是否有数据
         total = ReferenceText.query.count()
+
+        # 如果没有数据，自动触发生成
         if total == 0:
+            logger.info("数据库中暂无参考文本数据，自动触发生成")
+            success, task, error_message = _trigger_dify_generation()
+
+            if not success:
+                return jsonify({
+                    'success': False,
+                    'error': f'数据库暂无数据，自动生成失败: {error_message}'
+                }), 503  # 503 Service Unavailable
+
             return jsonify({
                 'success': True,
                 'data': [],
-                'message': '数据库中暂无话语数据'
+                'message': f'数据库中暂无参考文本数据，正在自动填充，请稍后再试',
+                'task_id': task.id
             })
 
+        # 使用随机偏移量获取随机记录
         results = []
         item_ids = []
         used_indices = set()
@@ -128,6 +143,60 @@ def api_get_random_reference_text(key_obj):
         }), 500
 
 
+def _trigger_dify_generation():
+    """触发Dify生成参考文本的核心逻辑
+
+    Returns:
+        (success: bool, task: GenerationTask or None, error_message: str or None)
+    """
+    webhook_url = current_app.config.get('DIFY_WEBHOOK_URL')
+    if not webhook_url:
+        return False, None, 'Dify Webhook URL未配置'
+
+    # 检查是否有正在处理中的任务
+    processing_task = GenerationTask.query.filter_by(status='processing').first()
+    if processing_task:
+        logger.info(f"已有正在处理中的任务: {processing_task.id}")
+        return True, processing_task, None
+
+    # 创建新任务
+    task = GenerationTask(status='processing')
+    db.session.add(task)
+    db.session.commit()
+    task_id = task.id
+
+    # 同步调用Dify Webhook
+    data = {
+        'task_id': task_id
+    }
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    logger.info(f"触发Dify Webhook: {webhook_url}, 任务ID: {task_id}")
+
+    try:
+        response = requests.post(webhook_url, json=data, headers=headers, timeout=30)
+        logger.info(f"Dify Webhook响应状态码: {response.status_code}, 任务ID: {task_id}")
+
+        if response.status_code not in [200, 201]:
+            # Dify调用失败，删除任务并返回错误
+            db.session.delete(task)
+            db.session.commit()
+            logger.error(f"Dify Webhook调用失败: {response.status_code}")
+            return False, None, f'Dify服务返回错误: HTTP {response.status_code}'
+
+    except Exception as e:
+        # Dify调用失败，删除任务并返回错误
+        db.session.delete(task)
+        db.session.commit()
+        logger.error(f"Dify Webhook调用异常: {e}")
+        return False, None, f'调用Dify服务失败: {str(e)}'
+
+    logger.info(f"Dify Webhook触发成功, 任务ID: {task_id}")
+    return True, task, None
+
+
 @reference_bp.route('/api/reference-text/generate', methods=['GET'])
 @admin_required
 def api_generate_reference_text():
@@ -145,65 +214,13 @@ def api_generate_reference_text():
     }
     """
     try:
-        webhook_url = current_app.config.get('DIFY_WEBHOOK_URL')
+        success, task, error_message = _trigger_dify_generation()
 
-        if not webhook_url:
+        if not success:
             return jsonify({
                 'success': False,
-                'error': 'Dify Webhook URL未配置'
+                'error': error_message
             }), 500
-
-        # 检查是否有正在处理中的任务
-        processing_task = GenerationTask.query.filter_by(status='processing').first()
-        if processing_task:
-            logger.info(f"已有正在处理中的任务: {processing_task.id}")
-            return jsonify({
-                'success': True,
-                'message': '已有任务正在处理中',
-                'task': processing_task.to_dict()
-            })
-
-        # 先创建任务（用于获取task_id）
-        task = GenerationTask(status='processing')
-        db.session.add(task)
-        db.session.commit()
-        task_id = task.id
-
-        # 同步调用Dify Webhook
-        data = {
-            'task_id': task_id
-        }
-        headers = {
-            'Content-Type': 'application/json'
-        }
-
-        logger.info(f"触发Dify Webhook: {webhook_url}, 任务ID: {task_id}")
-
-        try:
-            response = requests.post(webhook_url, json=data, headers=headers, timeout=30)
-            logger.info(f"Dify Webhook响应状态码: {response.status_code}, 任务ID: {task_id}")
-
-            if response.status_code not in [200, 201]:
-                # Dify调用失败，删除任务并返回错误
-                db.session.delete(task)
-                db.session.commit()
-                logger.error(f"Dify Webhook调用失败: {response.status_code}")
-                return jsonify({
-                    'success': False,
-                    'error': f'Dify服务返回错误: HTTP {response.status_code}'
-                }), 500
-
-        except Exception as e:
-            # Dify调用失败，删除任务并返回错误
-            db.session.delete(task)
-            db.session.commit()
-            logger.error(f"Dify Webhook调用异常: {e}")
-            return jsonify({
-                'success': False,
-                'error': f'调用Dify服务失败: {str(e)}'
-            }), 500
-
-        logger.info(f"Dify Webhook触发成功, 任务ID: {task_id}")
 
         return jsonify({
             'success': True,
