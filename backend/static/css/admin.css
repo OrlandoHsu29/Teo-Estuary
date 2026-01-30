@@ -1298,6 +1298,7 @@ body {
     font-size: 0.9rem;
     line-height: 1.4;
     font-style: italic;
+    padding-left: 0.5rem;
 }
 
 .status-badge {
@@ -2372,7 +2373,9 @@ s
         flex-direction: column;
     }
 
-
+    .export-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 
     .sidebar {
         width: 100%;
@@ -2432,6 +2435,15 @@ s
     .stats {
         grid-template-columns: repeat(2, 1fr);
         gap: 15px;
+    }
+
+    .export-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .export-card {
+        height: auto;
+        min-height: 260px;
     }
 
     .stat-card {
@@ -5795,22 +5807,53 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 /* 导出数据页面样式 */
 .export-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 25px;
-    max-width: 1400px;
-    margin: 0 auto;
-    /* 垂直居中 */
-    align-items: center;
-    height:85%;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+}
 
+.export-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.export-group-title {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--text-secondary);
+    margin: 0;
+    margin-bottom: 5px;
+    padding: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.export-group-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    width: 100%;
+    margin-bottom: 15px;
 }
 
 .export-card {
-    height: 260px;
+    min-height: 260px;
     background: linear-gradient(145deg, rgba(42, 42, 62, 0.8), rgba(26, 26, 46, 0.9));
     border-radius: var(--border-radius);
-    padding: 35px;
+    padding: 25px 30px;
     box-shadow: var(--shadow-md);
     border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.3s ease;

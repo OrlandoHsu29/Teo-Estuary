@@ -275,7 +275,7 @@ function updateDurationDisplay(totalSeconds) {
     const totalHours = Math.floor(totalSeconds / 3600);
 
     // 更新显示
-    element.textContent = totalHours;
+    element.textContent = totalHours + "h";
 
     // 设置title属性，鼠标悬停时显示三位小数
     const totalHoursPrecise = (totalSeconds / 3600).toFixed(3);

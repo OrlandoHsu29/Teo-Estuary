@@ -31,6 +31,8 @@ services:
       - ./instance:/app/instance
       - ./data/logs:/app/logs
       - ./data/data:/app/data
+      - ./data/teo_g2p_logs:/app/app/teo_g2p/logs
+      - ./data/teo_g2p_word_dict:/app/app/teo_g2p/word_dict
     environment:
       - MYSQL_HOST=${MYSQL_HOST:-mysql}
       - MYSQL_PORT=${MYSQL_PORT:-3306}

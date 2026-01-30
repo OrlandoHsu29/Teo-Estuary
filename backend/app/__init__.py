@@ -214,6 +214,7 @@ def create_app():
     # 注册蓝图
     from app.api import auth_bp, recordings_bp, keys_bp, text_bp, dictionary_bp, asr_bp, reference_bp
     from app.api.jieba_sync import jieba_sync_bp
+    from app.api.data_management import data_management_bp
     from app.admin.routes import admin_bp
 
     app.register_blueprint(auth_bp)
@@ -224,6 +225,7 @@ def create_app():
     app.register_blueprint(asr_bp)
     app.register_blueprint(reference_bp)
     app.register_blueprint(jieba_sync_bp)
+    app.register_blueprint(data_management_bp)
     app.register_blueprint(admin_bp)
 
     # 豁免特定路由的速率限制（仅在启用limiter时）

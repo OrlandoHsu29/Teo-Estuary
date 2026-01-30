@@ -20,6 +20,46 @@ async function exportJiebaDict() {
     }
 }
 
+// 导出翻译词典数据库
+async function exportTranslationDict() {
+    try {
+        showToast('正在准备下载...', 'info');
+
+        // 创建一个隐藏的a标签来触发下载
+        const link = document.createElement('a');
+        link.href = '/admin/api/export/translation-dict';
+        link.download = 'translation_dict.db';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('下载已开始', 'success');
+    } catch (error) {
+        console.error('导出翻译词典失败:', error);
+        showToast('导出失败', 'error');
+    }
+}
+
+// 导出词典操作日志
+async function exportDictLogs() {
+    try {
+        showToast('正在准备下载...', 'info');
+
+        // 创建一个隐藏的a标签来触发下载
+        const link = document.createElement('a');
+        link.href = '/admin/api/export/dict-logs';
+        link.download = `database_changes_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.log`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('下载已开始', 'success');
+    } catch (error) {
+        console.error('导出词典操作日志失败:', error);
+        showToast('导出失败', 'error');
+    }
+}
+
 // 导出模型训练数据集
 async function exportTrainDataset() {
     try {

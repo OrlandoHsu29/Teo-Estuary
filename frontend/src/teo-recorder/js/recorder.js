@@ -140,7 +140,8 @@ class DialectRecorder {
 
             // 在状态框显示提示信息
             this.updateStatus('已获取新文本', 'success');
-            this.showTemporaryStatusMessages('开始录音后用潮汕话朗读文本(要口齿清晰！)','info');
+            this.showTemporaryStatusMessages('录音时可以用土话，不用跟文本完全一样', 'info');
+
         } catch (error) {
             console.error('获取文本失败:', error);
             const errorMessage = error.message || '获取新句子失败，请重试';
@@ -244,7 +245,7 @@ class DialectRecorder {
             this.updateStatus('录音中...', 'recording');
 
             // 1.5秒后显示提示文本
-            this.showTemporaryStatusMessages('可以按口语的读法，不用跟文本完全一样', 'recording');
+            this.showTemporaryStatusMessages('注意要语速适中、口齿清晰哦','recordings');
 
         } catch (error) {
             console.error('开始录音失败:', error);
