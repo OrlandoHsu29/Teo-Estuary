@@ -292,7 +292,7 @@ def export_database_sql():
 @data_management_bp.route('/admin/api/import/dict-logs', methods=['POST'])
 @admin_required
 def import_dict_logs():
-    """导入词典操作日志"""
+    """导入词典操作日志（支持增量追加或全量覆盖）"""
     try:
         # 检查是否有文件上传
         if 'file' not in request.files:
@@ -302,8 +302,9 @@ def import_dict_logs():
         if file.filename == '':
             return jsonify({'error': '没有选择文件'}), 400
 
-        # 获取日志类型参数
+        # 获取参数
         log_type = request.form.get('type', 'changes')  # 'changes' 或 'sync'
+        import_mode = request.form.get('mode', 'append')  # 'append' 或 'overwrite'
 
         # 检查文件类型
         if not file.filename.endswith('.log'):
@@ -321,15 +322,22 @@ def import_dict_logs():
         # 根据type参数选择目标文件
         target_file = change_log.log_file_path if log_type == 'changes' else change_log.sync_log_file_path
 
+        # 确保目标目录存在
+        os.makedirs(os.path.dirname(target_file), exist_ok=True)
+
+        # 根据导入模式选择写入方式
+        write_mode = 'w' if import_mode == 'overwrite' else 'a'
+
         # 处理日志内容
-        imported, skipped, errors = _process_log_content(log_content, target_file)
+        imported, skipped, errors = _process_log_content(log_content, target_file, write_mode)
 
         log_type_name = '修改日志' if log_type == 'changes' else '同步日志'
-        logger.info(f"Imported {log_type_name}: {imported} imported, {skipped} skipped")
+        mode_name = '全量覆盖' if import_mode == 'overwrite' else '增量追加'
+        logger.info(f"Imported {log_type_name} ({mode_name}): {imported} imported, {skipped} skipped")
 
         return jsonify({
             'success': True,
-            'message': f'导入完成：成功{imported}条，跳过{skipped}条',
+            'message': f'导入完成（{mode_name}）：成功{imported}条，跳过{skipped}条',
             'imported_count': imported,
             'skipped_count': skipped,
             'errors': errors[:10] if errors else []
@@ -340,8 +348,14 @@ def import_dict_logs():
         return jsonify({'error': f'导入失败: {str(e)}'}), 500
 
 
-def _process_log_content(content, target_file_path):
-    """处理日志内容并追加到目标文件"""
+def _process_log_content(content, target_file_path, write_mode='a'):
+    """处理日志内容并写入目标文件
+
+    Args:
+        content: 日志内容
+        target_file_path: 目标文件路径
+        write_mode: 写入模式，'a'为追加（默认），'w'为覆盖
+    """
     import json
 
     imported_count = 0
@@ -351,8 +365,8 @@ def _process_log_content(content, target_file_path):
     # 确保目标目录存在
     os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
 
-    # 追加模式写入日志文件
-    with open(target_file_path, 'a', encoding='utf-8') as f:
+    # 根据模式写入日志文件
+    with open(target_file_path, write_mode, encoding='utf-8') as f:
         for line in content.strip().split('\n'):
             line = line.strip()
             if not line:

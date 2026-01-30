@@ -800,7 +800,16 @@
                                     </div>
                                     <div id="importPreview" style="margin-top: 15px; display: none;">
                                         <p class="export-description" id="previewFileName"></p>
-                                        <button class="export-btn" onclick="importDictLogs()" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 106, 0.2)); border-color: rgba(0, 255, 136, 0.4);">
+                                        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+                                            <label style="color: var(--text-secondary); font-size: 14px;">导入模式：</label>
+                                            <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
+                                                <input type="radio" name="importMode" value="append" checked style="margin-right: 6px;">增量追加
+                                            </label>
+                                            <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
+                                                <input type="radio" name="importMode" value="overwrite" style="margin-right: 6px;">全量覆盖
+                                            </label>
+                                        </div>
+                                        <button class="export-btn" onclick="importDictLogs()" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 106, 0.2)); border-color: rgba(0, 255, 136, 0.4); margin-top: 12px;">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                             </svg>

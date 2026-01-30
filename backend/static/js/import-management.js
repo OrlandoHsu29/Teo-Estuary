@@ -24,7 +24,10 @@ function previewDictLogFile(type) {
     fileNameSpan.textContent = `已选择${typeName}: ${file.name} (${formatFileSize(file.size)})`;
     previewDiv.style.display = 'block';
 
-    showToast('文件已选择，请点击"确认导入"完成导入', 'info');
+    // 重置导入模式为增量追加
+    document.querySelector('input[name="importMode"][value="append"]').checked = true;
+
+    showToast('文件已选择，请选择导入模式后点击"确认导入"', 'info');
 }
 
 // 导入词典操作日志
@@ -34,10 +37,14 @@ async function importDictLogs() {
         return;
     }
 
+    // 获取选择的导入模式
+    const importMode = document.querySelector('input[name="importMode"]:checked').value;
+
     try {
         const formData = new FormData();
         formData.append('file', selectedDictLogFile);
         formData.append('type', selectedLogType); // 传递日志类型
+        formData.append('mode', importMode); // 传递导入模式：append 或 overwrite
 
         showToast('正在导入...', 'info');
 
