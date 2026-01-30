@@ -184,7 +184,6 @@ def api_add_dictionary():
         success = add_translation(
             mandarin_text=mandarin_text,
             teochew_text=teochew_text,
-            variant=variant,  # 传递variant以保持向后兼容
             variant_mandarin=variant_mandarin,
             variant_teochew=variant_teochew,
             teochew_priority=teochew_priority,
@@ -219,8 +218,7 @@ def api_update_dictionary(entry_id):
 
         data = request.get_json()
         new_teochew_text = data.get('teochew_text', '').strip()
-        new_variant = data.get('variant')  # 向后兼容
-        new_variant_mandarin = data.get('variant_mandarin')  # 优先使用variant_mandarin
+        new_variant_mandarin = data.get('variant_mandarin')
         new_variant_teochew = data.get('variant_teochew')
         new_teochew_priority = data.get('teochew_priority')
         new_is_active = data.get('is_active')
@@ -250,7 +248,6 @@ def api_update_dictionary(entry_id):
         success = update_translation(
             entry_id=entry_id,
             teochew_text=new_teochew_text if new_teochew_text else None,
-            variant=new_variant,  # 传递variant以保持向后兼容
             variant_mandarin=new_variant_mandarin,
             variant_teochew=new_variant_teochew,
             teochew_priority=new_teochew_priority,
@@ -297,14 +294,10 @@ def api_delete_dictionary(entry_id):
         user = request.args.get('user', 'admin')
         reason = request.args.get('reason', '通过管理界面删除')
 
-        # 获取variant_mandarin（向后兼容：如果没有该字段，使用variant）
-        entry_variant = getattr(entry, 'variant_mandarin', getattr(entry, 'variant', None))
-
         # 使用teo_dict_edit的删除功能（软删除）
         success = delete_translation(
             mandarin_text=entry.mandarin_text,
-            variant=entry_variant,  # 传递variant以保持向后兼容
-            variant_mandarin=entry_variant,
+            variant_mandarin=entry.variant_mandarin,
             user=user,
             reason=reason
         )

@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('页面初始化完成');
 });
 
-// 兼容性函数 - 从list-view.js移动过来，因为HTML中可能有直接调用
+// 下载当前录音
 function downloadCurrentRecording() {
     if (!recordingsData.length || currentRecordIndex >= recordingsData.length) return;
 

@@ -124,7 +124,7 @@ class ChangeLog:
 
     def _normalize_log_entry(self, log_entry: Dict) -> Dict:
         """
-        标准化日志条目格式，处理旧格式兼容性
+        标准化日志条目格式
 
         Args:
             log_entry: 原始日志条目
@@ -136,16 +136,19 @@ class ChangeLog:
         if 'identifier' in log_entry:
             return log_entry
 
-        # 转换旧格式为新格式
+        # 转换旧格式为新格式（如果存在）
         if 'mandarin_text' in log_entry:
             old_data = log_entry.get('old_data')
             new_data = log_entry.get('new_data')
 
-            # 从旧字段中提取identifier信息
+            # 从字段中提取identifier信息
             identifier = {
-                'mandarin_text': log_entry.get('mandarin_text'),
-                'variant': log_entry.get('variant')
+                'mandarin_text': log_entry.get('mandarin_text')
             }
+
+            # 优先使用新字段名
+            if 'variant_mandarin' in log_entry:
+                identifier['variant_mandarin'] = log_entry.get('variant_mandarin')
 
             # 清理identifier中的None值
             identifier = {k: v for k, v in identifier.items() if v is not None}
@@ -306,7 +309,7 @@ class TranslationDictDAO:
     def update_translation(self, mandarin_text: str = None, entry_id: int = None,
                           teochew_text: str = None, variant_mandarin: int = None,
                           variant_teochew: int = None, teochew_priority: int = None,
-                          is_active: bool = None, variant: int = None,
+                          is_active: bool = None,
                           user: str = "system", reason: str = "") -> bool:
         """
         更新翻译条目（支持更新内容和状态）
@@ -319,17 +322,12 @@ class TranslationDictDAO:
             variant_teochew: 新的潮州话方向变体编号
             teochew_priority: 新的潮州话翻译优先级 1-10整数
             is_active: 新的状态（None表示不更新状态）
-            variant: 向后兼容的参数，等同于variant_mandarin
             user: 操作用户
             reason: 修改原因
 
         Returns:
             是否更新成功
         """
-        # 向后兼容：如果传了variant但没有传variant_mandarin，使用variant作为variant_mandarin
-        if variant is not None and variant_mandarin is None:
-            variant_mandarin = variant
-
         db = next(get_db())
 
         try:
@@ -415,28 +413,8 @@ class TranslationDictDAO:
         finally:
             db.close()
 
-    def update_translation_status(self, entry_id: int, is_active: bool, user: str = "system", reason: str = "") -> bool:
-        """
-        更新翻译条目的状态（向后兼容函数，调用update_translation）
-
-        Args:
-            entry_id: 词条ID
-            is_active: 是否激活
-            user: 操作用户
-            reason: 修改原因
-
-        Returns:
-            是否更新成功
-        """
-        return self.update_translation(
-            entry_id=entry_id,
-            is_active=is_active,
-            user=user,
-            reason=reason or "更新词条状态"
-        )
-
     def delete_translation(self, mandarin_text: str, variant_mandarin: int = None,
-                          user: str = "system", reason: str = "", variant: int = None) -> bool:
+                          user: str = "system", reason: str = "") -> bool:
         """
         删除翻译条目（直接删除）
 
@@ -445,15 +423,10 @@ class TranslationDictDAO:
             variant_mandarin: 变体编号，如果为None则删除所有变体
             user: 操作用户
             reason: 删除原因
-            variant: 向后兼容的参数，等同于variant_mandarin
 
         Returns:
             是否删除成功
         """
-        # 向后兼容：如果传了variant但没有传variant_mandarin，使用variant作为variant_mandarin
-        if variant is not None and variant_mandarin is None:
-            variant_mandarin = variant
-
         db = next(get_db())
 
         try:
@@ -508,22 +481,17 @@ class TranslationDictDAO:
         finally:
             db.close()
 
-    def get_translation(self, mandarin_text: str, variant_mandarin: int = None, variant: int = None) -> Optional[TranslationDict]:
+    def get_translation(self, mandarin_text: str, variant_mandarin: int = None) -> Optional[TranslationDict]:
         """
         获取翻译条目
 
         Args:
             mandarin_text: 普通话词语
             variant_mandarin: 变体编号
-            variant: 向后兼容的参数，等同于variant_mandarin
 
         Returns:
             翻译条目或None
         """
-        # 向后兼容：如果传了variant但没有传variant_mandarin，使用variant作为variant_mandarin
-        if variant is not None and variant_mandarin is None:
-            variant_mandarin = variant
-
         db = next(get_db())
 
         try:

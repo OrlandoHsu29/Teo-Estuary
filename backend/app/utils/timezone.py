@@ -33,8 +33,3 @@ def get_hours_ago(hours):
 def get_days_ago(days):
     """获取N天前的时间"""
     return datetime.now(CHINA_TZ) - timedelta(days=days)
-
-
-# 向后兼容的别名
-local_now = now
-current_time = now

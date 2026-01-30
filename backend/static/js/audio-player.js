@@ -328,31 +328,6 @@ function updateScreenProgress(currentTime, duration) {
     }
 }
 
-// 更新进度条显示（保留用于兼容性）
-function updateBottomProgress(currentTime, duration) {
-    const bottomProgress = document.getElementById('bottomProgress');
-    const progressFillBottom = document.getElementById('progressFillBottom');
-    const progressTime = document.getElementById('progressTime');
-
-    if (bottomProgress && progressFillBottom && progressTime) {
-        if (duration > 0) {
-            const percentage = (currentTime / duration) * 100;
-            progressFillBottom.style.width = percentage + '%';
-
-            const formatTime = (time) => {
-                const minutes = Math.floor(time / 60);
-                const seconds = Math.floor(time % 60);
-                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            };
-
-            progressTime.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-            bottomProgress.style.display = 'block';
-        } else {
-            bottomProgress.style.display = 'none';
-        }
-    }
-}
-
 // 预加载下一首音频
 function preloadNextAudio() {
     // 获取下一首记录的信息
