@@ -369,6 +369,8 @@ class TranslationDictDAO:
                 }
 
                 # 更新内容字段
+                if mandarin_text is not None:
+                    translation.mandarin_text = mandarin_text
                 if teochew_text is not None:
                     translation.teochew_text = teochew_text
                 if variant_mandarin is not None:

@@ -284,7 +284,8 @@ def api_update_task_status(task_id):
     请求体:
     {
         "status": "completed",  // completed, failed
-        "result": "...",  // 可选，生成结果
+        "result": "...",  // 可选，生成结果（用于导入话语）
+        "source": "...",  // 可选，来源标识
         "error_message": "..."  // 可选，错误信息
     }
 
@@ -344,7 +345,7 @@ def api_update_task_status(task_id):
             }), 400
 
         task.status = new_status
-        task.result = data.get('result', task.result)
+        task.source = data.get('source')
         task.error_message = data.get('error_message', task.error_message)
 
         if new_status in ['completed', 'failed']:

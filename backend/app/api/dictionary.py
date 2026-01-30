@@ -217,6 +217,7 @@ def api_update_dictionary(entry_id):
         from app.teo_g2p.teo_dict_edit import update_translation
 
         data = request.get_json()
+        new_mandarin_text = data.get('mandarin_text', '').strip()
         new_teochew_text = data.get('teochew_text', '').strip()
         new_variant_mandarin = data.get('variant_mandarin')
         new_variant_teochew = data.get('variant_teochew')
@@ -224,6 +225,13 @@ def api_update_dictionary(entry_id):
         new_is_active = data.get('is_active')
         user = data.get('user', 'admin')
         reason = data.get('reason', '通过管理界面编辑')
+
+        # 验证普通话文本长度（字词最多10个字符）
+        if new_mandarin_text and len(new_mandarin_text) > 10:
+            return jsonify({
+                'success': False,
+                'error': '普通话词汇长度不能超过10个字符'
+            }), 400
 
         # 验证潮语文本长度（字词最多10个字符）
         if new_teochew_text and len(new_teochew_text) > 10:
@@ -247,6 +255,7 @@ def api_update_dictionary(entry_id):
         # 使用合并后的更新功能，通过entry_id更新记录
         success = update_translation(
             entry_id=entry_id,
+            mandarin_text=new_mandarin_text if new_mandarin_text else None,
             teochew_text=new_teochew_text if new_teochew_text else None,
             variant_mandarin=new_variant_mandarin,
             variant_teochew=new_variant_teochew,
