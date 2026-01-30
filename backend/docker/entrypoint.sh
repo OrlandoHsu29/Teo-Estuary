@@ -1,8 +1,18 @@
 #!/bin/bash
 set -e
 
-# 修复权限
+# 创建并修复所有需要的目录权限
+mkdir -p /app/instance
+mkdir -p /app/app/teo_g2p/logs
+mkdir -p /app/logs
+mkdir -p /app/data/uploads
+mkdir -p /app/data/good
+mkdir -p /app/data/bad
+
+# 修复权限 - 确保数据库目录可写
 chmod 777 /app/instance 2>/dev/null || true
+chmod 777 /app/app/teo_g2p/logs 2>/dev/null || true
+chmod -R 755 /app/logs /app/data 2>/dev/null || true
 
 # 初始化翻译词典数据库（从镜像中的初始化文件复制）
 if [ ! -f /app/instance/translation_dict.db ] && [ -f /app/translation_dict.db.init ]; then
@@ -10,8 +20,9 @@ if [ ! -f /app/instance/translation_dict.db ] && [ -f /app/translation_dict.db.i
     echo "Translation dictionary initialized from image"
 fi
 
-chmod 666 /app/instance/translation_dict.db 2>/dev/null || true
-chmod -R 755 /app/logs /app/data 2>/dev/null || true
+# 确保所有数据库文件有写权限
+chmod 666 /app/instance/*.db 2>/dev/null || true
+find /app/app/teo_g2p/logs -name "*.db" -exec chmod 666 {} \; 2>/dev/null || true
 
 # 启动应用
 if [ "${DEBUG:-False}" = "True" ]; then

@@ -131,12 +131,14 @@ def api_add_dictionary():
     """添加新词条"""
     try:
         from app.teo_g2p.teo_dict_edit import add_translation
+        from app.teo_g2p.dao import TranslationDictDAO
+        from sqlalchemy import exc as sqlalchemy_exc
 
         data = request.get_json()
 
         mandarin_text = data.get('mandarin_text', '').strip()
         teochew_text = data.get('teochew_text', '').strip()
-        variant_mandarin = data.get('variant_mandarin', 1)  
+        variant_mandarin = data.get('variant_mandarin', 1)
         variant_teochew = data.get('variant_teochew')  # 可选，默认自动计算
         teochew_priority = data.get('teochew_priority')  # 可选，未提供则自动计算
         user = data.get('user', 'admin')
@@ -181,26 +183,66 @@ def api_add_dictionary():
             teochew_priority = min(word_len, 10)  # 1字=1, 2字=2, ..., 10字=10，最大不超过10
 
         # 使用teo_dict_edit的添加功能
-        success = add_translation(
-            mandarin_text=mandarin_text,
-            teochew_text=teochew_text,
-            variant_mandarin=variant_mandarin,
-            variant_teochew=variant_teochew,
-            teochew_priority=teochew_priority,
-            user=user,
-            reason=reason
-        )
+        try:
+            success = add_translation(
+                mandarin_text=mandarin_text,
+                teochew_text=teochew_text,
+                variant_mandarin=variant_mandarin,
+                variant_teochew=variant_teochew,
+                teochew_priority=teochew_priority,
+                user=user,
+                reason=reason
+            )
 
-        if success:
-            return jsonify({
-                'success': True,
-                'message': '词条添加成功'
-            })
-        else:
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': '词条添加成功'
+                })
+            else:
+                # 检查是否是已存在的错误
+                from app import db
+                from app.teo_g2p.models import TranslationDict
+
+                existing = db.session.query(TranslationDict).filter(
+                    TranslationDict.mandarin_text == mandarin_text,
+                    TranslationDict.teochew_text == teochew_text
+                ).first()
+
+                if existing:
+                    return jsonify({
+                        'success': False,
+                        'error': '该普通话和潮汕话组合已存在'
+                    }), 400
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': '词条添加失败，请稍后重试'
+                    }), 500
+
+        except Exception as e:
+            error_str = str(e)
+            logger.error(f"Add dictionary error: {e}")
+
+            # 检查是否是数据库只读错误
+            if 'readonly database' in error_str.lower():
+                return jsonify({
+                    'success': False,
+                    'error': '数据库只读，无法添加词条。请联系管理员检查数据库文件权限'
+                }), 500
+
+            # 检查是否是唯一约束冲突
+            if isinstance(e, sqlalchemy_exc.IntegrityError):
+                return jsonify({
+                    'success': False,
+                    'error': '该普通话和潮汕话组合已存在'
+                }), 400
+
+            # 其他错误
             return jsonify({
                 'success': False,
-                'error': '词条添加失败，该普通话和潮汕话组合已存在'
-            }), 400
+                'error': f'添加词条失败: {error_str}'
+            }), 500
 
     except Exception as e:
         logger.error(f"Add dictionary error: {e}")
