@@ -4689,8 +4689,7 @@ mark {
 
 /* 字典开关样式 */
 .dict-toggle-group {
-    display: flex;
-    align-items: center;
+    /* 移除特殊样式，使用默认的dict-form-group样式 */
 }
 
 .dict-toggle-label {
@@ -4699,6 +4698,7 @@ mark {
     gap: 12px;
     cursor: pointer;
     user-select: none;
+    padding-top: 10px;
 }
 
 .dict-toggle-label input[type="checkbox"] {
@@ -4706,7 +4706,6 @@ mark {
 }
 
 .dict-toggle-slider {
-    margin-top: 15px;
     width: 50px;
     height: 26px;
     background: linear-gradient(145deg, #1a1a2e, #0f0f22);
