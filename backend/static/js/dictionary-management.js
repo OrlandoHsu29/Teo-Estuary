@@ -708,27 +708,38 @@ async function loadUnsyncedLogs() {
 
                 detailsHtml = `「普」"${mandarin}"${variantMandarin > 1 ? `(变体${variantMandarin})` : ''}  · 「潮」"${teochew}"`;
             } else if (operation === 'update') {
-                // 修改操作显示：“old_data”->“new_data”（相同数据不显示）
+                // 修改操作显示："old_data"->"new_data"（相同数据不显示）
                 const oldData = changes.old || {};
                 const newData = changes.new || {};
+
+                // 获取字词信息用于操作列显示
+                const mandarin = newData.mandarin_text || oldData.mandarin_text || '未知词条';
+                const teochew = newData.teochew_text || oldData.teochew_text || '未知词条';
+
+                // 更新操作列显示
+                operationText = `更新 - 「普」"${mandarin}" · 「潮」"${teochew}"`;
 
                 const changesArray = [];
 
                 // 检查每个字段的变化
                 if (oldData.mandarin_text !== newData.mandarin_text) {
-                    changesArray.push(`「普通话」 "${oldData.mandarin_text || '空'}" → "${newData.mandarin_text || '空'}`);
+                    changesArray.push(`「普」 "${oldData.mandarin_text || '空'}"（旧） → "${newData.mandarin_text || '空'}"（新）`);
                 }
 
                 if (oldData.teochew_text !== newData.teochew_text) {
-                    changesArray.push(`「潮汕话」 "${oldData.teochew_text || '空'}" → "${newData.teochew_text || '空'}"`);
+                    changesArray.push(`「潮」 "${oldData.teochew_text || '空'}"（旧） → "${newData.teochew_text || '空'}"（新）`);
                 }
 
                 if (oldData.variant_mandarin !== newData.variant_mandarin) {
-                    changesArray.push(`「普通话变体」 ${oldData.variant_mandarin || 1} → ${newData.variant_mandarin || 1}`);
+                    const oldVariant = oldData.variant_mandarin || 1;
+                    const newVariant = newData.variant_mandarin || 1;
+                    changesArray.push(`「普通话变体」 M${oldVariant} → M${newVariant}`);
                 }
 
                 if (oldData.variant_teochew !== newData.variant_teochew) {
-                    changesArray.push(`「潮州话变体」 ${oldData.variant_teochew || 1} → ${newData.variant_teochew || 1}`);
+                    const oldVariant = oldData.variant_teochew || 1;
+                    const newVariant = newData.variant_teochew || 1;
+                    changesArray.push(`「潮州话变体」 T${oldVariant} → T${newVariant}`);
                 }
 
                 // 优先级变化
@@ -765,7 +776,6 @@ async function loadUnsyncedLogs() {
 
                 // 如果没有变化，显示基本信息
                 if (changesArray.length === 0) {
-                    const mandarin = newData.mandarin_text || oldData.mandarin_text || '未知词条';
                     const variantMandarin = newData.variant_mandarin || oldData.variant_mandarin || 1;
                     detailsHtml = `"${mandarin}"${variantMandarin > 1 ? `(变体${variantMandarin})` : ''} -- 元数据更新`;
                 } else {
