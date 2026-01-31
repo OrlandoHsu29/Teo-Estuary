@@ -918,16 +918,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 点击模态框外部关闭
-    const modal = document.getElementById('dictModal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeDictModal();
-            }
-        });
-    }
-
     // 添加复选框事件监听器
     const onlyPendingSyncCheckbox = document.getElementById('onlyPendingSync');
 

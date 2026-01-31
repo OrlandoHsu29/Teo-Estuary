@@ -58,6 +58,7 @@ def api_search_dictionary():
             # 1. 按搜索文本的匹配度排序（完全匹配 > 前缀匹配 > 包含匹配）
             # 2. 按普通话文本长度排序（从短到长）
             # 3. 按潮汕话优先级排序（从低到高）
+            # 4. 按变体编号排序（从低到高）
             def sort_key(item):
                 mandarin_text = item.mandarin_text
                 teochew_text = item.teochew_text
@@ -72,6 +73,7 @@ def api_search_dictionary():
                     else:
                         match_score = 2  # 包含匹配
                     search_text_length = len(teochew_text)
+                    variant_number = getattr(item, 'variant_teochew', 1)
                 else:
                     # 搜索普通话
                     if mandarin_text == keyword:
@@ -81,11 +83,13 @@ def api_search_dictionary():
                     else:
                         match_score = 2  # 包含匹配
                     search_text_length = len(mandarin_text)
+                    variant_number = getattr(item, 'variant_mandarin', 1)
 
                 return (
                     match_score,  # 匹配度（越小越好）
                     search_text_length,  # 文本长度（越短越好）
-                    item.teochew_priority  # 优先级（越低越好）
+                    item.teochew_priority,  # 优先级（越低越好）
+                    variant_number  # 变体编号（越小越好）
                 )
 
             # 排序
