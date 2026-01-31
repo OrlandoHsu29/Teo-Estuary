@@ -242,10 +242,10 @@ class DialectRecorder {
             this.startTimer();
             this.startVolumeMonitoring();
 
-            this.updateStatus('录音中...', 'recording');
+            this.updateStatus('录音中...', 'error');
 
             // 1.5秒后显示提示文本
-            this.showTemporaryStatusMessages('注意要语速适中、口齿清晰哦','recordings');
+            this.showTemporaryStatusMessages('注意要语速适中、口齿清晰哦','error');
 
         } catch (error) {
             console.error('开始录音失败:', error);
@@ -424,7 +424,7 @@ class DialectRecorder {
         // 设置播放事件监听器
         this.currentAudio.addEventListener('loadedmetadata', () => {
             this.startUniformPlaybackProgress();
-            this.updateStatus('正在播放', 'playing');
+            this.updateStatus('正在播放', 'processing');
         });
 
         this.currentAudio.addEventListener('ended', () => {
@@ -848,21 +848,11 @@ class DialectRecorder {
                 this.elements.statusDot.style.boxShadow = '0 0 10px #ff3333';
                 break;
             case 'recording':
-                this.elements.statusDot.style.background = '#ff3333';
-                this.elements.statusDot.style.boxShadow = '0 0 15px #ff3333';
                 this.elements.statusDot.classList.add('recording');
-                break;
-            case 'playing':
-                this.elements.statusDot.style.background = '#FFD700';
-                this.elements.statusDot.style.boxShadow = '0 0 15px #FFD700';
                 break;
             case 'processing':
                 this.elements.statusDot.style.background = '#ffaa00';
                 this.elements.statusDot.style.boxShadow = '0 0 10px #ffaa00';
-                break;
-            case 'uploading':
-                this.elements.statusDot.style.background = '#FFD700';
-                this.elements.statusDot.style.boxShadow = '0 0 10px #FFD700';
                 break;
             case 'info':
                 this.elements.statusDot.style.background = '#0088ff';
