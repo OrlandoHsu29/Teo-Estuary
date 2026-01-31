@@ -23,17 +23,17 @@ async function exportJiebaDict() {
 // 导出翻译词典数据库
 async function exportTranslationDict() {
     try {
-        showToast('正在准备下载...', 'info');
+        showToast('正在生成翻译词典JSON文件...', 'info');
 
         // 创建一个隐藏的a标签来触发下载
         const link = document.createElement('a');
         link.href = '/admin/api/export/translation-dict';
-        link.download = 'translation_dict.db';
+        link.download = `translation_dict_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        showToast('下载已开始', 'success');
+        showToast('翻译词典导出成功', 'success');
     } catch (error) {
         console.error('导出翻译词典失败:', error);
         showToast('导出失败', 'error');
@@ -80,22 +80,22 @@ async function exportTrainDataset() {
     }
 }
 
-// 导出数据库SQL备份
+// 导出主数据库JSON备份
 async function exportDatabaseSQL() {
     try {
-        showToast('正在生成SQL文件...', 'info');
+        showToast('正在生成主数据库JSON文件...', 'info');
 
         // 创建一个隐藏的a标签来触发下载
         const link = document.createElement('a');
         link.href = '/admin/api/export/database-sql';
-        link.download = `teo_estuary_backup_${new Date().toISOString().slice(0,10)}.sql`;
+        link.download = `teo_estuary_database_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.json`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        showToast('SQL文件导出成功', 'success');
+        showToast('主数据库导出成功', 'success');
     } catch (error) {
-        console.error('导出数据库SQL失败:', error);
+        console.error('导出主数据库失败:', error);
         showToast('导出失败', 'error');
     }
 }

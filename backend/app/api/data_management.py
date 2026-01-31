@@ -1,12 +1,14 @@
 """数据管理蓝图（导入/导出）"""
 import io
+import json
 import os
 import zipfile
 from datetime import datetime
-from flask import Blueprint, jsonify, Response, current_app, request, send_from_directory
+from flask import Blueprint, jsonify, Response, request, send_from_directory
 
 import logging
 from app.utils.decorators import admin_required
+from app.utils.datetime_utils import now_utc, now_utc_isoformat, now_beijing_str
 from app.teo_g2p.dao import ChangeLog
 from app.teo_g2p.jieba_temp_manager import JiebaTempManager
 
@@ -102,32 +104,47 @@ def export_jieba_dict():
 @data_management_bp.route('/admin/api/export/translation-dict', methods=['GET'])
 @admin_required
 def export_translation_dict():
-    """导出翻译词典数据库"""
+    """导出翻译词典数据库为JSON格式"""
     try:
-        # translation_dict.db 文件路径
-        translation_dict_path = os.path.join(
-            current_app.instance_path,
-            'translation_dict.db'
-        )
+        from app.teo_g2p.models import TranslationDict
+        from app.teo_g2p.database import get_db
 
-        # 规范化路径
-        translation_dict_path = os.path.abspath(translation_dict_path)
+        # 查询所有启用的词条
+        db = next(get_db())
+        try:
+            translations = db.query(TranslationDict).filter_by(is_active=1).all()
+        finally:
+            db.close()
 
-        if not os.path.exists(translation_dict_path):
-            logger.error(f"Translation dict file not found: {translation_dict_path}")
-            return jsonify({'error': '词典文件不存在'}), 404
+        # 构建JSON数据
+        export_data = {
+            'version': '1.0',
+            'export_time': now_utc_isoformat(),
+            'total_count': len(translations),
+            'data': []
+        }
 
-        # 获取目录和文件名
-        directory = os.path.dirname(translation_dict_path)
-        filename = os.path.basename(translation_dict_path)
+        for t in translations:
+            export_data['data'].append({
+                'mandarin_text': t.mandarin_text,
+                'teochew_text': t.teochew_text,
+                'variant_mandarin': t.variant_mandarin,
+                'variant_teochew': t.variant_teochew,
+                'teochew_priority': t.teochew_priority,
+                'is_active': t.is_active
+            })
 
-        logger.info(f"Exporting translation dict: {translation_dict_path}")
+        # 生成JSON内容
+        json_content = json.dumps(export_data, ensure_ascii=False, indent=2)
 
-        return send_from_directory(
-            directory,
-            filename,
-            download_name='translation_dict.db',
-            as_attachment=True
+        logger.info(f"Exported translation dict: {len(translations)} entries")
+
+        return Response(
+            json_content,
+            mimetype='application/json',
+            headers={
+                'Content-Disposition': f'attachment; filename=translation_dict_{now_beijing_str()}.json'
+            }
         )
 
     except Exception as e:
@@ -175,7 +192,7 @@ def export_dict_logs():
             memory_file.getvalue(),
             mimetype='application/zip',
             headers={
-                'Content-Disposition': f'attachment; filename=dict_logs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+                'Content-Disposition': f'attachment; filename=dict_logs_{now_beijing_str()}.zip'
             }
         )
 
@@ -186,106 +203,109 @@ def export_dict_logs():
 
 @data_management_bp.route('/admin/api/export/database-sql', methods=['GET'])
 @admin_required
-def export_database_sql():
-    """导出数据库所有数据为SQL文件"""
+def export_database_json():
+    """导出主数据库为JSON格式"""
     try:
         from app.models import Recording, ReferenceText, APIKey, GenerationTask
-        from sqlalchemy import inspect
 
-        sql_lines = []
-        sql_lines.append("-- Teo Estuary Database Export")
-        sql_lines.append(f"-- Export Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        sql_lines.append("-- This file contains all data from the database")
-        sql_lines.append("-- Execute this file to restore/import the data")
-        sql_lines.append("")
-        sql_lines.append("SET FOREIGN_KEY_CHECKS = 0;")
-        sql_lines.append("")
+        # 构建JSON数据
+        export_data = {
+            'version': '1.0',
+            'export_time': now_utc_isoformat(),
+            'tables': {
+                'recordings': {
+                    'count': 0,
+                    'data': []
+                },
+                'reference_text': {
+                    'count': 0,
+                    'data': []
+                },
+                'api_keys': {
+                    'count': 0,
+                    'data': []
+                },
+                'generation_tasks': {
+                    'count': 0,
+                    'data': []
+                }
+            }
+        }
 
         # 导出 recordings 表
-        sql_lines.append("-- ============================================")
-        sql_lines.append("-- Table: recordings")
-        sql_lines.append("-- ============================================")
         recordings = Recording.query.all()
-        if recordings:
-            for r in recordings:
-                # 转义单引号
-                mandarin_text_escaped = r.mandarin_text.replace("'", "''") if r.mandarin_text else ''
-                teochew_text_escaped = r.teochew_text.replace("'", "''") if r.teochew_text else None
-                file_path_escaped = r.file_path.replace("'", "''") if r.file_path else ''
-                user_agent_escaped = r.user_agent.replace("'", "''") if r.user_agent else None
-
-                teochew_sql = f"NULL" if teochew_text_escaped is None else f"'{teochew_text_escaped}'"
-                user_agent_sql = f"NULL" if user_agent_escaped is None else f"'{user_agent_escaped}'"
-                reviewed_at_sql = f"'{r.reviewed_at.isoformat()}'" if r.reviewed_at else 'NULL'
-                ip_address_sql = r.ip_address if r.ip_address else ''
-
-                sql_lines.append(f"INSERT INTO recordings (id, file_path, mandarin_text, teochew_text, upload_time, ip_address, user_agent, file_size, duration, status, upload_type, reviewed_at) VALUES ('{r.id}', '{file_path_escaped}', '{mandarin_text_escaped}', {teochew_sql}, '{r.upload_time.isoformat()}', '{ip_address_sql}', {user_agent_sql}, {r.file_size}, {r.duration}, '{r.status}', {r.upload_type}, {reviewed_at_sql});")
-
-        sql_lines.append("")
+        export_data['tables']['recordings']['count'] = len(recordings)
+        for r in recordings:
+            export_data['tables']['recordings']['data'].append({
+                'id': r.id,
+                'file_path': r.file_path,
+                'mandarin_text': r.mandarin_text,
+                'teochew_text': r.teochew_text,
+                'upload_time': r.upload_time.isoformat() if r.upload_time else None,
+                'ip_address': r.ip_address,
+                'user_agent': r.user_agent,
+                'file_size': r.file_size,
+                'duration': r.duration,
+                'status': r.status,
+                'upload_type': r.upload_type,
+                'reviewed_at': r.reviewed_at.isoformat() if r.reviewed_at else None
+            })
 
         # 导出 reference_text 表
-        sql_lines.append("-- ============================================")
-        sql_lines.append("-- Table: reference_text")
-        sql_lines.append("-- ============================================")
         refs = ReferenceText.query.all()
-        if refs:
-            for ref in refs:
-                discourse_escaped = ref.discourse.replace("'", "''")
-                sql_lines.append(f"INSERT INTO reference_text (id, discourse, created_time) VALUES ({ref.id}, '{discourse_escaped}', '{ref.created_time.isoformat()}');")
-
-        sql_lines.append("")
+        export_data['tables']['reference_text']['count'] = len(refs)
+        for ref in refs:
+            export_data['tables']['reference_text']['data'].append({
+                'id': ref.id,
+                'discourse': ref.discourse,
+                'created_time': ref.created_time.isoformat() if ref.created_time else None
+            })
 
         # 导出 api_keys 表
-        sql_lines.append("-- ============================================")
-        sql_lines.append("-- Table: api_keys")
-        sql_lines.append("-- ============================================")
         api_keys = APIKey.query.all()
-        if api_keys:
-            for key in api_keys:
-                name_escaped = key.name.replace("'", "''")
-                description_escaped = key.description.replace("'", "''") if key.description else None
-                description_sql = f"NULL" if description_escaped is None else f"'{description_escaped}'"
-                is_active_sql = 1 if key.is_active else 0
-                last_used_sql = f"'{key.last_used.isoformat()}'" if key.last_used else 'NULL'
-
-                sql_lines.append(f"INSERT INTO api_keys (id, name, key, description, is_active, created_time, last_used, usage_count, max_requests) VALUES ({key.id}, '{name_escaped}', '{key.key}', {description_sql}, {is_active_sql}, '{key.created_time.isoformat()}', {last_used_sql}, {key.usage_count}, {key.max_requests});")
-
-        sql_lines.append("")
+        export_data['tables']['api_keys']['count'] = len(api_keys)
+        for key in api_keys:
+            export_data['tables']['api_keys']['data'].append({
+                'id': key.id,
+                'name': key.name,
+                'key': key.key,
+                'description': key.description,
+                'is_active': key.is_active,
+                'created_time': key.created_time.isoformat() if key.created_time else None,
+                'last_used': key.last_used.isoformat() if key.last_used else None,
+                'usage_count': key.usage_count,
+                'max_requests': key.max_requests
+            })
 
         # 导出 generation_tasks 表
-        sql_lines.append("-- ============================================")
-        sql_lines.append("-- Table: generation_tasks")
-        sql_lines.append("-- ============================================")
         tasks = GenerationTask.query.all()
-        if tasks:
-            for task in tasks:
-                result_escaped = task.result.replace("'", "''") if task.result else None
-                error_escaped = task.error_message.replace("'", "''") if task.error_message else None
+        export_data['tables']['generation_tasks']['count'] = len(tasks)
+        for task in tasks:
+            export_data['tables']['generation_tasks']['data'].append({
+                'id': task.id,
+                'status': task.status,
+                'result': task.result,
+                'error_message': task.error_message,
+                'created_time': task.created_time.isoformat() if task.created_time else None,
+                'updated_time': task.updated_time.isoformat() if task.updated_time else None,
+                'completed_time': task.completed_time.isoformat() if task.completed_time else None
+            })
 
-                result_sql = f"NULL" if result_escaped is None else f"'{result_escaped}'"
-                error_sql = f"NULL" if error_escaped is None else f"'{error_escaped}'"
-                completed_time_sql = f"'{task.completed_time.isoformat()}'" if task.completed_time else 'NULL'
+        # 生成JSON内容
+        json_content = json.dumps(export_data, ensure_ascii=False, indent=2)
 
-                sql_lines.append(f"INSERT INTO generation_tasks (id, status, result, error_message, created_time, updated_time, completed_time) VALUES ({task.id}, '{task.status}', {result_sql}, {error_sql}, '{task.created_time.isoformat()}', '{task.updated_time.isoformat()}', {completed_time_sql});")
-
-        sql_lines.append("")
-        sql_lines.append("SET FOREIGN_KEY_CHECKS = 1;")
-
-        # 生成SQL内容
-        sql_content = '\n'.join(sql_lines)
-
-        logger.info(f"Exported database SQL: {len(recordings)} recordings, {len(refs)} reference texts, {len(api_keys)} API keys, {len(tasks)} tasks")
+        logger.info(f"Exported database JSON: {len(recordings)} recordings, {len(refs)} reference texts, {len(api_keys)} API keys, {len(tasks)} tasks")
 
         return Response(
-            sql_content,
-            mimetype='text/plain',
+            json_content,
+            mimetype='application/json',
             headers={
-                'Content-Disposition': f'attachment; filename=teo_estuary_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.sql'
+                'Content-Disposition': f'attachment; filename=teo_estuary_database_{now_beijing_str()}.json'
             }
         )
 
     except Exception as e:
-        logger.error(f"Export database SQL error: {e}")
+        logger.error(f"Export database JSON error: {e}")
         return jsonify({'error': '导出失败'}), 500
 
 
@@ -397,3 +417,335 @@ def _process_log_content(content, target_file_path, write_mode='a'):
 
     return imported_count, skipped_count, error_lines
 
+
+@data_management_bp.route('/admin/api/import/translation-dict', methods=['POST'])
+@admin_required
+def import_translation_dict():
+    """导入翻译词典JSON文件（支持增量追加或全量覆盖）"""
+    try:
+        # 检查是否有文件上传
+        if 'file' not in request.files:
+            return jsonify({'error': '没有上传文件'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+
+        # 获取导入模式
+        import_mode = request.form.get('mode', 'append')  # 'append' 或 'overwrite'
+
+        # 检查文件类型
+        if not file.filename.endswith('.json'):
+            return jsonify({'error': '只支持.json格式的文件'}), 400
+
+        # 读取JSON内容
+        try:
+            json_content = file.read().decode('utf-8')
+            import_data = json.loads(json_content)
+        except json.JSONDecodeError as e:
+            return jsonify({'error': f'JSON格式错误: {str(e)}'}), 400
+        except UnicodeDecodeError:
+            return jsonify({'error': '文件编码错误，请确保文件为UTF-8编码'}), 400
+
+        # 验证数据结构
+        if 'data' not in import_data:
+            return jsonify({'error': 'JSON文件格式错误：缺少data字段'}), 400
+
+        from app.teo_g2p.models import TranslationDict
+        from app.teo_g2p.database import get_db
+
+        imported_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        # 获取 SQLite 数据库会话
+        db = next(get_db())
+        try:
+            # 如果是全量覆盖模式，先删除所有现有数据
+            if import_mode == 'overwrite':
+                try:
+                    db.query(TranslationDict).delete()
+                    db.commit()
+                    logger.info("Cleared all translation dict entries for overwrite import")
+                except Exception as e:
+                    db.rollback()
+                    return jsonify({'error': f'清空现有数据失败: {str(e)}'}), 500
+
+            # 导入数据
+            for entry in import_data.get('data', []):
+                try:
+                    # 验证必填字段
+                    if 'mandarin_text' not in entry or 'teochew_text' not in entry:
+                        error_count += 1
+                        continue
+
+                    mandarin_text = entry['mandarin_text'].strip()
+                    teochew_text = entry['teochew_text'].strip()
+
+                    if not mandarin_text or not teochew_text:
+                        error_count += 1
+                        continue
+
+                    # 检查是否已存在（仅增量模式需要）
+                    if import_mode == 'append':
+                        existing = db.query(TranslationDict).filter(
+                            TranslationDict.mandarin_text == mandarin_text,
+                            TranslationDict.teochew_text == teochew_text
+                        ).first()
+
+                        if existing:
+                            skipped_count += 1
+                            continue
+
+                    # 创建新记录
+                    new_entry = TranslationDict(
+                        mandarin_text=mandarin_text,
+                        teochew_text=teochew_text,
+                        variant_mandarin=entry.get('variant_mandarin', 1),
+                        variant_teochew=entry.get('variant_teochew', 1),
+                        teochew_priority=entry.get('teochew_priority', len(teochew_text)),
+                        is_active=entry.get('is_active', 1)
+                    )
+
+                    db.add(new_entry)
+                    imported_count += 1
+
+                except Exception as e:
+                    error_count += 1
+                    logger.error(f"Error importing translation entry: {e}")
+                    continue
+
+            # 提交事务
+            try:
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                logger.error(f"Commit failed: {e}")
+                return jsonify({'error': f'保存数据失败: {str(e)}'}), 500
+
+            mode_name = '全量覆盖' if import_mode == 'overwrite' else '增量追加'
+            logger.info(f"Imported translation dict ({mode_name}): {imported_count} imported, {skipped_count} skipped, {error_count} errors")
+
+            return jsonify({
+                'success': True,
+                'message': f'导入完成（{mode_name}）：成功{imported_count}条，跳过{skipped_count}条，失败{error_count}条',
+                'imported_count': imported_count,
+                'skipped_count': skipped_count,
+                'error_count': error_count
+            })
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"Import translation dict error: {e}", exc_info=True)
+        return jsonify({'error': f'导入失败: {str(e)}'}), 500
+
+
+@data_management_bp.route('/admin/api/import/database', methods=['POST'])
+@admin_required
+def import_database():
+    """导入主数据库JSON文件（支持增量追加或全量覆盖）"""
+    try:
+        # 检查是否有文件上传
+        if 'file' not in request.files:
+            return jsonify({'error': '没有上传文件'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+
+        # 获取导入模式
+        import_mode = request.form.get('mode', 'append')  # 'append' 或 'overwrite'
+
+        # 检查文件类型
+        if not file.filename.endswith('.json'):
+            return jsonify({'error': '只支持.json格式的文件'}), 400
+
+        # 读取JSON内容
+        try:
+            json_content = file.read().decode('utf-8')
+            import_data = json.loads(json_content)
+        except json.JSONDecodeError as e:
+            return jsonify({'error': f'JSON格式错误: {str(e)}'}), 400
+        except UnicodeDecodeError:
+            return jsonify({'error': '文件编码错误，请确保文件为UTF-8编码'}), 400
+
+        # 验证数据结构
+        if 'tables' not in import_data:
+            return jsonify({'error': 'JSON文件格式错误：缺少tables字段'}), 400
+
+        from app.models import Recording, ReferenceText, APIKey, GenerationTask
+        from app import db
+        from datetime import datetime
+
+        total_imported = 0
+        total_skipped = 0
+        total_errors = 0
+
+        # 如果是全量覆盖模式，先删除所有现有数据
+        if import_mode == 'overwrite':
+            try:
+                db.session.query(GenerationTask).delete()
+                db.session.query(APIKey).delete()
+                db.session.query(ReferenceText).delete()
+                db.session.query(Recording).delete()
+                db.session.commit()
+                logger.info("Cleared all database tables for overwrite import")
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'error': f'清空现有数据失败: {str(e)}'}), 500
+
+        # 导入各个表的数据
+        tables = import_data.get('tables', {})
+
+        # 导入 recordings
+        if 'recordings' in tables:
+            for record in tables['recordings'].get('data', []):
+                try:
+                    # 检查是否已存在（仅增量模式需要）
+                    if import_mode == 'append':
+                        existing = db.session.query(Recording).filter_by(id=record['id']).first()
+                        if existing:
+                            total_skipped += 1
+                            continue
+
+                    # 解析日期时间
+                    upload_time = datetime.fromisoformat(record['upload_time']) if record.get('upload_time') else None
+                    reviewed_at = datetime.fromisoformat(record['reviewed_at']) if record.get('reviewed_at') else None
+
+                    new_record = Recording(
+                        id=record['id'],
+                        file_path=record.get('file_path', ''),
+                        mandarin_text=record.get('mandarin_text', ''),
+                        teochew_text=record.get('teochew_text'),
+                        upload_time=upload_time,
+                        ip_address=record.get('ip_address', ''),
+                        user_agent=record.get('user_agent'),
+                        file_size=record.get('file_size', 0),
+                        duration=record.get('duration', 0.0),
+                        status=record.get('status', 'pending'),
+                        upload_type=record.get('upload_type', 'single'),
+                        reviewed_at=reviewed_at
+                    )
+
+                    db.session.add(new_record)
+                    total_imported += 1
+
+                except Exception as e:
+                    total_errors += 1
+                    logger.error(f"Error importing recording: {e}")
+                    continue
+
+        # 导入 reference_text
+        if 'reference_text' in tables:
+            for ref in tables['reference_text'].get('data', []):
+                try:
+                    if import_mode == 'append':
+                        existing = db.session.query(ReferenceText).filter_by(id=ref['id']).first()
+                        if existing:
+                            total_skipped += 1
+                            continue
+
+                    created_time = datetime.fromisoformat(ref['created_time']) if ref.get('created_time') else None
+
+                    new_ref = ReferenceText(
+                        id=ref['id'],
+                        discourse=ref.get('discourse', ''),
+                        created_time=created_time
+                    )
+
+                    db.session.add(new_ref)
+                    total_imported += 1
+
+                except Exception as e:
+                    total_errors += 1
+                    logger.error(f"Error importing reference text: {e}")
+                    continue
+
+        # 导入 api_keys
+        if 'api_keys' in tables:
+            for key_data in tables['api_keys'].get('data', []):
+                try:
+                    if import_mode == 'append':
+                        existing = db.session.query(APIKey).filter_by(id=key_data['id']).first()
+                        if existing:
+                            total_skipped += 1
+                            continue
+
+                    created_time = datetime.fromisoformat(key_data['created_time']) if key_data.get('created_time') else None
+                    last_used = datetime.fromisoformat(key_data['last_used']) if key_data.get('last_used') else None
+
+                    new_key = APIKey(
+                        id=key_data['id'],
+                        name=key_data.get('name', ''),
+                        key=key_data.get('key', ''),
+                        description=key_data.get('description'),
+                        is_active=key_data.get('is_active', True),
+                        created_time=created_time,
+                        last_used=last_used,
+                        usage_count=key_data.get('usage_count', 0),
+                        max_requests=key_data.get('max_requests', 1000)
+                    )
+
+                    db.session.add(new_key)
+                    total_imported += 1
+
+                except Exception as e:
+                    total_errors += 1
+                    logger.error(f"Error importing API key: {e}")
+                    continue
+
+        # 导出 generation_tasks
+        if 'generation_tasks' in tables:
+            for task in tables['generation_tasks'].get('data', []):
+                try:
+                    if import_mode == 'append':
+                        existing = db.session.query(GenerationTask).filter_by(id=task['id']).first()
+                        if existing:
+                            total_skipped += 1
+                            continue
+
+                    created_time = datetime.fromisoformat(task['created_time']) if task.get('created_time') else None
+                    updated_time = datetime.fromisoformat(task['updated_time']) if task.get('updated_time') else None
+                    completed_time = datetime.fromisoformat(task['completed_time']) if task.get('completed_time') else None
+
+                    new_task = GenerationTask(
+                        id=task['id'],
+                        status=task.get('status', 'pending'),
+                        result=task.get('result'),
+                        error_message=task.get('error_message'),
+                        created_time=created_time,
+                        updated_time=updated_time,
+                        completed_time=completed_time
+                    )
+
+                    db.session.add(new_task)
+                    total_imported += 1
+
+                except Exception as e:
+                    total_errors += 1
+                    logger.error(f"Error importing generation task: {e}")
+                    continue
+
+        # 提交事务
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Commit failed: {e}")
+            return jsonify({'error': f'保存数据失败: {str(e)}'}), 500
+
+        mode_name = '全量覆盖' if import_mode == 'overwrite' else '增量追加'
+        logger.info(f"Imported database ({mode_name}): {total_imported} imported, {total_skipped} skipped, {total_errors} errors")
+
+        return jsonify({
+            'success': True,
+            'message': f'导入完成（{mode_name}）：成功{total_imported}条，跳过{total_skipped}条，失败{total_errors}条',
+            'imported_count': total_imported,
+            'skipped_count': total_skipped,
+            'error_count': total_errors
+        })
+
+    except Exception as e:
+        logger.error(f"Import database error: {e}", exc_info=True)
+        return jsonify({'error': f'导入失败: {str(e)}'}), 500

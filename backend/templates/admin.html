@@ -719,15 +719,15 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                                         </svg>
                                     </div>
-                                    <h2>翻译词典数据库</h2>
+                                    <h2>潮语翻译词典数据库</h2>
                                 </div>
                                 <div class="export-card-body">
-                                    <p class="export-description">导出普通话到潮汕话的翻译词典数据库文件（SQLite格式），包含所有自定义翻译条目。</p>
+                                    <p class="export-description">导出普通话-潮汕话的翻译词典数据为Json文件，包含所有自定义翻译条目。</p>
                                     <button class="export-btn" onclick="exportTranslationDict()">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                         </svg>
-                                        <span>导出翻译词典数据库</span>
+                                        <span>导出潮语翻译词典数据库</span>
                                     </button>
                                 </div>
                             </div>
@@ -742,15 +742,15 @@
                                             <path d="M21 5v14"/>
                                         </svg>
                                     </div>
-                                    <h2>数据库SQL备份</h2>
+                                    <h2>主数据库</h2>
                                 </div>
                                 <div class="export-card-body">
-                                    <p class="export-description">导出所有数据库表的数据为SQL文件，包含录音数据、参考文本、API密钥等，用于数据备份和迁移。</p>
+                                    <p class="export-description">导出主数据库所有表的数据为Json文件，包含录音数据、参考文本、API密钥等，用于数据备份和迁移。</p>
                                     <button class="export-btn" onclick="exportDatabaseSQL()">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                         </svg>
-                                        <span>导出数据库SQL</span>
+                                        <span>导出主数据库</span>
                                     </button>
                                 </div>
                             </div>
@@ -781,8 +781,8 @@
                                     <h2>词典操作日志</h2>
                                 </div>
                                 <div class="export-card-body">
-                                    <p class="export-description">导入词典修改日志（database_changes.log）或Jieba同步日志（database_changes_sync.log）。</p>
-                                    <div style="display: flex; gap: 12px;">
+                                    <p class="export-description" id="dictLogDescription">导入词典修改日志（database_changes.log）或Jieba同步日志（database_changes_sync.log）。</p>
+                                    <div id="dictLogUploadButtons" style="display: flex; gap: 12px;">
                                         <input type="file" id="dictLogFile_changes" accept=".log" style="display: none;" onchange="previewDictLogFile('changes')">
                                         <input type="file" id="dictLogFile_sync" accept=".log" style="display: none;" onchange="previewDictLogFile('sync')">
                                         <button class="export-btn" onclick="document.getElementById('dictLogFile_changes').click()" style="flex: 1;">
@@ -799,22 +799,134 @@
                                         </button>
                                     </div>
                                     <div id="importPreview" style="margin-top: 15px; display: none;">
-                                        <p class="export-description" id="previewFileName"></p>
-                                        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
-                                            <label style="color: var(--text-secondary); font-size: 14px;">导入模式：</label>
+                                        <p class="export-description" id="previewFileName" style="margin-bottom: 10px;"></p>
+                                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                                             <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
                                                 <input type="radio" name="importMode" value="append" checked style="margin-right: 6px;">增量追加
                                             </label>
                                             <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
                                                 <input type="radio" name="importMode" value="overwrite" style="margin-right: 6px;">全量覆盖
                                             </label>
+                                            <button class="export-btn dictLog-reupload" onclick="document.getElementById('dictLogFile_changes').click()" style="padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                </svg>
+                                                <span>重新上传</span>
+                                            </button>
+                                            <button class="export-btn dictLog-reupload" onclick="document.getElementById('dictLogFile_sync').click()" style="padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                </svg>
+                                                <span>重新上传</span>
+                                            </button>
+                                            <button class="export-btn" onclick="importDictLogs()" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 106, 0.2)); border-color: rgba(0, 255, 136, 0.4); padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                <span>确认导入</span>
+                                            </button>
                                         </div>
-                                        <button class="export-btn" onclick="importDictLogs()" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 106, 0.2)); border-color: rgba(0, 255, 136, 0.4); margin-top: 12px;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据库相关 -->
+                    <div class="export-group">
+                        <h3 class="export-group-title">数据库相关</h3>
+                        <div class="export-grid">
+                            <div class="export-card">
+                                <div class="export-card-header">
+                                    <div class="export-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                        </svg>
+                                    </div>
+                                    <h2>潮语翻译词典数据库</h2>
+                                </div>
+                                <div class="export-card-body">
+                                    <p class="export-description" id="translationDictDescription">导入翻译词典JSON文件（由"导出潮语翻译词典数据库"功能导出的数据文件）。</p>
+                                    <input type="file" id="translationDictFile" accept=".json" style="display: none;" onchange="previewTranslationDictFile()">
+                                    <div id="translationDictUploadButton">
+                                        <button class="export-btn" onclick="document.getElementById('translationDictFile').click()" style="width: 100%;">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                             </svg>
-                                            <span>确认导入</span>
+                                            <span>选择JSON文件</span>
                                         </button>
+                                    </div>
+                                    <div id="translationDictPreview" style="margin-top: 15px; display: none;">
+                                        <p class="export-description" id="translationDictFileName" style="margin-bottom: 10px;"></p>
+                                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                            <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
+                                                <input type="radio" name="translationDictImportMode" value="append" checked style="margin-right: 6px;">增量追加
+                                            </label>
+                                            <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
+                                                <input type="radio" name="translationDictImportMode" value="overwrite" style="margin-right: 6px;">全量覆盖
+                                            </label>
+                                            <button class="export-btn" onclick="document.getElementById('translationDictFile').click()" style="padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                </svg>
+                                                <span>重新上传</span>
+                                            </button>
+                                            <button class="export-btn" onclick="importTranslationDict()" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 106, 0.2)); border-color: rgba(0, 255, 136, 0.4); padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                <span>确认导入</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="export-card">
+                                <div class="export-card-header">
+                                    <div class="export-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                                            <path d="M21 12c0 1.66-3.34 3-9 3s-9-1.34-9-3"/>
+                                            <path d="M3 5v14c0 1.66 3.34 3 9 3s9-1.34 9-3"/>
+                                            <path d="M21 5v14"/>
+                                        </svg>
+                                    </div>
+                                    <h2>主数据库</h2>
+                                </div>
+                                <div class="export-card-body">
+                                    <p class="export-description" id="databaseDescription">导入主数据库JSON文件（由"导出主数据库"功能导出），包含录音数据、参考文本、API密钥等。</p>
+                                    <input type="file" id="databaseFile" accept=".json" style="display: none;" onchange="previewDatabaseFile()">
+                                    <div id="databaseUploadButton">
+                                        <button class="export-btn" onclick="document.getElementById('databaseFile').click()" style="width: 100%;">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                            </svg>
+                                            <span>选择JSON文件</span>
+                                        </button>
+                                    </div>
+                                    <div id="databasePreview" style="margin-top: 15px; display: none;">
+                                        <p class="export-description" id="databaseFileName" style="margin-bottom: 10px;"></p>
+                                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                            <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
+                                                <input type="radio" name="databaseImportMode" value="append" checked style="margin-right: 6px;">增量追加
+                                            </label>
+                                            <label style="color: var(--text-primary); font-size: 14px; cursor: pointer;">
+                                                <input type="radio" name="databaseImportMode" value="overwrite" style="margin-right: 6px;">全量覆盖
+                                            </label>
+                                            <button class="export-btn" onclick="document.getElementById('databaseFile').click()" style="padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                                </svg>
+                                                <span>重新上传</span>
+                                            </button>
+                                            <button class="export-btn" onclick="importDatabase()" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 106, 0.2)); border-color: rgba(0, 255, 136, 0.4); padding: 8px 16px; font-size: 14px;">
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                <span>确认导入</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
