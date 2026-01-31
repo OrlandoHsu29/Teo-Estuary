@@ -87,6 +87,9 @@ class DialectRecorder {
     }
 
     async getNewText() {
+        // 标志位：标识是否是"没有更多句子"的情况
+        let noMoreText = false;
+
         try {
             // 检查API密钥
             const apiKey = localStorage.getItem('apiKey');
@@ -131,7 +134,11 @@ class DialectRecorder {
 
             // 检查返回的数据是否有效
             if (!data.success || !data.data || data.data.length === 0) {
-                throw new Error('暂无可用的参考文本，请联系管理员添加');
+                // 显示自定义提示信息
+                this.elements.textDisplay.textContent = '没有更多句子了';
+                this.updateStatus('正在自动填充新的句子，请稍后再试', 'error');
+                noMoreText = true; // 设置标志位
+                return; // 直接返回，不执行后续逻辑
             }
 
             this.currentText = data.data[0].discourse;
@@ -153,8 +160,8 @@ class DialectRecorder {
         } finally {
             // 恢复按钮状态
             this.setAllButtonsDisabled(false);
-            // 如果没有当前文本，显示默认提示
-            if (!this.currentText) {
+            // 只有在没有文本且不是"没有更多句子"的情况下才显示默认提示
+            if (!this.currentText && !noMoreText) {
                 this.elements.textDisplay.textContent = '点击「刷新」按钮获取跟读文本';
             }
         }
