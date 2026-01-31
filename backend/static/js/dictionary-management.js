@@ -716,8 +716,8 @@ async function loadUnsyncedLogs() {
                 const mandarin = newData.mandarin_text || oldData.mandarin_text || '未知词条';
                 const teochew = newData.teochew_text || oldData.teochew_text || '未知词条';
 
-                // 更新操作列显示
-                operationText = `更新 - 「普」"${mandarin}" · 「潮」"${teochew}"`;
+                // 更新操作列显示，字词信息使用不显眼的样式
+                operationText = `更新:<span class="sync-log-word-info">「普」"${mandarin}" · 「潮」"${teochew}"</span>`;
 
                 const changesArray = [];
 

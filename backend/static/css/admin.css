@@ -5531,12 +5531,20 @@ mark {
 }
 
 .dict-management-container .sync-log-details {
-    color: #8B8B8B;
+    color: #cccccc;
     margin-top: 6px;
     padding: 8px;
     background: rgba(0, 0, 0, 0.2);
     border-left: 3px solid var(--primary-color);
     word-break: break-all;
+}
+
+/* 更新操作中的字词信息样式 - 不显眼且不加粗 */
+.dict-management-container .sync-log-word-info {
+    color: #e9a216;
+    font-weight: normal;
+    opacity: 0.8;
+    font-size: 11.5px;
 }
 
 /* 更新同步设备控制台样式 */
