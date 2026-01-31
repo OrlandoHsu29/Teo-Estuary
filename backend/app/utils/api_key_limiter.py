@@ -1,8 +1,7 @@
 """基于API密钥的自定义限流器"""
-import time
 import os
 from datetime import timedelta
-from app.utils.timezone import now
+from app.utils.datetime_utils import now_utc
 import logging
 from functools import wraps
 from flask import jsonify
@@ -43,7 +42,7 @@ def api_key_rate_limit(hourly_limit=300, daily_limit=750):
                 }), 401
 
             api_key = key_obj.key
-            current_time = now()
+            current_time = now_utc()
 
             # 获取或初始化该API密钥的使用记录
             if api_key not in _api_key_usage:
@@ -104,7 +103,7 @@ def cleanup_old_usage():
     if not ENABLE_RATE_LIMITER:
         return
 
-    current_time = now()
+    current_time = now_utc()
     one_day_ago = current_time - timedelta(days=1)
 
     for api_key, usage in _api_key_usage.items():

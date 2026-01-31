@@ -194,7 +194,7 @@ function renderListView(recordings, total, current, pages) {
             <div class="list-item-footer">
                 <div class="list-item-meta">
                     <span class="meta-ip">IP: ${record.ip_address || '-'}</span>
-                    <span class="meta-time">${record.upload_time ? new Date(record.upload_time).toLocaleString() : '-'}</span>
+                    <span class="meta-time">${record.upload_time ? formatDateTimeShort(record.upload_time) : '-'}</span>
                     <span class="meta-size">${record.file_size ? formatFileSize(record.file_size) : '-'}</span>
                 </div>
 

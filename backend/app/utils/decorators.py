@@ -1,7 +1,8 @@
 """装饰器模块"""
 from functools import wraps
-from flask import session, request, jsonify, redirect, url_for, current_app
+from flask import session, request, jsonify, redirect, url_for
 from datetime import datetime
+from app.utils.datetime_utils import now_utc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def api_key_required(f):
         if error:
             return jsonify({'success': False, 'error': error['error']}), 401
 
-        key_obj.last_used = datetime.now()  # 使用中国时间
+        key_obj.last_used = now_utc()
         key_obj.usage_count += 1
         db.session.commit()
 
@@ -78,7 +79,7 @@ def api_key_and_rate_limit(f):
             }), 429
 
         # 更新使用记录
-        key_obj.last_used = datetime.now()  # 使用中国时间
+        key_obj.last_used = now_utc()
         key_obj.usage_count += 1
         db.session.commit()
 

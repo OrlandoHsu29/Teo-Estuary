@@ -2,15 +2,13 @@
 import os
 import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from app.utils.decorators import admin_required
+from app.utils.datetime_utils import now_utc_isoformat
 from app.teo_g2p.jieba_temp_manager import JiebaTempManager
 from app.utils.enhanced_change_logger import EnhancedChangeLogger
 from app.teo_g2p.unsynced_logs_service import UnsyncedLogsService
-
-# 定义中国时区 (UTC+8)
-CHINA_TZ = timezone(timedelta(hours=8))
 
 jieba_sync_bp = Blueprint('jieba_sync', __name__)
 logger = logging.getLogger(__name__)
@@ -45,7 +43,7 @@ def sync_jieba():
                     "operation": "add",
                     "word": word,
                     "freq": "100000",
-                    "timestamp": datetime.now(CHINA_TZ).isoformat()
+                    "timestamp": now_utc_isoformat()
                 })
 
             # 记录修改的词语
@@ -54,7 +52,7 @@ def sync_jieba():
                     "operation": "update",
                     "word": word,
                     "freq": "100000",
-                    "timestamp": datetime.now(CHINA_TZ).isoformat()
+                    "timestamp": now_utc_isoformat()
                 })
 
             # 记录删除的词语
@@ -62,7 +60,7 @@ def sync_jieba():
                 sync_items.append({
                     "operation": "delete",
                     "word": word,
-                    "timestamp": datetime.now(CHINA_TZ).isoformat()
+                    "timestamp": now_utc_isoformat()
                 })
 
             # 记录同步日志
@@ -139,7 +137,7 @@ def get_sync_status():
         return jsonify({
             'success': True,
             'sync_needed': is_sync_needed,
-            'latest_sync_time': latest_sync_time.isoformat() if latest_sync_time != datetime(1970, 1, 1, tzinfo=CHINA_TZ) else None,
+            'latest_sync_time': latest_sync_time.isoformat() if latest_sync_time != datetime(1970, 1, 1, tzinfo=timezone.utc) else None,
             'unsynced_logs_count': unsynced_count,
             'pending_changes': {
                 'added': len(changes['added']),

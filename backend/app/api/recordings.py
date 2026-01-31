@@ -10,7 +10,7 @@ from app import db
 from app.utils.combined_decorators import api_key_required_with_rate_limit
 from app.utils.decorators import admin_required, get_client_ip
 from app.utils.helpers import generate_id, get_next_audio_name, move_audio_file
-from app.utils.timezone import now
+from app.utils.datetime_utils import now_utc
 from app.teo_g2p.translation_service import translation_service
 
 recordings_bp = Blueprint('recordings', __name__)
@@ -261,7 +261,7 @@ def api_review_recording(recording_id):
                 if response.status_code == 200:
                     # Emilia 服务移动成功，更新状态和操作时间
                     recording.status = new_status
-                    recording.reviewed_at = now()
+                    recording.reviewed_at = now_utc()
                     logger.info(f"{old_status} → {new_status}: Emilia recording {recording_id} moved via Emilia service")
                 else:
                     logger.error(f"Emilia move_audio returned error: {response.status_code} - {response.text}")
@@ -302,7 +302,7 @@ def api_review_recording(recording_id):
 
             if target_path:
                 recording.status = new_status
-                recording.reviewed_at = now()
+                recording.reviewed_at = now_utc()
                 # 转化为相对于data根目录的路径: good/S001/F001/S001F001C001.webm
                 relative_path = os.path.relpath(target_path, current_app.config['DATA_FOLDER'])
 
@@ -994,7 +994,7 @@ def api_stats():
         ).filter_by(status='approved').first()
         total_approved_duration = approved_duration_result[0] or 0 if approved_duration_result else 0
 
-        yesterday = datetime.now() - timedelta(days=1)
+        yesterday = now_utc() - timedelta(days=1)
         recent_uploads = Recording.query.filter(
             Recording.upload_time >= yesterday
         ).count()

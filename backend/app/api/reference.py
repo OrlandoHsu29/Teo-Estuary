@@ -6,6 +6,7 @@ import json
 from sqlalchemy.exc import IntegrityError
 from app.utils.combined_decorators import api_key_required_with_rate_limit
 from app.utils.decorators import admin_required
+from app.utils.datetime_utils import now_utc
 from app import db
 from app.models import ReferenceText, GenerationTask
 
@@ -349,8 +350,7 @@ def api_update_task_status(task_id):
         task.error_message = data.get('error_message', task.error_message)
 
         if new_status in ['completed', 'failed']:
-            from app.utils.timezone import now
-            task.completed_time = now()
+            task.completed_time = now_utc()
 
         db.session.commit()
 
@@ -433,8 +433,7 @@ def api_update_task_status(task_id):
             if task and task.status == 'processing':
                 task.status = 'failed'
                 task.error_message = f"更新异常: {str(e)}"
-                from app.utils.timezone import now
-                task.completed_time = now()
+                task.completed_time = now_utc()
                 db.session.commit()
                 logger.info(f"任务 {task_id} 已标记为失败")
         except Exception as update_error:

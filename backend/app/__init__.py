@@ -27,27 +27,8 @@ db = SQLAlchemy()
 # 配置日志
 import logging
 
-# 创建自定义 Formatter，使用中国时区
-class ChinaTimeFormatter(logging.Formatter):
-    """使用中国时区的日志格式化器"""
-    def __init__(self, fmt=None, datefmt=None, style='%'):
-        super().__init__(fmt, datefmt, style)
-        # 中国时区 (UTC+8)
-        from datetime import timezone, timedelta
-        self.china_tz = timezone(timedelta(hours=8))
-
-    def formatTime(self, record, datefmt=None):
-        """格式化时间为中国时区"""
-        from datetime import datetime
-        # 将 UTC 时间转换为中国时区
-        ct = datetime.fromtimestamp(record.created, tz=self.china_tz)
-        if datefmt:
-            return ct.strftime(datefmt)
-        else:
-            return ct.strftime('%Y-%m-%d %H:%M:%S')
-
-# 创建 formatter
-formatter = ChinaTimeFormatter('%(asctime)s - %(levelname)s - %(message)s')
+# 创建标准 formatter（使用系统时区，即 UTC）
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
 # 配置日志
 file_handler = logging.FileHandler(str(BACKEND_ROOT / 'logs' / 'app.log'), encoding='utf-8')
@@ -292,29 +273,31 @@ def register_base_routes(app, limiter):
     @app.route('/api/test', methods=['GET'])
     def api_test():
         """测试API端点"""
-        from datetime import datetime
+        from app.utils.datetime_utils import now_utc_isoformat
+        import time
         return jsonify({
             'success': True,
             'message': '后端API正常工作',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': now_utc_isoformat(),
+            'time_timezone': time.timezone
         })
 
     @app.route('/health', methods=['GET'])
     @limiter.exempt  # 健康检查不受速率限制
     def health_check():
         """Docker健康检查端点"""
-        from datetime import datetime
+        from app.utils.datetime_utils import now_utc_isoformat
         try:
             # 简单的数据库连接检查
             with db.engine.connect() as conn:
                 conn.execute(db.text('SELECT 1'))
             return jsonify({
                 'status': 'healthy',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now_utc_isoformat()
             }), 200
         except Exception as e:
             return jsonify({
                 'status': 'unhealthy',
                 'error': str(e),
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now_utc_isoformat()
             }), 503

@@ -678,7 +678,7 @@ async function loadUnsyncedLogs() {
         const logs = data.logs;
 
         logs.forEach(log => {
-            const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleString() : '未知时间';
+            const timestamp = log.timestamp ? formatDateTime(log.timestamp) : '未知时间';
             const identifier = log.identifier || {};
             const changes = log.changes || {};
             const operation = log.operation || 'unknown';

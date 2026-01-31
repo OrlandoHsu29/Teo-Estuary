@@ -8,15 +8,11 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List, Dict, Any
-from sqlalchemy.orm import Session
+from typing import Optional, List, Dict
 from sqlalchemy import and_, desc, func
 from app.teo_g2p.models import TranslationDict
 from app.teo_g2p.database import get_db
-
-# 定义中国时区 (UTC+8)
-CHINA_TZ = timezone(timedelta(hours=8))
+from app.utils.datetime_utils import now_utc_isoformat
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -61,7 +57,7 @@ class ChangeLog:
         """
         try:
             log_entry = {
-                "timestamp": datetime.now(CHINA_TZ).isoformat(),
+                "timestamp": now_utc_isoformat(),
                 "operation": operation,
                 "identifier": identifier or {},
                 "changes": {
@@ -102,7 +98,7 @@ class ChangeLog:
         """
         try:
             log_entry = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": now_utc_isoformat(),
                 "operation": "sync",
                 "sync_type": sync_type,
                 "items_count": len(items),

@@ -2,7 +2,7 @@
 import os
 from datetime import datetime
 from app import db
-from app.utils.timezone import now
+from app.utils.datetime_utils import now_utc
 
 
 class Recording(db.Model):
@@ -12,7 +12,7 @@ class Recording(db.Model):
     file_path = db.Column(db.String(500), nullable=False)
     mandarin_text = db.Column(db.String(300), nullable=False, unique=True)  # 普通话文本唯一
     teochew_text = db.Column(db.String(300), unique=True)  # 潮州话文本唯一
-    upload_time = db.Column(db.DateTime, default=now)
+    upload_time = db.Column(db.DateTime, default=now_utc)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(500))
     file_size = db.Column(db.Integer)
@@ -22,7 +22,6 @@ class Recording(db.Model):
     reviewed_at = db.Column(db.DateTime)  # 审核操作时间（approved或rejected的时间）
 
     def to_dict(self):
-        from app.utils.timezone import format_time
         return {
             'id': self.id,
             'filename': os.path.basename(self.file_path) if self.file_path else None,
@@ -30,7 +29,6 @@ class Recording(db.Model):
             'mandarin_text': self.mandarin_text,
             'teochew_text': self.teochew_text,
             'upload_time': self.upload_time.isoformat(),
-            'upload_time_formatted': format_time(self.upload_time),
             'ip_address': self.ip_address,
             'file_size': self.file_size,
             'duration': self.duration,
@@ -48,13 +46,12 @@ class APIKey(db.Model):
     key = db.Column(db.String(64), nullable=False, unique=True)
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    created_time = db.Column(db.DateTime, default=now)
+    created_time = db.Column(db.DateTime, default=now_utc)
     last_used = db.Column(db.DateTime)
     usage_count = db.Column(db.Integer, default=0)
     max_requests = db.Column(db.Integer, default=1000)  # 每天最大请求次数
 
     def to_dict(self):
-        from app.utils.timezone import format_time
         return {
             'id': self.id,
             'name': self.name,
@@ -62,9 +59,7 @@ class APIKey(db.Model):
             'description': self.description,
             'is_active': self.is_active,
             'created_time': self.created_time.isoformat(),
-            'created_time_formatted': format_time(self.created_time),
             'last_used': self.last_used.isoformat() if self.last_used else None,
-            'last_used_formatted': format_time(self.last_used) if self.last_used else None,
             'usage_count': self.usage_count,
             'max_requests': self.max_requests
         }
@@ -76,15 +71,13 @@ class ReferenceText(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     discourse = db.Column(db.String(100), nullable=False, unique=True)  # 话语内容，最多100字符，唯一
-    created_time = db.Column(db.DateTime, default=now)  # 创建时间
+    created_time = db.Column(db.DateTime, default=now_utc)  # 创建时间
 
     def to_dict(self):
-        from app.utils.timezone import format_time
         return {
             'id': self.id,
             'discourse': self.discourse,
-            'created_time': self.created_time.isoformat(),
-            'created_time_formatted': format_time(self.created_time)
+            'created_time': self.created_time.isoformat()
         }
 
 
@@ -96,21 +89,17 @@ class GenerationTask(db.Model):
     status = db.Column(db.String(20), nullable=False, default='processing')  # processing, completed, failed
     source = db.Column(db.String(30))  # 来源标识
     error_message = db.Column(db.Text)  # 错误信息
-    created_time = db.Column(db.DateTime, default=now)  # 创建时间
-    updated_time = db.Column(db.DateTime, default=now, onupdate=now)  # 更新时间
+    created_time = db.Column(db.DateTime, default=now_utc)  # 创建时间
+    updated_time = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)  # 更新时间
     completed_time = db.Column(db.DateTime)  # 完成时间
 
     def to_dict(self):
-        from app.utils.timezone import format_time
         return {
             'id': self.id,
             'status': self.status,
             'source': self.source,
             'error_message': self.error_message,
             'created_time': self.created_time.isoformat(),
-            'created_time_formatted': format_time(self.created_time),
             'updated_time': self.updated_time.isoformat() if self.updated_time else None,
-            'updated_time_formatted': format_time(self.updated_time) if self.updated_time else None,
-            'completed_time': self.completed_time.isoformat() if self.completed_time else None,
-            'completed_time_formatted': format_time(self.completed_time) if self.completed_time else None
+            'completed_time': self.completed_time.isoformat() if self.completed_time else None
         }

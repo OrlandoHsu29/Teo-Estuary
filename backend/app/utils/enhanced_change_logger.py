@@ -8,11 +8,9 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
-
-# 定义中国时区 (UTC+8)
-CHINA_TZ = timezone(timedelta(hours=8))
+from app.utils.datetime_utils import now_utc_isoformat
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +56,7 @@ class EnhancedChangeLogger:
         """
         try:
             log_entry = {
-                "timestamp": datetime.now(CHINA_TZ).isoformat(),
+                "timestamp": now_utc_isoformat(),
                 "operation": operation,
                 "recording_id": recording_id,
                 "change_type": change_type,
@@ -105,7 +103,7 @@ class EnhancedChangeLogger:
         """
         try:
             log_entry = {
-                "timestamp": datetime.now(CHINA_TZ).isoformat(),
+                "timestamp": now_utc_isoformat(),
                 "operation": "sync",
                 "sync_type": sync_type,
                 "items_count": len(items),

@@ -303,7 +303,7 @@ function displayCurrentRecord() {
 
     const uploadTimeElement = document.getElementById('uploadTime');
     if (uploadTimeElement) {
-        uploadTimeElement.textContent = record.upload_time ? new Date(record.upload_time).toLocaleString() : '-';
+        uploadTimeElement.textContent = record.upload_time ? formatDateTime(record.upload_time) : '-';
     }
 
     const fileSizeElement = document.getElementById('fileSize');

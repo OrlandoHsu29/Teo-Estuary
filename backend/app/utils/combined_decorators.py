@@ -5,7 +5,7 @@ import logging
 import os
 from app.utils.decorators import verify_api_key
 from app.utils.api_key_limiter import api_key_rate_limit, _api_key_usage
-from app.utils.timezone import now
+from app.utils.datetime_utils import now_utc
 from datetime import timedelta
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def api_key_required_with_rate_limit(hourly_limit=300, daily_limit=750):
             # 2. 如果启用限流，应用速率限制
             if ENABLE_RATE_LIMITER:
                 api_key = key_obj.key
-                current_time = now()
+                current_time = now_utc()
 
                 # 获取或初始化该API密钥的使用记录
                 if api_key not in _api_key_usage:
@@ -94,7 +94,7 @@ def api_key_required_with_rate_limit(hourly_limit=300, daily_limit=750):
                 }), 429
 
             # 4. 更新数据库
-            key_obj.last_used = now()  # 使用中国时间
+            key_obj.last_used = now_utc()
             key_obj.usage_count += 1
             db.session.commit()
 

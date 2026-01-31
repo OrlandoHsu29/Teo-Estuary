@@ -9,6 +9,74 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// 格式化时间为中国北京时间（UTC+8）
+function formatDateTime(isoString) {
+    if (!isoString) return '-';
+
+    try {
+        // 检查是否包含时区信息（+或Z）
+        let normalizedString = isoString;
+        if (!isoString.includes('+') && !isoString.includes('Z')) {
+            // 数据库存储时丢失了时区信息，添加UTC时区
+            normalizedString = isoString + '+00:00';
+        }
+
+        const date = new Date(normalizedString);
+
+        // 如果日期无效，返回原字符串
+        if (isNaN(date.getTime())) {
+            return isoString;
+        }
+
+        // 转换为中国时区格式
+        return date.toLocaleString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return isoString;
+    }
+}
+
+// 格式化时间为简短格式（用于列表显示）
+function formatDateTimeShort(isoString) {
+    if (!isoString) return '-';
+
+    try {
+        // 检查是否包含时区信息（+或Z）
+        let normalizedString = isoString;
+        if (!isoString.includes('+') && !isoString.includes('Z')) {
+            // 数据库存储时丢失了时区信息，添加UTC时区
+            normalizedString = isoString + '+00:00';
+        }
+
+        const date = new Date(normalizedString);
+
+        if (isNaN(date.getTime())) {
+            return isoString;
+        }
+
+        return date.toLocaleString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return isoString;
+    }
+}
+
 // 获取状态文本
 function getStatusText(status) {
     const statusMap = {
