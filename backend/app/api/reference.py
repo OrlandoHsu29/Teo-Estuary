@@ -355,15 +355,16 @@ def api_update_task_status(task_id):
         db.session.commit()
 
         # 如果任务完成且包含生成的话语，自动存入数据库
-        if new_status == 'completed' and task.result:
+        result = data.get('result')  # 从请求数据中获取result
+        if new_status == 'completed' and result:
             try:
                 # 尝试解析result为话语数组
                 discourse_list = None
 
                 # 如果result是JSON字符串，尝试解析
-                if isinstance(task.result, str):
+                if isinstance(result, str):
                     try:
-                        parsed = json.loads(task.result)
+                        parsed = json.loads(result)
                         # 检查是否包含话语字段
                         if isinstance(parsed, dict):
                             discourse_list = parsed.get('discourse') or parsed.get('texts') or parsed.get('data')
@@ -371,7 +372,9 @@ def api_update_task_status(task_id):
                             discourse_list = parsed
                     except json.JSONDecodeError:
                         # 如果不是JSON，可能就是普通文本，按换行符分割
-                        discourse_list = task.result.split('\n')
+                        discourse_list = result.split('\n')
+                elif isinstance(result, list):
+                    discourse_list = result
 
                 # 处理话语列表
                 if discourse_list and isinstance(discourse_list, list):

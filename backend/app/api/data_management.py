@@ -284,7 +284,7 @@ def export_database_json():
             export_data['tables']['generation_tasks']['data'].append({
                 'id': task.id,
                 'status': task.status,
-                'result': task.result,
+                'source': task.source,
                 'error_message': task.error_message,
                 'created_time': task.created_time.isoformat() if task.created_time else None,
                 'updated_time': task.updated_time.isoformat() if task.updated_time else None,
@@ -712,7 +712,7 @@ def import_database():
                     new_task = GenerationTask(
                         id=task['id'],
                         status=task.get('status', 'pending'),
-                        result=task.get('result'),
+                        source=task.get('source'),
                         error_message=task.get('error_message'),
                         created_time=created_time,
                         updated_time=updated_time,
