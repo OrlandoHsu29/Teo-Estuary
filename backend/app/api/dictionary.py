@@ -108,7 +108,8 @@ def api_search_dictionary():
                     'variant_mandarin': getattr(item, 'variant_mandarin', 1),
                     'variant_teochew': getattr(item, 'variant_teochew', 1),
                     'teochew_priority': getattr(item, 'teochew_priority', 1),
-                    'is_active': item.is_active
+                    'is_active': item.is_active,
+                    'notes': getattr(item, 'notes', '暂无备注')
                 })
 
             return jsonify({
@@ -145,6 +146,7 @@ def api_add_dictionary():
         variant_mandarin = data.get('variant_mandarin', 1)
         variant_teochew = data.get('variant_teochew')  # 可选，默认自动计算
         teochew_priority = data.get('teochew_priority')  # 可选，未提供则自动计算
+        notes = data.get('notes')  # 可选，未提供则为 None
         user = data.get('user', 'admin')
         reason = data.get('reason', '通过管理界面添加')
 
@@ -188,12 +190,32 @@ def api_add_dictionary():
 
         # 使用teo_dict_edit的添加功能
         try:
+            # 先检查是否已存在相同组合（使用 teo_g2p 的数据库连接）
+            from app.teo_g2p.database import get_db
+            from app.teo_g2p.models import TranslationDict
+
+            db = next(get_db())
+            try:
+                existing = db.query(TranslationDict).filter(
+                    TranslationDict.mandarin_text == mandarin_text,
+                    TranslationDict.teochew_text == teochew_text
+                ).first()
+
+                if existing:
+                    return jsonify({
+                        'success': False,
+                        'error': f'词条已存在："{mandarin_text}" → "{teochew_text}"'
+                    }), 400
+            finally:
+                db.close()
+
             success = add_translation(
                 mandarin_text=mandarin_text,
                 teochew_text=teochew_text,
                 variant_mandarin=variant_mandarin,
                 variant_teochew=variant_teochew,
                 teochew_priority=teochew_priority,
+                notes=notes,
                 user=user,
                 reason=reason
             )
@@ -204,29 +226,15 @@ def api_add_dictionary():
                     'message': '词条添加成功'
                 })
             else:
-                # 检查是否是已存在的错误
-                from app import db
-                from app.teo_g2p.models import TranslationDict
-
-                existing = db.session.query(TranslationDict).filter(
-                    TranslationDict.mandarin_text == mandarin_text,
-                    TranslationDict.teochew_text == teochew_text
-                ).first()
-
-                if existing:
-                    return jsonify({
-                        'success': False,
-                        'error': '该普通话和潮汕话组合已存在'
-                    }), 400
-                else:
-                    return jsonify({
-                        'success': False,
-                        'error': '词条添加失败，请稍后重试'
-                    }), 500
+                return jsonify({
+                    'success': False,
+                    'error': '词条添加失败，请稍后重试'
+                }), 500
 
         except Exception as e:
             error_str = str(e)
             logger.error(f"Add dictionary error: {e}")
+            logger.error(f"Error type: {type(e).__name__}")
 
             # 检查是否是数据库只读错误
             if 'readonly database' in error_str.lower():
@@ -239,13 +247,20 @@ def api_add_dictionary():
             if isinstance(e, sqlalchemy_exc.IntegrityError):
                 return jsonify({
                     'success': False,
-                    'error': '该普通话和潮汕话组合已存在'
+                    'error': f'词条已存在："{mandarin_text}" → "{teochew_text}"'
                 }), 400
 
-            # 其他错误
+            # 检查是否是没有 notes 列的错误
+            if 'no such column: teochew_dict.notes' in error_str:
+                return jsonify({
+                    'success': False,
+                    'error': '数据库缺少 notes 列，请先执行数据库迁移：python check_notes_column.py'
+                }), 500
+
+            # 其他错误 - 只返回简短错误信息
             return jsonify({
                 'success': False,
-                'error': f'添加词条失败: {error_str}'
+                'error': f'添加失败: {type(e).__name__}'
             }), 500
 
     except Exception as e:
@@ -269,6 +284,7 @@ def api_update_dictionary(entry_id):
         new_variant_teochew = data.get('variant_teochew')
         new_teochew_priority = data.get('teochew_priority')
         new_is_active = data.get('is_active')
+        new_notes = data.get('notes')
         user = data.get('user', 'admin')
         reason = data.get('reason', '通过管理界面编辑')
 
@@ -307,6 +323,7 @@ def api_update_dictionary(entry_id):
             variant_teochew=new_variant_teochew,
             teochew_priority=new_teochew_priority,
             is_active=new_is_active,
+            notes=new_notes,
             user=user,
             reason=reason
         )
@@ -319,14 +336,24 @@ def api_update_dictionary(entry_id):
         else:
             return jsonify({
                 'success': False,
-                'error': '词条更新失败'
+                'error': '词条更新失败，请稍后重试'
             }), 400
 
     except Exception as e:
+        error_str = str(e)
         logger.error(f"Update dictionary error: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+
+        # 检查是否是没有 notes 列的错误
+        if 'no such column: teochew_dict.notes' in error_str:
+            return jsonify({
+                'success': False,
+                'error': '数据库缺少 notes 列，请先执行数据库迁移：python check_notes_column.py'
+            }), 500
+
         return jsonify({
             'success': False,
-            'error': f'更新词条失败: {str(e)}'
+            'error': f'更新失败: {type(e).__name__}'
         }), 500
 
 

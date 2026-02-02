@@ -219,7 +219,8 @@ class TranslationDictDAO:
 
     def add_translation(self, mandarin_text: str, teochew_text: str,
                        variant_mandarin: int = 1, variant_teochew: int = None,
-                       teochew_priority: int = None, user: str = "system", reason: str = "") -> bool:
+                       teochew_priority: int = None, notes: str = None,
+                       user: str = "system", reason: str = "") -> bool:
         """
         添加新的翻译条目
 
@@ -229,6 +230,7 @@ class TranslationDictDAO:
             variant_mandarin: 普通话方向的变体编号
             variant_teochew: 潮州话方向的变体编号（可选，默认自动计算）
             teochew_priority: 潮州话翻译优先级 1-10整数
+            notes: 备注信息
             user: 操作用户
             reason: 添加原因
 
@@ -264,6 +266,9 @@ class TranslationDictDAO:
                 ).scalar()
                 variant_teochew = (max_teochew_variant or 0) + 1
 
+                # 处理 notes：空字符串转换为 None
+                notes_to_save = notes if notes else None
+
                 # 创建新记录
                 translation = TranslationDict(
                     mandarin_text=mandarin_text,
@@ -271,6 +276,7 @@ class TranslationDictDAO:
                     variant_mandarin=variant_mandarin,
                     variant_teochew=variant_teochew,
                     teochew_priority=teochew_priority,
+                    notes=notes_to_save,
                     is_active=1
                 )
                 db.add(translation)
@@ -281,6 +287,7 @@ class TranslationDictDAO:
                     "variant_mandarin": variant_mandarin,
                     "variant_teochew": variant_teochew,
                     "teochew_priority": teochew_priority,
+                    "notes": notes_to_save,
                     "is_active": 1
                 }
 
@@ -305,7 +312,7 @@ class TranslationDictDAO:
     def update_translation(self, mandarin_text: str = None, entry_id: int = None,
                           teochew_text: str = None, variant_mandarin: int = None,
                           variant_teochew: int = None, teochew_priority: int = None,
-                          is_active: bool = None,
+                          is_active: bool = None, notes: str = None,
                           user: str = "system", reason: str = "") -> bool:
         """
         更新翻译条目（支持更新内容和状态）
@@ -318,6 +325,7 @@ class TranslationDictDAO:
             variant_teochew: 新的潮州话方向变体编号
             teochew_priority: 新的潮州话翻译优先级 1-10整数
             is_active: 新的状态（None表示不更新状态）
+            notes: 备注信息（None表示不更新备注）
             user: 操作用户
             reason: 修改原因
 
@@ -354,6 +362,7 @@ class TranslationDictDAO:
             # 更新每条记录
             for translation in translations:
                 old_priority = getattr(translation, 'teochew_priority', None)
+                old_notes = getattr(translation, 'notes', None)
 
                 old_data = {
                     "mandarin_text": translation.mandarin_text,
@@ -361,6 +370,7 @@ class TranslationDictDAO:
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
                     "teochew_priority": old_priority,
+                    "notes": old_notes,
                     "is_active": translation.is_active
                 }
 
@@ -377,6 +387,9 @@ class TranslationDictDAO:
                     translation.teochew_priority = teochew_priority
                 if is_active is not None:
                     translation.is_active = is_active
+                # notes 字段：总是更新（包括空字符串），将空字符串转换为 None
+                if notes is not None:
+                    translation.notes = notes if notes else None
 
                 new_data = {
                     "mandarin_text": translation.mandarin_text,
@@ -384,6 +397,7 @@ class TranslationDictDAO:
                     "variant_mandarin": translation.variant_mandarin,
                     "variant_teochew": translation.variant_teochew,
                     "teochew_priority": translation.teochew_priority,
+                    "notes": translation.notes,
                     "is_active": translation.is_active
                 }
 

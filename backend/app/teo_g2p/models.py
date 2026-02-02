@@ -10,7 +10,7 @@ class TranslationDict(Base):
     支持优先级匹配和多义词处理
     支持双向变体编号（普通话方向和潮州话方向）
     """
-    __tablename__ = 'mandarin2teochew'
+    __tablename__ = 'teochew_dict'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     mandarin_text = Column(String(10), nullable=False, comment='普通话词语')
@@ -19,6 +19,7 @@ class TranslationDict(Base):
     variant_teochew = Column(Integer, default=1, comment='潮州话词的变体编号（用于潮州话转普通话）')
     teochew_priority = Column(Integer, default=1, comment='潮州话翻译的优先级，1-10整数，数值越大优先级越高，影响jieba词频')
     is_active = Column(Integer, default=1, comment='是否启用，1启用，0禁用')
+    notes = Column(String(50), nullable=True, default=None, comment='词条备注信息')
 
     # 创建复合索引以优化查询性能
     # 支持双向变体查询

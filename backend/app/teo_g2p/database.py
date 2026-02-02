@@ -44,7 +44,7 @@ def init_db():
         raise RuntimeError("Database engine not initialized. Call init_from_app() first.")
 
     Base.metadata.create_all(bind=engine)
-    logger.info("teo_g2p database tables (mandarin2teochew) created/verified in translation_dict.db")
+    logger.info("teo_g2p database tables (teochew_dict) created/verified in translation_dict.db")
 
 def get_db():
     """获取数据库会话"""

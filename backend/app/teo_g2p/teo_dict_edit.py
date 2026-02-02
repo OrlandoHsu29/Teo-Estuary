@@ -17,7 +17,8 @@ _jieba_manager = JiebaTempManager()
 
 def add_translation(mandarin_text: str, teochew_text: str,
                    teochew_priority: int = None, user: str = "system", reason: str = "",
-                   variant_mandarin: int = None, variant_teochew: int = None) -> bool:
+                   variant_mandarin: int = None, variant_teochew: int = None,
+                   notes: str = None) -> bool:
     """
     添加新的翻译条目
 
@@ -29,6 +30,7 @@ def add_translation(mandarin_text: str, teochew_text: str,
         reason: 添加原因 (可选)
         variant_mandarin: 普通话方向变体编号 (可选，默认自动计算)
         variant_teochew: 潮州话方向变体编号 (可选，默认自动计算)
+        notes: 备注信息 (可选，默认"暂无备注")
 
     Returns:
         bool: 是否添加成功
@@ -45,6 +47,7 @@ def add_translation(mandarin_text: str, teochew_text: str,
         variant_mandarin=variant_mandarin,
         variant_teochew=variant_teochew,
         teochew_priority=teochew_priority,
+        notes=notes,
         user=user,
         reason=reason
     )
@@ -63,7 +66,8 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
                       teochew_text: str = None,
                       teochew_priority: int = None, is_active: bool = None,
                       user: str = "system", reason: str = "",
-                      variant_mandarin: int = None, variant_teochew: int = None) -> bool:
+                      variant_mandarin: int = None, variant_teochew: int = None,
+                      notes: str = None) -> bool:
     """
     更新翻译条目（支持更新内容和状态）
 
@@ -77,6 +81,7 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         reason: 更新原因 (可选)
         variant_mandarin: 普通话方向变体编号 (可选)
         variant_teochew: 潮州话方向变体编号 (可选)
+        notes: 备注信息 (可选)
 
     Returns:
         bool: 是否更新成功
@@ -109,6 +114,7 @@ def update_translation(mandarin_text: str = None, entry_id: int = None,
         variant_teochew=variant_teochew,
         teochew_priority=teochew_priority,
         is_active=is_active,
+        notes=notes,
         user=user,
         reason=reason
     )

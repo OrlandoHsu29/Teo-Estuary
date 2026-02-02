@@ -131,6 +131,7 @@ def export_translation_dict():
                 'variant_mandarin': t.variant_mandarin,
                 'variant_teochew': t.variant_teochew,
                 'teochew_priority': t.teochew_priority,
+                'notes': getattr(t, 'notes', None),
                 'is_active': t.is_active
             })
 
@@ -248,7 +249,8 @@ def export_database_json():
                 'duration': r.duration,
                 'status': r.status,
                 'upload_type': r.upload_type,
-                'reviewed_at': r.reviewed_at.isoformat() if r.reviewed_at else None
+                'reviewed_at': r.reviewed_at.isoformat() if r.reviewed_at else None,
+                'notes': r.notes
             })
 
         # 导出 reference_text 表
@@ -504,6 +506,7 @@ def import_translation_dict():
                         variant_mandarin=entry.get('variant_mandarin', 1),
                         variant_teochew=entry.get('variant_teochew', 1),
                         teochew_priority=entry.get('teochew_priority', len(teochew_text)),
+                        notes=entry.get('notes') if entry.get('notes') else None,
                         is_active=entry.get('is_active', 1)
                     )
 
@@ -624,8 +627,9 @@ def import_database():
                         file_size=record.get('file_size', 0),
                         duration=record.get('duration', 0.0),
                         status=record.get('status', 'pending'),
-                        upload_type=record.get('upload_type', 'single'),
-                        reviewed_at=reviewed_at
+                        upload_type=record.get('upload_type', 0),
+                        reviewed_at=reviewed_at,
+                        notes=record.get('notes')
                     )
 
                     db.session.add(new_record)
