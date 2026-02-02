@@ -3,7 +3,7 @@ services:
     image: mysql:8.0
     container_name: teo-estuary-mysql
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "33306:3306"  # 宿主机33306映射到容器内部3306
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-teo_root_password}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-teo_estuary}
