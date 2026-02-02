@@ -22,3 +22,6 @@ let listSearchTimer = null;
 
 // 详细视图状态保存
 let deviceViewActiveStatus = 'pending'; // 保存详细视图当前的激活状态
+
+// 搜索状态
+let currentSearchQuery = ''; // 当前搜索关键词

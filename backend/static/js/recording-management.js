@@ -61,7 +61,7 @@ function hideDataLoading() {
 }
 
 // 加载录音数据
-async function loadRecordings(status = null) {
+async function loadRecordings(status = null, searchQuery = null) {
     try {
         // 确保退出所有编辑模式
         if (typeof exitAllEditModes === 'function') {
@@ -70,11 +70,17 @@ async function loadRecordings(status = null) {
 
         // 使用传入的状态参数，如果没有则使用当前筛选状态
         const filterStatus = status || currentStatusFilter || 'pending';
+        // 使用传入的搜索参数，如果没有则使用当前搜索状态
+        const searchParam = searchQuery !== null ? searchQuery : currentSearchQuery;
 
-        console.log('正在加载记录，状态:', filterStatus); // 调试信息
+        console.log('正在加载记录，状态:', filterStatus, '搜索:', searchParam); // 调试信息
 
         // 显示加载动画
-        showDataLoading('正在加载记录...', `状态: ${getStatusText(filterStatus)}`);
+        let loadingSubtitle = `状态: ${getStatusText(filterStatus)}`;
+        if (searchParam) {
+            loadingSubtitle += ` | 搜索: "${searchParam}"`;
+        }
+        showDataLoading('正在加载记录...', loadingSubtitle);
 
         // 构建API URL
         let apiUrl = `/api/recordings?page=${currentPage}&per_page=50`;
@@ -82,6 +88,11 @@ async function loadRecordings(status = null) {
         // 只有在不是 'all' 时才添加 status 参数
         if (filterStatus !== 'all') {
             apiUrl += `&status=${filterStatus}`;
+        }
+
+        // 添加搜索参数（如果有）
+        if (searchParam) {
+            apiUrl += `&search=${encodeURIComponent(searchParam)}`;
         }
 
         const response = await fetch(apiUrl);
@@ -226,6 +237,12 @@ function displayEmptyRecordState() {
     // 禁用所有控制按钮
     updateControlButtonsByStatus();
 
+    // 清空备注文本框
+    const notesTextarea = document.getElementById('notesTextarea');
+    if (notesTextarea) {
+        notesTextarea.value = '';
+    }
+
     // 确保进度条容器始终显示
     const screenProgress = document.getElementById('screenProgress');
     if (screenProgress) {
@@ -244,6 +261,9 @@ function displayCurrentRecord() {
     if (typeof exitAllEditModes === 'function') {
         exitAllEditModes();
     }
+
+    // 清除备注保存定时器（避免在切换记录时触发保存）
+    clearTimeout(notesSaveTimer);
 
     // 重置未保存修改状态
     hasPendingMandarinEdits = false;
@@ -317,6 +337,15 @@ function displayCurrentRecord() {
         const uploadType = record.upload_type || 0;
         uploadTypeElement.textContent = uploadType === 1 ? '素材提取' : '录音上传';
         uploadTypeElement.className = 'meta-value ' + (uploadType === 1 ? 'upload-type-extracted' : 'upload-type-recorded');
+    }
+
+    // 更新备注（处理undefined、null、空字符串）
+    const notesTextarea = document.getElementById('notesTextarea');
+    if (notesTextarea) {
+        // 强制清空并重新赋值，确保正确显示
+        const notesValue = record.notes;
+        notesTextarea.value = (notesValue !== undefined && notesValue !== null) ? notesValue : '';
+        console.log('加载备注:', notesTextarea.value, '| 原始值:', notesValue);
     }
 
     // 更新音频播放器 - 懒加载模式
@@ -440,7 +469,12 @@ async function loadNextPage() {
 
         try {
             showDataLoading('正在加载下一页...', '');
-            const response = await fetch(`/api/recordings?status=${currentStatusFilter}&page=${nextPage}&per_page=50`);
+            let apiUrl = `/api/recordings?status=${currentStatusFilter}&page=${nextPage}&per_page=50`;
+            // 添加搜索参数（如果有）
+            if (currentSearchQuery) {
+                apiUrl += `&search=${encodeURIComponent(currentSearchQuery)}`;
+            }
+            const response = await fetch(apiUrl);
             const data = await response.json();
 
             if (data.success) {
@@ -478,7 +512,12 @@ async function loadNextPage() {
 
         try {
             showDataLoading('正在加载下一页...', '');
-            const response = await fetch(`/api/recordings?status=${currentStatusFilter}&page=${nextPage}&per_page=50`);
+            let apiUrl = `/api/recordings?status=${currentStatusFilter}&page=${nextPage}&per_page=50`;
+            // 添加搜索参数（如果有）
+            if (currentSearchQuery) {
+                apiUrl += `&search=${encodeURIComponent(currentSearchQuery)}`;
+            }
+            const response = await fetch(apiUrl);
             const data = await response.json();
 
             if (data.success) {
@@ -517,7 +556,12 @@ async function loadPreviousPage() {
 
     try {
         showDataLoading('正在加载上一页...', '');
-        const response = await fetch(`/api/recordings?status=${currentStatusFilter}&page=${prevPage}&per_page=50`);
+        let apiUrl = `/api/recordings?status=${currentStatusFilter}&page=${prevPage}&per_page=50`;
+        // 添加搜索参数（如果有）
+        if (currentSearchQuery) {
+            apiUrl += `&search=${encodeURIComponent(currentSearchQuery)}`;
+        }
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         if (data.success) {
@@ -1510,3 +1554,73 @@ async function translateTo(targetLang) {
         }
     }
 }
+
+// 备注功能
+let notesSaveTimer = null;
+
+// 保存备注到后端
+async function saveNotes(notesText) {
+    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
+        return;
+    }
+
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return;
+
+    try {
+        const response = await fetch(`/api/recording/${record.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notes: notesText })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // 更新本地数据
+            record.notes = notesText;
+            console.log('备注已保存');
+        } else {
+            showToast(data.error || '保存备注失败', 'error');
+        }
+    } catch (error) {
+        console.error('保存备注失败:', error);
+        showToast('保存备注失败', 'error');
+    }
+}
+
+// 初始化备注文本框事件监听
+function initializeNotesTextarea() {
+    const notesTextarea = document.getElementById('notesTextarea');
+    if (!notesTextarea) return;
+
+    // 防抖保存：输入后500ms自动保存
+    notesTextarea.addEventListener('input', function() {
+        clearTimeout(notesSaveTimer);
+
+        // 限制字符数为100
+        let notesText = this.value;
+        if (notesText.length > 100) {
+            notesText = notesText.substring(0, 100);
+            this.value = notesText;
+            showToast('备注不能超过100个字符', 'warning');
+        }
+
+        notesSaveTimer = setTimeout(() => {
+            saveNotes(notesText);
+        }, 500);
+    });
+
+    // 失焦时立即保存
+    notesTextarea.addEventListener('blur', function() {
+        clearTimeout(notesSaveTimer);
+        saveNotes(this.value);
+    });
+}
+
+// 在页面加载时初始化备注文本框
+document.addEventListener('DOMContentLoaded', function() {
+    initializeNotesTextarea();
+});

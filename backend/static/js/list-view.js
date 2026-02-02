@@ -58,8 +58,10 @@ function toggleView() {
 
         // 同步列表视图的筛选状态到详细视图
         const statusFilter = document.getElementById('statusFilter');
+        const searchInput = document.getElementById('searchInput');
         if (statusFilter) {
             const filterValue = statusFilter.value;
+            const searchValue = searchInput ? searchInput.value.trim() : '';
 
             // 更新详细视图的状态筛选按钮
             const filterButtons = document.querySelectorAll('.status-filter-btn');
@@ -71,25 +73,35 @@ function toggleView() {
             if (filterValue && filterValue !== '') {
                 // 列表视图是具体状态筛选
                 currentStatusFilter = filterValue;
-                filterButtons.forEach(btn => {
-                    if (btn.dataset.status === currentStatusFilter) {
-                        btn.classList.add('active');
-                    }
-                });
 
-                // 加载对应状态的数据
-                loadRecordings(currentStatusFilter);
+                // 只有在没有搜索条件时，才选中状态按钮
+                if (!searchValue) {
+                    filterButtons.forEach(btn => {
+                        if (btn.dataset.status === currentStatusFilter) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+
+                // 加载对应状态的数据（保持搜索条件）
+                currentSearchQuery = searchValue;
+                loadRecordings(currentStatusFilter, searchValue);
             } else {
                 // 列表视图是"所有状态"，详细视图也切换到"所有状态"
                 currentStatusFilter = 'all';
-                filterButtons.forEach(btn => {
-                    if (btn.dataset.status === 'all') {
-                        btn.classList.add('active');
-                    }
-                });
 
-                // 加载所有状态的数据
-                loadRecordings('all');
+                // 只有在没有搜索条件时，才选中状态按钮
+                if (!searchValue) {
+                    filterButtons.forEach(btn => {
+                        if (btn.dataset.status === 'all') {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+
+                // 加载所有状态的数据（保持搜索条件）
+                currentSearchQuery = searchValue;
+                loadRecordings('all', searchValue);
 
                 // 更新保存的详细视图状态
                 deviceViewActiveStatus = 'all';
@@ -146,10 +158,35 @@ function renderListView(recordings, total, current, pages) {
 
     // 获取搜索关键词用于高亮
     const searchQuery = document.getElementById('searchInput').value.trim();
+
+    // 清理分词标记（用于列表显示）
+    const cleanWordMarkers = (text) => {
+        if (!text) return '-';
+        // 移除分词相关的标记符：空格分隔符、$[原词]、$、#
+        // 处理新格式：翻译$[原词] -> 翻译
+        // 处理旧格式：翻译$ -> 翻译
+        // 处理完成词：翻译# -> 翻译
+        return text
+            .replace(/\$\[([^\]]+)\]/g, '')  // 移除 $[原词]
+            .replace(/\$/g, '')               // 移除单独的 $
+            .replace(/#/g, '')                // 移除 #
+            .replace(/\s+/g, '');              // 移除所有空格
+    };
+
     const highlightText = (text) => {
-        if (!searchQuery || !text) return text || '-';
-        const regex = new RegExp(`(${searchQuery})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
+        if (!text) return '-';
+
+        // 先清理分词标记用于显示
+        const cleanedText = cleanWordMarkers(text);
+
+        // 如果有搜索关键词，在清理后的文本中进行高亮
+        if (searchQuery) {
+            const regex = new RegExp(`(${searchQuery})`, 'gi');
+            return cleanedText.replace(regex, '<mark>$1</mark>');
+        }
+
+        // 没有搜索，直接返回清理后的文本
+        return cleanedText;
     };
 
     // 获取当前筛选状态
@@ -292,8 +329,9 @@ async function jumpToDetailView(recordId, listIndex, listPage) {
     try {
         console.log('[跳转到详细视图] recordId:', recordId, 'listIndex:', listIndex, 'listPage:', listPage);
 
-        // 获取当前列表的筛选状态
+        // 获取当前列表的筛选状态和搜索关键词
         const currentListFilter = document.getElementById('statusFilter').value || '';
+        const searchQuery = document.getElementById('searchInput').value.trim();
 
         // 确定目标状态（用于详细视图筛选）
         // 如果列表是"所有状态"，则详细视图也切换到"所有状态"
@@ -308,6 +346,13 @@ async function jumpToDetailView(recordId, listIndex, listPage) {
         if (targetStatus !== 'all') {
             apiUrl += `&status=${targetStatus}`;
         }
+        // 添加搜索参数（如果有）
+        if (searchQuery) {
+            apiUrl += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        // 保存搜索状态到全局变量
+        currentSearchQuery = searchQuery;
 
         const response = await fetch(apiUrl);
         const data = await response.json();
@@ -337,18 +382,30 @@ async function jumpToDetailView(recordId, listIndex, listPage) {
             currentStatusFilter = targetStatus;
 
             // 更新详细视图的筛选按钮状态
+            // 如果有搜索条件，不选中任何状态按钮
+            // 如果没有搜索条件，才选中对应的状态按钮
             const filterButtons = document.querySelectorAll('.status-filter-btn');
             filterButtons.forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.dataset.status === targetStatus) {
-                    btn.classList.add('active');
-                }
             });
 
-            // 更新列表视图的筛选器（保持同步）
+            // 只有在没有搜索条件时，才选中对应的状态按钮
+            if (!searchQuery) {
+                filterButtons.forEach(btn => {
+                    if (btn.dataset.status === targetStatus) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            // 更新列表视图的筛选器和搜索框（保持同步）
             const statusFilter = document.getElementById('statusFilter');
+            const searchInput = document.getElementById('searchInput');
             if (statusFilter) {
                 statusFilter.value = currentListFilter;
+            }
+            if (searchInput) {
+                searchInput.value = searchQuery;
             }
 
             // 切换到详细视图
@@ -409,6 +466,9 @@ function initializeSearch() {
             clearTimeout(listSearchTimer);
             const searchValue = this.value.trim();
 
+            // 更新全局搜索变量
+            currentSearchQuery = searchValue;
+
             // 更新清除按钮显示状态
             if (searchValue) {
                 searchContainer.classList.add('has-search');
@@ -421,6 +481,9 @@ function initializeSearch() {
                 currentPage = 1;
                 if (currentView === 'list') {
                     loadListView();
+                } else if (currentView === 'device') {
+                    // 如果在详细视图,也需要重新加载数据
+                    loadRecordings(currentStatusFilter, searchValue);
                 }
             }, 300); // 300ms延迟
         });
@@ -429,9 +492,14 @@ function initializeSearch() {
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 clearTimeout(listSearchTimer);
+                const searchValue = this.value.trim();
+                currentSearchQuery = searchValue; // 更新全局搜索变量
                 currentPage = 1;
                 if (currentView === 'list') {
                     loadListView();
+                } else if (currentView === 'device') {
+                    // 如果在详细视图,也需要重新加载数据
+                    loadRecordings(currentStatusFilter, searchValue);
                 }
             }
         });
@@ -443,9 +511,22 @@ function initializeSearch() {
             if (searchInput) {
                 searchInput.value = '';
                 searchContainer.classList.remove('has-search');
+                currentSearchQuery = ''; // 重置全局搜索变量
                 currentPage = 1;
                 if (currentView === 'list') {
                     loadListView();
+                } else if (currentView === 'device') {
+                    // 如果在详细视图，需要重新加载数据并恢复状态按钮
+                    loadRecordings(currentStatusFilter, '');
+
+                    // 恢复状态按钮的选中状态
+                    const filterButtons = document.querySelectorAll('.status-filter-btn');
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.status === currentStatusFilter) {
+                            btn.classList.add('active');
+                        }
+                    });
                 }
             }
         });

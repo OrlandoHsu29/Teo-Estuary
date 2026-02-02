@@ -167,12 +167,23 @@ function filterByStatus(status) {
         statusFilter.value = status === 'all' ? '' : status;
     }
 
+    // 清除搜索条件和搜索框
+    currentSearchQuery = '';
+    const searchInput = document.getElementById('searchInput');
+    const searchContainer = document.querySelector('.search-container');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    if (searchContainer) {
+        searchContainer.classList.remove('has-search');
+    }
+
     // 保存详细视图状态（用于切换回列表视图时恢复）
     deviceViewActiveStatus = status;
 
-    // 重置页码并重新加载录音数据
+    // 重置页码并重新加载录音数据（清除搜索条件）
     currentPage = 1;
-    loadRecordings(status);
+    loadRecordings(status, '');
 }
 
 // 退出所有编辑模式的函数

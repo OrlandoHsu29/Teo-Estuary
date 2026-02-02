@@ -311,6 +311,20 @@
                                                         <span class="meta-value" id="uploadType">-</span>
                                                     </div>
                                                 </div>
+
+                                                <!-- 备注文本框 -->
+                                                <div class="notes-container">
+                                                    <div class="notes-label">
+                                                        <span>备注</span>
+                                                    </div>
+                                                    <textarea
+                                                        class="notes-textarea"
+                                                        id="notesTextarea"
+                                                        placeholder="添加备注信息...（最多100字）"
+                                                        rows="10"
+                                                        maxlength="100"
+                                                    ></textarea>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -566,12 +580,12 @@
                         <div class="dict-device-console">
                             <div class="dict-info-panel">
                                 <div class="dict-info-item">
-                                    <span class="dict-info-label">搜索结果</span>
-                                    <span class="dict-info-value" id="dictResultCount">0 条词条</span>
-                                </div>
-                                <div class="dict-info-item">
                                     <span class="dict-info-label">当前显示</span>
                                     <span class="dict-info-value" id="dictCurrentDisplay">未查询</span>
+                                </div>
+                                <div class="dict-info-item">
+                                    <span class="dict-info-label">备注</span>
+                                    <span class="dict-info-value" id="dictNotesDisplay">暂无备注</span>
                                 </div>
                             </div>
                         </div>
@@ -1045,6 +1059,13 @@
                             <span class="dict-toggle-slider"></span>
                             <span class="dict-toggle-text">启用</span>
                         </label>
+                    </div>
+                </div>
+
+                <div class="dict-form-row">
+                    <div class="dict-form-group">
+                        <label for="dictNotes">备注:</label>
+                        <textarea id="dictNotes" class="dict-form-input" placeholder="留空则自动填充「暂无备注」" rows="2" maxlength="50"></textarea>
                     </div>
                 </div>
             </div>

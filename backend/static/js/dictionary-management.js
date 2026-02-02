@@ -59,8 +59,8 @@ function clearDictionaryDisplay() {
     document.getElementById('dictCurrentIndex').textContent = '0';
     document.getElementById('dictTotalResults').textContent = '0';
     document.getElementById('dictProgressFill').style.width = '0%';
-    document.getElementById('dictResultCount').textContent = '0 条词条';
     document.getElementById('dictCurrentDisplay').textContent = '未查询';
+    document.getElementById('dictNotesDisplay').textContent = '暂无备注';
 
     // 重置变体状态指示器
     const statusElement = document.getElementById('dictEntryVariantStatus');
@@ -145,8 +145,8 @@ function showSearchLoading() {
     document.getElementById('dictCurrentIndex').textContent = '0';
     document.getElementById('dictTotalResults').textContent = '0';
     document.getElementById('dictProgressFill').style.width = '0%';
-    document.getElementById('dictResultCount').textContent = '搜索中...';
     document.getElementById('dictCurrentDisplay').textContent = '搜索中';
+    document.getElementById('dictNotesDisplay').textContent = '暂无备注';
 }
 
 // 隐藏加载动画
@@ -195,8 +195,8 @@ function showNoResults() {
     document.getElementById('dictCurrentIndex').textContent = '0';
     document.getElementById('dictTotalResults').textContent = '0';
     document.getElementById('dictProgressFill').style.width = '0%';
-    document.getElementById('dictResultCount').textContent = '0 条词条';
     document.getElementById('dictCurrentDisplay').textContent = '未找到';
+    document.getElementById('dictNotesDisplay').textContent = '暂无备注';
     currentDictEntry = null;
 }
 
@@ -209,10 +209,12 @@ function updateDictionaryInfo() {
     document.getElementById('dictCurrentIndex').textContent = currentIndex.toString();
     document.getElementById('dictTotalResults').textContent = totalCount.toString();
     document.getElementById('dictProgressFill').style.width = `${progressPercent}%`;
-    document.getElementById('dictResultCount').textContent = `${totalCount} 条词条`;
 
     if (currentDictEntry) {
         document.getElementById('dictCurrentDisplay').textContent = `${currentDictEntry.mandarin_text} → ${currentDictEntry.teochew_text}`;
+        // 更新备注显示
+        const notes = currentDictEntry.notes || '暂无备注';
+        document.getElementById('dictNotesDisplay').textContent = notes;
     }
 
     // 更新导航按钮状态
@@ -328,6 +330,7 @@ function showAddDictModal() {
     document.getElementById('dictVariantMandarin').value = '';  // 留空则自动计算
     document.getElementById('dictVariantTeochew').value = '';
     document.getElementById('dictTeochewPriority').value = '';  // 留空则自动计算
+    document.getElementById('dictNotes').value = '';
     document.getElementById('dictActive').checked = true;
 }
 
@@ -353,6 +356,10 @@ function editCurrentDictEntry() {
     // 优先级
     const priority = currentDictEntry.teochew_priority !== undefined ? currentDictEntry.teochew_priority : 1;
     document.getElementById('dictTeochewPriority').value = priority;
+
+    // 备注 - 显示原始值，如果是"暂无备注"则显示为空
+    const notes = currentDictEntry.notes || '';
+    document.getElementById('dictNotes').value = notes === '暂无备注' ? '' : notes;
 
     // 状态
     const isActive = currentDictEntry.is_active !== undefined ? currentDictEntry.is_active : (currentDictEntry.is_active !== 0);
@@ -415,6 +422,7 @@ async function saveDictEntry() {
     const variantMandarinInput = document.getElementById('dictVariantMandarin');
     const variantTeochewInput = document.getElementById('dictVariantTeochew');
     const teochewPriorityInput = document.getElementById('dictTeochewPriority');
+    const notesInput = document.getElementById('dictNotes');
 
     // 处理变体：如果为空则传null，让后端自动计算
     const variantMandarin = variantMandarinInput && variantMandarinInput.value ?
@@ -468,6 +476,17 @@ async function saveDictEntry() {
             reason: id ? '通过管理界面编辑' : '通过管理界面添加'
         };
 
+        // 处理备注字段
+        if (id) {
+            // 编辑模式：总是发送备注字段，让用户可以修改或清空备注
+            const notesValue = notesInput.value.trim();
+            // 如果用户输入了内容就使用，否则设置为"暂无备注"
+            payload.notes = notesValue || '暂无备注';
+        } else {
+            // 新增模式：备注为空则设置为"暂无备注"
+            payload.notes = notesInput.value.trim() || '暂无备注';
+        }
+
         // 只有当提供了值时才添加到payload
         if (variantMandarin !== null) {
             payload.variant_mandarin = variantMandarin;
@@ -506,6 +525,10 @@ async function saveDictEntry() {
                 }
                 if (teochewPriority !== null) {
                     currentDictEntry.teochew_priority = teochewPriority;
+                }
+                // 只有当 payload 中有 notes 时才更新
+                if (payload.notes !== undefined) {
+                    currentDictEntry.notes = payload.notes;
                 }
                 currentDictEntry.is_active = isActive;
 
@@ -772,6 +795,19 @@ async function loadUnsyncedLogs() {
                     const oldStatusText = normalizedOld ? '启用' : '禁用';
                     const newStatusText = normalizedNew ? '启用' : '禁用';
                     changesArray.push(`「状态」 ${oldStatusText} → ${newStatusText}`);
+                }
+
+                // 备注变化
+                const oldNotes = oldData.notes || '暂无备注';
+                const newNotes = newData.notes || '暂无备注';
+                if (oldNotes !== newNotes) {
+                    // 截断显示，最多5个字符
+                    const truncateNotes = (text) => {
+                        if (text === '暂无备注') return '暂无备注';
+                        if (text.length <= 5) return `"${text}"`;
+                        return `"${text.substring(0, 5)}..."`;
+                    };
+                    changesArray.push(`「备注」 ${truncateNotes(oldNotes)} → ${truncateNotes(newNotes)}`);
                 }
 
                 // 如果没有变化，显示基本信息

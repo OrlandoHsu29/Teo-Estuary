@@ -728,7 +728,7 @@ body {
 
 /* 审核区域 - 拟物化设备设计 */
 .review-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: auto;
     perspective: 1000px;
     position: relative;
@@ -743,7 +743,7 @@ body {
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     padding: 15px;
-    width: 1025px;
+    width: 1200px;
     position: relative;
     transform: rotateX(2deg);
     transform-style: preserve-3d;
@@ -752,7 +752,7 @@ body {
     flex-direction: column;
     gap: 0; /* 确保屏幕和控制台紧密连接 */
     margin-bottom: 15px;
-
+    margin-right: 40px;
 }
 
 .review-device:hover {
@@ -2596,10 +2596,11 @@ s
 }
 
 .media-column {
-    flex: 0 0 200px;
+    flex: 0 0 280px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
+    align-items: flex-start;
 }
 
 .text-display.compact {
@@ -3173,7 +3174,7 @@ s
     background: rgba(26, 26, 46, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    flex: 1; 
+    flex: 0 0 140px;
     display: flex;
     flex-direction: column;
     padding: 0 0 5px 0;
@@ -3211,6 +3212,65 @@ s
     color: var(--text-disabled);
     font-weight: 600;
     align-items: end;
+}
+
+/* 备注文本框 */
+.notes-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 218px;
+    max-height: 218px;
+}
+
+.notes-label {
+    font-size: 11px;
+    color: var(--text-disabled);
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notes-label svg {
+    width: 14px;
+    height: 14px;
+    color: #00ffff;
+}
+
+.notes-textarea {
+    flex: 1;
+    background: #3a3227;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    color: #cccccc;
+    font-size: 12px;
+    font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+    resize: none;
+    outline: none;
+    transition: all 0.2s ease;
+    line-height: 1.5;
+    overflow-y: auto;
+    /* 隐藏滚动条但支持滚动 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+}
+
+.notes-textarea::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.notes-textarea:focus {
+    border-color: rgba(0, 255, 255, 0.3);
+    background: rgba(26, 26, 46, 0.6);
+    color: var(--text-primary);
+}
+
+.notes-textarea::placeholder {
+    color: var(--text-disabled);
+    opacity: 0.6;
 }
 
 /* 主控制按钮 */
@@ -4571,7 +4631,8 @@ mark {
 .dict-device-console {
     background: linear-gradient(145deg, #2a2a3e, #1f1f33);
     border-radius: 0 0 16px 16px;
-    padding: 16px 24px;
+    padding: 40px 24px 12px 24px;
+    margin-top: -30px; /* 向上延伸，与圆角 screen 衔接 */
     box-shadow:
         inset 0 4px 8px rgba(0, 0, 0, 0.3),
         0 2px 4px rgba(0, 0, 0, 0.2);
@@ -4697,6 +4758,21 @@ mark {
 .dict-form-input::placeholder {
     color: var(--text-disabled);
     font-size: 0.85rem;
+}
+
+.dict-form-group textarea.dict-form-input {
+    height: 80px;
+    resize: none;
+    font-family: 'Noto Sans SC', sans-serif;
+    line-height: 1.4;
+    overflow-y: auto;
+    /* 隐藏滚动条但支持滚动 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.dict-form-group textarea.dict-form-input::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
 }
 
 /* 字典开关样式 */
