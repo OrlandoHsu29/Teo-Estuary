@@ -9,6 +9,7 @@ app/teo_g2p/word_dict/jieba_cut_temp.txt
 
 # 用户上传的文件 (包含用户数据，应该保密)
 data/
+!docker/data/ 
 *.webm
 *.mp3
 *.wav

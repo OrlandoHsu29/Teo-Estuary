@@ -14,7 +14,7 @@ backup/
 # 忽略运行时数据库文件（使用 *_init.db 作为初始版本）
 instance/
 *.db
-!translation_dict_init.db
+!data/db/translation_dict_init.db
 
 
 # jieba文本分词文件 (自动生成)
