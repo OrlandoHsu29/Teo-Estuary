@@ -11,3 +11,17 @@ backup/
 *.bak
 *.backup
 
+# 忽略运行时数据库文件（使用 *_init.db 作为初始版本）
+instance/
+*.db
+!translation_dict_init.db
+
+
+# jieba文本分词文件 (自动生成)
+app/teo_g2p/word_dict/
+*.txt
+!jieba_cut_original.txt
+
+
+
+

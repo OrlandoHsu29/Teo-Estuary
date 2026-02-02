@@ -27,12 +27,29 @@ class TranslationService:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         jieba_path = os.path.join(current_dir, 'word_dict', 'jieba_cut.txt')
         jieba_path = os.path.normpath(jieba_path)
+        jieba_original_path = os.path.join(current_dir, 'word_dict', 'jieba_cut_original.txt')
 
+        # 如果jieba_cut.txt不存在，从jieba_cut_original.txt复制
+        if not os.path.exists(jieba_path):
+            if os.path.exists(jieba_original_path):
+                import shutil
+                try:
+                    shutil.copy2(jieba_original_path, jieba_path)
+                    print(f"[INFO] 从jieba_cut_original.txt复制创建jieba_cut.txt: {jieba_path}")
+                except Exception as e:
+                    print(f"[ERROR] 复制jieba_cut_original.txt失败: {e}")
+                    return
+            else:
+                print(f"[WARNING] jieba_cut_original.txt也未找到: {jieba_original_path}")
+                return
+
+        # 加载jieba词典
         if os.path.exists(jieba_path):
             jieba.load_userdict(jieba_path)
             jieba.cut('')  # 预热
+            print(f"[INFO] jieba词典加载成功: {jieba_path}")
         else:
-            print(f"[WARNING] jieba词典未找到: {jieba_path}")
+            print(f"[WARNING] jieba词典加载失败: {jieba_path}")
 
     def translate(self, text: str, auto_split: bool = True, use_cache: bool = True, cache_ttl: int = 3600, target_lang: str = 'teochew', preserve_markers: bool = True) -> str:
         """

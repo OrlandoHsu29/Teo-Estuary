@@ -40,8 +40,8 @@ COPY static ./static
 # 创建必要的目录
 RUN mkdir -p logs instance data/uploads data/good data/bad
 
-# 复制翻译词典数据库到根目录（不会被 volume 挂载覆盖）
-COPY docker/instance/translation_dict.db ./translation_dict.db.init
+# 复制翻译词典初始化数据库到根目录（不会被 volume 挂载覆盖）
+COPY docker/data/db/translation_dict_init.db ./translation_dict.db.init
 
 # 修复权限
 RUN chmod -R 777 instance && \

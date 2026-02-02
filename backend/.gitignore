@@ -1,0 +1,19 @@
+# 运行时生成的文件（不应提交到版本控制）
+app/teo_g2p/word_dict/jieba_cut.txt
+app/teo_g2p/word_dict/jieba_cut_temp.txt
+
+*.db
+!instance/translation_dict_init.db
+*.sqlite
+*.sqlite3
+
+# 用户上传的文件 (包含用户数据，应该保密)
+data/
+*.webm
+*.mp3
+*.wav
+
+# 词典文件 (自动生成或用户特定)
+app/teo_g2p/word_dict/
+*.txt
+!jieba_cut_original.txt
