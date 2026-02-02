@@ -20,6 +20,7 @@ class Recording(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     upload_type = db.Column(db.Integer, nullable=False)  # 0: 录音上传, 1: 素材提取 (不允许为空)
     reviewed_at = db.Column(db.DateTime)  # 审核操作时间（approved或rejected的时间）
+    notes = db.Column(db.String(100))  # 备注信息，最多100个字符
 
     def to_dict(self):
         return {
@@ -34,7 +35,8 @@ class Recording(db.Model):
             'duration': self.duration,
             'status': self.status,
             'upload_type': self.upload_type,
-            'reviewed_at': self.reviewed_at.isoformat() if self.reviewed_at else None
+            'reviewed_at': self.reviewed_at.isoformat() if self.reviewed_at else None,
+            'notes': self.notes
         }
 
 

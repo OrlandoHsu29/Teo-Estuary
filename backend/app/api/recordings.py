@@ -165,7 +165,7 @@ def api_recordings():
 @recordings_bp.route('/api/recording/<recording_id>', methods=['PUT'])
 def api_update_recording(recording_id):
     """更新录音基本信息（管理用）
-    仅支持更新 teochew_text、mandarin_text、file_path 等基本信息
+    仅支持更新 teochew_text、mandarin_text、file_path、notes 等基本信息
     不处理状态变更和文件移动
     """
     try:
@@ -183,6 +183,13 @@ def api_update_recording(recording_id):
 
         if 'file_path' in data:
             recording.file_path = data['file_path']
+
+        if 'notes' in data:
+            # 限制备注长度为100个字符
+            notes_text = data['notes']
+            if notes_text and len(notes_text) > 100:
+                return jsonify({'error': '备注不能超过100个字符'}), 400
+            recording.notes = notes_text
 
         db.session.commit()
 
