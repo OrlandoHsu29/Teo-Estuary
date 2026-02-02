@@ -477,14 +477,16 @@ async function saveDictEntry() {
         };
 
         // 处理备注字段
+        const notesValue = notesInput.value.trim();
         if (id) {
-            // 编辑模式：总是发送备注字段，让用户可以修改或清空备注
-            const notesValue = notesInput.value.trim();
-            // 如果用户输入了内容就使用，否则设置为"暂无备注"
-            payload.notes = notesValue || '暂无备注';
+            // 编辑模式：总是发送 notes 字段
+            // 如果用户清空了备注，发送空字符串；有内容则发送内容
+            payload.notes = notesValue || "";
         } else {
-            // 新增模式：备注为空则设置为"暂无备注"
-            payload.notes = notesInput.value.trim() || '暂无备注';
+            // 新增模式：备注为空则不发送 notes 字段
+            if (notesValue) {
+                payload.notes = notesValue;
+            }
         }
 
         // 只有当提供了值时才添加到payload
@@ -798,12 +800,16 @@ async function loadUnsyncedLogs() {
                 }
 
                 // 备注变化
-                const oldNotes = oldData.notes || '暂无备注';
-                const newNotes = newData.notes || '暂无备注';
-                if (oldNotes !== newNotes) {
+                const oldNotes = oldData.notes;
+                const newNotes = newData.notes;
+
+                // 判断是否变化（分别处理，避免 null 被转换为 '暂无备注' 后无法区分）
+                const hasChanged = (oldNotes !== newNotes);
+
+                if (hasChanged) {
                     // 截断显示，最多5个字符
                     const truncateNotes = (text) => {
-                        if (text === '暂无备注') return '暂无备注';
+                        if (text === null || text === undefined || text === '暂无备注') return '无备注';
                         if (text.length <= 5) return `"${text}"`;
                         return `"${text.substring(0, 5)}..."`;
                     };
