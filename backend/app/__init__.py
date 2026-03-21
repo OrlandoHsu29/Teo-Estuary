@@ -125,7 +125,7 @@ def create_app():
     )
 
     # 配置
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 
     # MySQL 数据库配置（用于 recordings 和 api_keys 表）
     mysql_host = os.environ.get('MYSQL_HOST', 'localhost')
@@ -148,14 +148,14 @@ def create_app():
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
     # Dify Webhook配置（用于生成参考文本）
-    app.config['DIFY_WEBHOOK_URL'] = os.environ.get('DIFY_WEBHOOK_URL', 'your-Dify-workflow-webhook-trigger-URL')
+    app.config['DIFY_WEBHOOK_URL'] = os.environ.get('DIFY_WEBHOOK_URL')
 
     # Webhook密钥（Dify回调认证）
-    app.config['WEBHOOK_KEY'] = os.environ.get('WEBHOOK_KEY', '')
+    app.config['WEBHOOK_KEY'] = os.environ.get('WEBHOOK_KEY')
 
     # 管理员配置
-    app.config['ADMIN_USERNAME'] = os.environ.get('ADMIN_USERNAME', 'admin')
-    app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'your-admin-password')
+    app.config['ADMIN_USERNAME'] = os.environ.get('ADMIN_USERNAME')
+    app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD')
 
     # 文本验证配置（30秒录音最多约300字）
     app.config['MAX_TEXT_LENGTH'] = 300
