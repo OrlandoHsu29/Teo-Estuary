@@ -2,13 +2,6 @@
  * 提供统一的密钥配置弹窗和状态管理
  */
 
-// API配置（根据环境动态选择）
-const API_BASE_URL = window.location.protocol === 'file:' || window.location.hostname === 'localhost'
-    ? 'http://localhost:5001'
-    : 'https://your-domain.com';
-
-
-
 // 获取密钥状态
 function getApiKeyStatus() {
     return localStorage.getItem('apiKey') || null;
@@ -26,7 +19,7 @@ async function validateApiKey() {
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/validate-key`, {
+        const response = await fetch(`${window.API_BASE_URL}/api/validate-key`, {
             method: 'GET',
             headers: {
                 'X-API-Key': apiKey
@@ -172,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-  // 通用 Toast 提示函数
+// 通用 Toast 提示函数
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toastUniversal');
     if (!toast) return;
@@ -210,8 +203,7 @@ async function handleApiResponse(response) {
 
 // 导出函数供全局使用
 window.KeyManager = {
-    API_BASE_URL,
-
+    API_BASE_URL: window.API_BASE_URL,
     getApiKeyStatus,
     validateApiKey,
     updateKeyButtonState,
@@ -220,6 +212,5 @@ window.KeyManager = {
     confirmGoToKeyConfig,
     goToKeyConfig,
     handleApiResponse,
-
     showToast
 };
