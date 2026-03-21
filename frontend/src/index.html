@@ -8,6 +8,7 @@
     <script src="./js/config.js"></script>
     <script src="./js/key-manager.js"></script>
     <link rel="stylesheet" href="./css/toast.css">
+    <link rel="stylesheet" href="./css/scrollbar.css">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="preload" href="./fonts/DottedSongtiSquareRegular.woff2" as="font" type="font/woff2" crossorigin>
 
@@ -50,18 +51,18 @@
                 <p class="option-description">潮汕话录音应用<br>人工录制潮汕话数据集</p>
             </a>
 
-            <a href="./teo-translater/index.html" class="option-card">
-                <span class="status-dot" id="status-asr"></span>
-                <div class="option-icon">T</div>
-                <h3 class="option-title">Teo Translater</h3>
-                <p class="option-description">潮汕话翻译器<br>当前阶段的潮汕话ASR效果展示</p>
-            </a>
-
             <a href="./teo-phonograph/index.html" class="option-card">
                 <span class="status-dot" id="status-emilia"></span>
                 <div class="option-icon">P</div>
                 <h3 class="option-title">Teo Phonograph</h3>
                 <p class="option-description">潮汕话音频处理<br>将潮汕话音频转录为数据集</p>
+            </a>
+
+            <a href="./teo-translator/index.html" class="option-card">
+                <span class="status-dot" id="status-asr"></span>
+                <div class="option-icon">T</div>
+                <h3 class="option-title">Teo translator</h3>
+                <p class="option-description">潮汕话翻译器<br>当前阶段的潮汕话ASR效果展示</p>
             </a>
 
             <div class="option-card" onclick="openIntroModal()" style="cursor: pointer;">
@@ -126,7 +127,7 @@
                 <h4>核心功能</h4>
                 <ul>
                     <li><strong>Teo Recorder</strong>：潮汕话录音应用，用于人工录制和收集潮汕话语音数据，能通过AI生成高质量的随机跟读文本，由用户进行跟读录音，确认为无误后即可上传到后台作为潮汕话语料。</li>
-                    <li><strong>Teo Translater</strong>：潮汕话翻译器，支持潮汕话语音识别。不过该功能仅用于体验当前阶段的潮汕话ASR，效果不够成熟，无法在通用场景下稳定使用。</li>
+                    <li><strong>Teo translator</strong>：潮汕话翻译器，支持潮汕话语音识别。不过该功能仅用于体验当前阶段的潮汕话ASR，效果不够成熟，无法在通用场景下稳定使用。</li>
                     <li><strong>Teo Phonograph</strong>：潮汕话音频处理工具，能对音频文件进行预处理、VAD、质量评估筛选、潮汕话文本ASR，最终自动整合优质数据上传到后端。</li>
                     <li><strong>Teo DMP</strong>：潮汕话数据管理平台，前端收集的音频数据会发送到该平台进行审核，审核完成后即可一键生成结构化数据集。为提高审核效率，该平台加入了诸多高效的辅助审核功能，如智能分词编辑、快捷变体翻译、批量数据转录等。</li>
                 </ul>

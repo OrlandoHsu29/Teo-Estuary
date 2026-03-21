@@ -209,15 +209,15 @@ body {
 }
 
 .option-card:nth-child(2) .option-icon {
-    background: linear-gradient(135deg, #00cc66, #00aa44);
-    box-shadow: 0 10px 30px rgba(0, 204, 102, 0.4);
-    animation: iconFloat 4s ease-in-out infinite 0.5s;
-}
-
-.option-card:nth-child(3) .option-icon {
     background: linear-gradient(135deg, #0088ff, #0066cc);
     box-shadow: 0 10px 30px rgba(0, 136, 255, 0.4);
     animation: iconFloat 4s ease-in-out infinite 1s;
+}
+
+.option-card:nth-child(3) .option-icon {
+    background: linear-gradient(135deg, #00cc66, #00aa44);
+    box-shadow: 0 10px 30px rgba(0, 204, 102, 0.4);
+    animation: iconFloat 4s ease-in-out infinite 0.5s;
 }
 
 .option-card:nth-child(4) .option-icon {
@@ -658,17 +658,18 @@ body {
 }
 
 .intro-modal-content::-webkit-scrollbar-track {
-    background: rgba(26, 26, 46, 0.5);
+    background: rgba(13, 13, 26, 0.8);
     border-radius: 4px;
 }
 
 .intro-modal-content::-webkit-scrollbar-thumb {
-    background: rgba(153, 102, 255, 0.5);
+    background: linear-gradient(180deg, rgba(0, 255, 255, 0.5) 0%, rgba(153, 102, 255, 0.5) 100%);
     border-radius: 4px;
+    border: 1px solid rgba(13, 13, 26, 0.8);
 }
 
 .intro-modal-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(153, 102, 255, 0.7);
+    background: linear-gradient(180deg, rgba(0, 255, 255, 0.7) 0%, rgba(153, 102, 255, 0.7) 100%);
 }
 
 .intro-modal-content h4 {
