@@ -75,18 +75,21 @@ async function loadApiKeys(forceRefresh = false) {
                                 <span class="stat-label">每日限额</span>
                             </div>
                             <div class="key-actions">
-                                <button class="reset-btn action-btn square-btn" onclick="resetKeyUsage(${key.id})" title="重置使用次数">
-                                    <i class="fas fa-redo"></i>
-                                </button>
-                                <button class="edit-btn action-btn square-btn" onclick="editKey(${key.id})" title="编辑密钥">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="toggle-btn action-btn square-btn ${key.is_active ? 'active' : 'inactive'}" onclick="toggleKey(${key.id})" title="${key.is_active ? '禁用密钥' : '启用密钥'}">
-                                    ${key.is_active ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>'}
-                                </button>
-                                <button class="delete-btn action-btn square-btn" onclick="deleteKey(${key.id})" title="删除密钥">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <div class="key-actions-grid">
+                                    <button class="reset-btn action-btn" onclick="resetKeyUsage(${key.id})" title="重置">
+                                        <i class="fas fa-redo"></i><span>重置</span>
+                                    </button>
+                                    <button class="edit-btn action-btn" onclick="editKey(${key.id})" title="编辑">
+                                        <i class="fas fa-edit"></i><span>编辑</span>
+                                    </button>
+                                    <button class="toggle-btn action-btn ${key.is_active ? 'active' : 'inactive'}" onclick="toggleKey(${key.id})" title="${key.is_active ? '禁用' : '启用'}">
+                                        ${key.is_active ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>'}
+                                        <span>${key.is_active ? '禁用' : '启用'}</span>
+                                    </button>
+                                    <button class="delete-btn action-btn" onclick="deleteKey(${key.id})" title="删除">
+                                        <i class="fas fa-trash"></i><span>删除</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -330,16 +333,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 点击模态框外部关闭
+    // 点击创建模态框外部关闭
     document.getElementById('createKeyModal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeCreateKeyModal();
-        }
-    });
-
-    document.getElementById('editKeyModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeEditKeyModal();
         }
     });
 });
