@@ -204,7 +204,7 @@ body {
 
 .lcd-glass {
     border-radius: 10px;
-    padding: 18px;
+    padding: 18px 18px 8px 18px;
     min-height: 100px;
     position: relative;
     font-family: 'Courier New', monospace;
@@ -225,15 +225,17 @@ body {
 
 /* 状态栏 */
 .lcd-status {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    position: relative;
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+    min-height: 16px;
 }
 
 .mode-text {
+    position: absolute;
+    left: 0;
+    top: 0;
     font-weight: bold;
     font-size: 12px;
     color: #000000;
@@ -242,6 +244,9 @@ body {
 }
 
 .signal-bars {
+    position: absolute;
+    right: 0;
+    top: 0;
     display: flex;
     gap: 3px;
     align-items: flex-end;
@@ -252,13 +257,60 @@ body {
     background: #333333;
     border-radius: 3px;
     transition: height 0.1s ease;
-    height: 6px; /* 默认最小高度 */
+    height: 6px;
+}
+
+/* 模型信息 — 绝对居中于状态栏 */
+.model-info {
+    display: none;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+    gap: 6px;
+    font-weight: bold;
+    font-size: 12px;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.model-name {
+    color: #000000;
+}
+
+.model-version {
+    opacity: 0.65;
+}
+
+/* 关机状态下模型信息 */
+.lcd-glass:not(.power-on) .model-info {
+    color: #555;
+}
+
+/* 模型更新日期 — 底部居中，始终占位 */
+.model-date {
+    display: block;
+    visibility: hidden;
+    font-weight: bold;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    padding-top: 6px;
+    height: 18px;
+}
+
+/* 关机状态下日期样式 */
+.lcd-glass:not(.power-on) .model-date {
+    color: #555;
 }
 
 /* 显示区域 */
 .lcd-display {
     min-height: 80px;
-    margin-bottom: 8px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -274,6 +326,7 @@ body {
     min-height: 36px;
     flex: 1;
 }
+
 
 .char-counter {
     text-align: center;

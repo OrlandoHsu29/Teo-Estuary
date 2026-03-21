@@ -1,4 +1,4 @@
-// Teo Translater - 潮汕话语音翻译器 JavaScript
+// Teo translator - 潮汕话语音翻译器 JavaScript
 class TeoTranslator {
     constructor() {
         this.mediaRecorder = null;
@@ -23,7 +23,7 @@ class TeoTranslator {
     init() {
         this.initElements();
         this.bindEvents();
-        console.log('Teo Translater 初始化完成');
+        console.log('Teo translator 初始化完成');
     }
 
     initElements() {
@@ -35,7 +35,11 @@ class TeoTranslator {
             recordBtn: document.getElementById('recordBtn'),
             serviceDot: document.getElementById('serviceDot'),
             volumeBars: document.querySelectorAll('.bar'),
-            signalBars: document.querySelector('.signal-bars')
+            signalBars: document.querySelector('.signal-bars'),
+            modelInfo: document.getElementById('modelInfo'),
+            modelName: document.getElementById('modelName'),
+            modelVersion: document.getElementById('modelVersion'),
+            modelDate: document.getElementById('modelDate')
         };
     }
 
@@ -564,16 +568,30 @@ class TeoTranslator {
             if (response.ok) {
                 const result = await response.json();
                 const isHealthy = result.status === 'healthy';
+
+                // 提取模型信息
+                if (result.model_info) {
+                    this.currentModelInfo = {
+                        name: result.model_info.model_name || '',
+                        version: result.model_info.version || '',
+                        updateTime: result.model_info.Update_time || result.model_info.update_time || ''
+                    };
+                } else {
+                    this.currentModelInfo = null;
+                }
+
                 this.updateServiceStatus(isHealthy);
                 this.asrServiceHealthy = isHealthy;
             } else {
                 this.updateServiceStatus(false);
                 this.asrServiceHealthy = false;
+                this.currentModelInfo = null;
             }
         } catch (error) {
             console.error('ASR服务健康检查失败:', error);
             this.updateServiceStatus(false);
             this.asrServiceHealthy = false;
+            this.currentModelInfo = null;
         }
     }
 
@@ -591,6 +609,8 @@ class TeoTranslator {
             if (this.elements.recordBtn) {
                 this.elements.recordBtn.disabled = false;
             }
+            // 显示模型信息
+            this.updateModelInfo();
             // 清除错误提示
             if (this.isIdle) {
                 this.updateDisplay('按住按钮开始录音...');
@@ -602,11 +622,15 @@ class TeoTranslator {
             if (this.elements.recordBtn) {
                 this.elements.recordBtn.disabled = true;
             }
+            // 隐藏模型信息
+            this.hideModelInfo();
             // 显示错误提示
             this.updateDisplay('ASR服务不可用');
             this.updateStatusText('ASR服务连接失败');
         } else {
             // null表示检查中或未检查
+            // 隐藏模型信息
+            this.hideModelInfo();
             // 只在开机状态时显示检查中提示
             const isPowerOn = document.body.classList.contains('power-on');
             if (isPowerOn && this.isIdle) {
@@ -614,6 +638,38 @@ class TeoTranslator {
                 this.updateStatusText('等待ASR服务响应');
             }
         }
+    }
+
+    // 显示模型信息
+    updateModelInfo() {
+        const { modelInfo, modelName, modelVersion, modelDate } = this.elements;
+        const info = this.currentModelInfo;
+
+        if (modelInfo && modelName && modelVersion) {
+            if (info && (info.name || info.version)) {
+                modelName.textContent = info.name || '';
+                modelVersion.textContent = info.version ? `\u00a0V${info.version}` : '';
+                modelInfo.style.display = 'flex';
+            } else {
+                modelInfo.style.display = 'none';
+            }
+        }
+
+        if (modelDate) {
+            if (info && info.updateTime) {
+                modelDate.textContent = `Model updated on ${info.updateTime}`;
+                modelDate.style.visibility = 'visible';
+            } else {
+                modelDate.style.visibility = 'hidden';
+            }
+        }
+    }
+
+    // 隐藏模型信息
+    hideModelInfo() {
+        const { modelInfo, modelDate } = this.elements;
+        if (modelInfo) modelInfo.style.display = 'none';
+        if (modelDate) modelDate.style.visibility = 'hidden';
     }
 
     // 更新显示内容
