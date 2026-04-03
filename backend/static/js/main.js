@@ -3,30 +3,18 @@
 
 // 页面初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面初始化开始...');
-
     // 确保DOM元素存在
     const deviceView = document.getElementById('deviceView');
     const reviewDevice = document.getElementById('reviewDevice');
     const listView = document.getElementById('listView');
-    console.log('deviceView:', deviceView);
-    console.log('reviewDevice:', reviewDevice);
-    console.log('listView:', listView);
 
     // 初始化各个模块
-    console.log('初始化导航模块...');
     initializeNavigation();
-
-    console.log('初始化状态筛选...');
     initializeStatusFilters();
-
-    console.log('初始化统计数据...');
     initializeStats(); // 初始化统计数据（只执行一次）
 
-    console.log('初始化视图状态...');
     // 默认使用详细视图
     currentView = 'device';
-    console.log('设置为详细视图');
 
     // 确保列表视图隐藏（HTML中已经设置了详细视图显示）
     if (listView) listView.style.display = 'none';
@@ -37,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
         emptyState.style.display = 'none';
     }
 
-    console.log('加载录音数据...');
     // 根据实际视图状态加载数据
     if (currentView === 'list') {
         loadListView();
@@ -45,13 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
         loadRecordings();
     }
 
-    console.log('API密钥将在导航到相应页面时加载');
-
-    console.log('初始化键盘快捷键...');
     initializeKeyboardShortcuts();
 
     // 初始化搜索功能
-    console.log('初始化搜索功能...');
     initializeSearch();
 
     // 状态筛选事件监听
@@ -88,8 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    console.log('页面初始化完成');
 });
 
 // 下载当前录音

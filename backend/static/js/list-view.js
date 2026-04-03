@@ -22,7 +22,6 @@ function toggleView() {
         const activeStatusBtn = document.querySelector('.status-filter-btn.active');
         if (activeStatusBtn) {
             deviceViewActiveStatus = activeStatusBtn.getAttribute('data-status') || 'pending';
-            console.log('保存详细视图激活状态:', deviceViewActiveStatus);
         }
 
         // 获取当前激活的状态筛选按钮，并同步到列表视图的筛选器
@@ -327,8 +326,6 @@ function goToPage(page) {
 // - listPage: 记录所在的列表页码（未使用，保留以便后续扩展）
 async function jumpToDetailView(recordId, listIndex, listPage) {
     try {
-        console.log('[跳转到详细视图] recordId:', recordId, 'listIndex:', listIndex, 'listPage:', listPage);
-
         // 获取当前列表的筛选状态和搜索关键词
         const currentListFilter = document.getElementById('statusFilter').value || '';
         const searchQuery = document.getElementById('searchInput').value.trim();
@@ -431,8 +428,6 @@ async function jumpToDetailView(recordId, listIndex, listPage) {
             displayCurrentRecord();
             updateNavigationButtons();
             updateReviewCounter();
-
-            console.log('[跳转完成] currentRecordIndex:', currentRecordIndex, 'absoluteRecordIndex:', absoluteRecordIndex, 'total:', window.totalDataCount);
 
             // 添加跳转动画效果
             const device = document.getElementById('reviewDevice');

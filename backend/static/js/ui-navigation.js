@@ -143,7 +143,6 @@ document.head.appendChild(style);
 
 // 状态筛选功能
 function filterByStatus(status) {
-    console.log('切换状态筛选到:', status); // 调试信息
 
     // 在切换状态前，确保关闭所有编辑模式
     exitAllEditModes();

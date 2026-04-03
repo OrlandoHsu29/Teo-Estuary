@@ -17,7 +17,6 @@ let isLoadingApiKeys = false; // 防止重复加载的标志
 async function loadApiKeys(forceRefresh = false) {
     // 防止重复加载，但允许强制刷新
     if (isLoadingApiKeys && !forceRefresh) {
-        console.log('API密钥正在加载中，跳过重复调用');
         return;
     }
 

@@ -676,8 +676,6 @@ async function loadUnsyncedLogs() {
         }
 
         const data = await response.json();
-        console.log('Logs response:', data); // 调试日志
-
 
         if (!data.success || !data.logs || data.logs.length === 0) {
             let message = onlyPendingSync ? '暂无未同步日志' : '暂无操作日志';
