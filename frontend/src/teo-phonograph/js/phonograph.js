@@ -582,10 +582,14 @@ async function handleSubmit() {
     elements.submitBtn.disabled = false;
     elements.submitBtn.classList.add('cancel-mode');
 
-    // 更新按钮文本为"取消"
+    // 更新按钮文本为"取消"，并切换图标为打叉
     const submitBtnText = elements.submitBtn.querySelector('.btn-text');
     if (submitBtnText) {
         submitBtnText.textContent = '取消';
+    }
+    const submitBtnIcon = elements.submitBtn.querySelector('.btn-icon');
+    if (submitBtnIcon) {
+        submitBtnIcon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>';
     }
 
     // 显示进度条，隐藏status-text
@@ -834,10 +838,14 @@ function resetSubmitButton() {
         elements.submitBtn.classList.remove('cancel-mode');
         elements.submitBtn.disabled = true;
 
-        // 恢复按钮文本为"提交"
+        // 恢复按钮文本和图标为"提交"
         const submitBtnText = elements.submitBtn.querySelector('.btn-text');
         if (submitBtnText) {
             submitBtnText.textContent = '提交';
+        }
+        const submitBtnIcon = elements.submitBtn.querySelector('.btn-icon');
+        if (submitBtnIcon) {
+            submitBtnIcon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
         }
     }
 }
