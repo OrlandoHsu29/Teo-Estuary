@@ -821,7 +821,11 @@ function updateControlButtonsByStatus() {
     if (editBtn) editBtn.disabled = !hasData || !currentRecording;
     if (deleteBtn) deleteBtn.disabled = !hasData || !currentRecording;
 
-    null_status = !hasData || !currentRecording || !currentRecording.file_path;
+    // 判断是否有可播放的音频：
+    // 1. 录音上传(upload_type=0)：需要 file_path
+    // 2. 素材提取(upload_type=1)：有记录ID就可以播放（音频从Emilia服务获取）
+    const canPlay = currentRecording && (currentRecording.upload_type === 1 || currentRecording.file_path);
+    null_status = !hasData || !currentRecording || !canPlay;
 
     if (downloadBtn) downloadBtn.disabled = null_status;
     if (playPauseBtn) playPauseBtn.disabled = null_status;

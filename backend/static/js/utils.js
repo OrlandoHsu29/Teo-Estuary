@@ -93,6 +93,10 @@ function showToast(message, type = 'success') {
     const toastMessage = document.getElementById('toastMessage');
     const toastIcon = document.getElementById('toastIcon');
 
+    if (!toast || !toastMessage || !toastIcon) {
+        return;
+    }
+
     // 设置消息和样式
     toastMessage.textContent = message;
     toast.className = `toast ${type} show`;
@@ -132,7 +136,6 @@ function playFlipSound() {
         oscillator.stop(audioContext.currentTime + 0.1);
     } catch (error) {
         // 忽略音频错误，不影响翻页功能
-        console.log('Audio feedback not available');
     }
 }
 

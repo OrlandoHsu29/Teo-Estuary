@@ -63,6 +63,7 @@ function toggleAudio() {
         if (!audioPlayer.src || audioPlayer.src === '') {
             const recordId = audioPlayer.dataset.recordId;
             const audioUrl = audioPlayer.dataset.audioUrl;
+            const uploadType = parseInt(audioPlayer.dataset.uploadType) || 0; // 1=素材提取，0=录音上传
 
             if (!recordId || !audioUrl) {
                 showToast('音频文件不可用', 'warning');
@@ -74,80 +75,50 @@ function toggleAudio() {
                 playIcon.className = 'fas fa-spinner fa-spin';
             }
 
-            // 测试音频URL是否可访问
+            // 先检查音频URL是否可访问（使用 HEAD 请求）
             fetch(audioUrl, { method: 'HEAD' })
-                .then(response => {
-                    if (response.ok) {
-                        audioPlayer.src = audioUrl;
-
-                        // 添加到缓存（使用原始URL）
-                        audioCache.add(recordId, audioUrl);
-
-                        // 音频加载完成后自动播放
-                        const handleCanPlay = () => {
-                            audioPlayer.removeEventListener('canplay', handleCanPlay);
-                            audioPlayer.removeEventListener('error', handleError);
-
-                            audioPlayer.play().then(() => {
-                                if (playIcon) {
-                                    playIcon.className = 'fas fa-pause';
-                                }
-                                // 显示音频播放器
-                                audioPlayer.style.display = 'block';
-                            }).catch(error => {
-                                console.error('Audio play failed:', error);
-                                if (playIcon) {
-                                    playIcon.className = 'fas fa-play';
-                                }
-                            });
-                        };
-
-                        const handleError = (error) => {
-                            audioPlayer.removeEventListener('canplay', handleCanPlay);
-                            audioPlayer.removeEventListener('error', handleError);
-                            console.error('Audio loading error:', error);
-                            console.error('Audio error:', audioPlayer.error);
-
-                            // 显示更详细的错误信息
-                            let errorMessage = '音频加载失败';
-                            if (audioPlayer.error) {
-                                switch (audioPlayer.error.code) {
-                                    case audioPlayer.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                                        errorMessage = '音频格式不支持';
-                                        break;
-                                    case audioPlayer.error.MEDIA_ERR_NETWORK:
-                                        errorMessage = '网络错误，请检查连接';
-                                        break;
-                                    case audioPlayer.error.MEDIA_ERR_DECODE:
-                                        errorMessage = '音频解码失败';
-                                        break;
-                                    default:
-                                        errorMessage = `音频加载失败 (${audioPlayer.error.code})`;
-                                }
-                            }
-
-                            showToast(errorMessage, 'error');
-                            if (playIcon) {
-                                playIcon.className = 'fas fa-play';
-                            }
-                        };
-
-                        audioPlayer.addEventListener('canplay', handleCanPlay, { once: true });
-                        audioPlayer.addEventListener('error', handleError, { once: true });
-
-                        // 手动触发音频加载
-                        audioPlayer.load();
-                    } else {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                .then(async response => {
+                    if (!response.ok) {
+                        // 非 2xx 响应
+                        let errorMessage = '音频文件无法访问';
+                        if (response.status === 503 && uploadType === 1) {
+                            errorMessage = 'Emilia 服务未启动，请确认服务已开启';
+                        } else if (response.status === 404) {
+                            errorMessage = '音频文件不存在';
+                        } else if (response.status >= 500) {
+                            errorMessage = `服务器错误 (${response.status})`;
+                        }
+                        showToast(errorMessage, 'error');
+                        if (playIcon) {
+                            playIcon.className = 'fas fa-play';
+                        }
+                        return;
                     }
-                })
-                .catch(error => {
-                    console.error('Audio URL accessibility test failed:', error);
-                    showToast('音频文件无法访问', 'error');
-                    if (playIcon) {
-                        playIcon.className = 'fas fa-play';
-                    }
-                    return;
+
+                    // URL 可访问，开始播放
+                    audioPlayer.src = audioUrl;
+                    audioCache.add(recordId, audioUrl);
+
+                    // 音频加载完成后自动播放
+                    const handleCanPlay = () => {
+                        audioPlayer.removeEventListener('canplay', handleCanPlay);
+                        audioPlayer.removeEventListener('error', handleError);
+                        audioPlayer.play().catch(() => {
+                            showToast('播放失败', 'error');
+                            if (playIcon) playIcon.className = 'fas fa-play';
+                        });
+                    };
+
+                    const handleError = () => {
+                        audioPlayer.removeEventListener('canplay', handleCanPlay);
+                        audioPlayer.removeEventListener('error', handleError);
+                        showToast('音频加载失败', 'error');
+                        if (playIcon) playIcon.className = 'fas fa-play';
+                    };
+
+                    audioPlayer.addEventListener('canplay', handleCanPlay, { once: true });
+                    audioPlayer.addEventListener('error', handleError, { once: true });
+                    audioPlayer.load();
                 });
 
             // 预加载下一首音频
@@ -156,33 +127,44 @@ function toggleAudio() {
             // 音频已加载，检查URL是否正确
             const expectedUrl = audioPlayer.dataset.audioUrl;
             const currentSrc = audioPlayer.src;
+            const uploadType = parseInt(audioPlayer.dataset.uploadType) || 0;
 
-            // 如果src不是我们期望的URL，重新设置
+            // 如果src不是我们期望的URL或加载失败，重新检查
             if (!currentSrc.endsWith(expectedUrl) || audioPlayer.readyState === 0) {
-                audioPlayer.src = expectedUrl;
-                audioPlayer.load(); // 重新加载
+                // 重置状态
+                audioPlayer.src = '';
+                audioPlayer.load();
 
-                // 等待加载完成后播放
-                const handleCanPlay = () => {
-                    audioPlayer.removeEventListener('canplay', handleCanPlay);
-                    audioPlayer.play().then(() => {
-                        if (playIcon) {
-                            playIcon.className = 'fas fa-pause';
-                        }
-                    }).catch(error => {
-                        console.error('Audio play failed after reload:', error);
-                        showToast('播放失败', 'error');
-                        if (playIcon) {
-                            playIcon.className = 'fas fa-play';
-                        }
-                    });
-                };
-
-                audioPlayer.addEventListener('canplay', handleCanPlay, { once: true });
+                // 重新执行 fetch 检查逻辑
+                const testUrl = audioPlayer.dataset.audioUrl;
+                if (testUrl) {
+                    fetch(testUrl, { method: 'HEAD' })
+                        .then(async response => {
+                            if (!response.ok) {
+                                let errorMessage = '音频文件无法访问';
+                                if (response.status === 503 && uploadType === 1) {
+                                    errorMessage = 'Emilia 服务未启动，请确认服务已开启';
+                                } else if (response.status === 404) {
+                                    errorMessage = '音频文件不存在';
+                                }
+                                showToast(errorMessage, 'error');
+                                if (playIcon) playIcon.className = 'fas fa-play';
+                                return;
+                            }
+                            // 可以访问，设置并播放
+                            audioPlayer.src = testUrl;
+                            audioPlayer.load();
+                            audioPlayer.addEventListener('canplay', () => {
+                                audioPlayer.play().catch(() => {
+                                    showToast('播放失败', 'error');
+                                    if (playIcon) playIcon.className = 'fas fa-play';
+                                });
+                            }, { once: true });
+                        });
+                }
             } else {
                 // src正确，直接播放
                 audioPlayer.play().catch(error => {
-                    console.error('Audio play failed:', error);
                     showToast('播放失败', 'error');
                     if (playIcon) {
                         playIcon.className = 'fas fa-play';

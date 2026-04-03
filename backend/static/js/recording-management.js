@@ -73,8 +73,6 @@ async function loadRecordings(status = null, searchQuery = null) {
         // 使用传入的搜索参数，如果没有则使用当前搜索状态
         const searchParam = searchQuery !== null ? searchQuery : currentSearchQuery;
 
-        console.log('正在加载记录，状态:', filterStatus, '搜索:', searchParam); // 调试信息
-
         // 显示加载动画
         let loadingSubtitle = `状态: ${getStatusText(filterStatus)}`;
         if (searchParam) {
@@ -107,8 +105,6 @@ async function loadRecordings(status = null, searchQuery = null) {
         }
 
         const data = await response.json();
-
-        console.log('API响应:', data); // 调试信息
 
         // 隐藏加载动画
         hideDataLoading();
@@ -367,7 +363,6 @@ function displayCurrentRecord() {
         // 强制清空并重新赋值，确保正确显示
         const notesValue = record.notes;
         notesTextarea.value = (notesValue !== undefined && notesValue !== null) ? notesValue : '';
-        console.log('加载备注:', notesTextarea.value, '| 原始值:', notesValue);
     }
 
     // 更新音频播放器 - 懒加载模式
@@ -380,6 +375,8 @@ function displayCurrentRecord() {
         audioPlayer.dataset.recordId = record.id;
         // 添加download=false参数来获取音频流而不是文件下载
         audioPlayer.dataset.audioUrl = `/admin/api/download/${record.id}?download=false`;
+        // 记录音频来源：1=素材提取，0=录音上传
+        audioPlayer.dataset.uploadType = record.upload_type || 0;
 
         // 延迟初始化自定义音频播放器（但不加载音频）
         setTimeout(() => {
@@ -389,6 +386,7 @@ function displayCurrentRecord() {
         audioPlayer.style.display = 'none';
         delete audioPlayer.dataset.recordId;
         delete audioPlayer.dataset.audioUrl;
+        delete audioPlayer.dataset.uploadType;
     }
 
     // 确保进度条容器始终可见（无论是否有音频）
@@ -785,16 +783,12 @@ async function handleVariantClick(button) {
         lang = 'mandarin'; // 在潮州话文本中，源词是普通话
     }
 
-    console.log('[变体切换] baseWord:', baseWord, '源词语言:', lang, 'currentVariant:', currentVariant);
-
     // 添加切换动画
     button.classList.add('switching');
 
     try {
         // 获取所有变体
         const variants = await getWordVariants(baseWord, lang);
-
-        console.log('[变体切换] 返回的variants:', variants);
 
         if (variants && variants.length > 0) {
             let nextVariant;
@@ -832,8 +826,6 @@ async function handleVariantClick(button) {
                 nextVariant = variants[0];
             }
 
-            console.log('[变体切换] 选择的nextVariant:', nextVariant);
-
             // 更新按钮显示
             button.textContent = nextVariant[1];
             button.dataset.currentVariant = nextVariant[0];
@@ -844,7 +836,6 @@ async function handleVariantClick(button) {
             // 显示提示
             showToast(`切换到变体 ${nextVariant[0]}: ${nextVariant[1]}`, 'success');
         } else {
-            console.log('[变体切换] variants为空或null');
             showToast('该词没有其他变体', 'warning');
         }
     } catch (error) {
@@ -863,13 +854,10 @@ async function getWordVariants(word, lang = 'teochew') {
     // 检查缓存
     const cacheKey = `${word}:${lang}`;
     if (wordVariantCache.has(cacheKey)) {
-        console.log('[getWordVariants] 从缓存获取:', cacheKey, wordVariantCache.get(cacheKey));
         return wordVariantCache.get(cacheKey);
     }
 
     try {
-        console.log('[getWordVariants] 请求API:', {word, lang});
-
         // 使用管理员API端点，无需API密钥
         const response = await fetch(`/admin/api/word-variants`, {
             method: 'POST',
@@ -886,7 +874,6 @@ async function getWordVariants(word, lang = 'teochew') {
         }
 
         const data = await response.json();
-        console.log('[getWordVariants] API返回:', data);
 
         if (data.success) {
             // 缓存结果（带语言标识）
@@ -1688,7 +1675,7 @@ async function saveNotes(notesText) {
         if (data.success) {
             // 更新本地数据
             record.notes = notesText;
-            console.log('备注已保存');
+            // 备注已保存
         } else {
             showToast(data.error || '保存备注失败', 'error');
         }
