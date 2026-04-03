@@ -2879,6 +2879,28 @@ s
     }
 }
 
+/* 撤回模式 */
+.translate-arrow-btn.revert-mode {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+}
+
+.translate-arrow-btn.revert-mode:hover:not(:disabled):not(.loading) {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.5);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
+}
+
+/* 撤回模式下旋转箭头 */
+.translate-arrow-btn.left.revert-mode svg {
+    transform: rotate(270deg);
+}
+
+.translate-arrow-btn.right.revert-mode svg {
+    transform: rotate(90deg);
+}
+
 
 /* 编辑模式下普通话文本的样式 */
 .text-column.editing-mandarin .mandarin-text p {
