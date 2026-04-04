@@ -1426,7 +1426,6 @@ function cancelTeochewChanges() {
     const teochewTranslateBtn = document.getElementById('translateToTeochewBtn');
     if (mandarinTranslateBtn) mandarinTranslateBtn.disabled = false;
     if (teochewTranslateBtn) teochewTranslateBtn.disabled = false;
-    if (translateBtn) translateBtn.disabled = false;
 
     updateSaveButtonState();
 }
@@ -1459,7 +1458,6 @@ async function savePendingMandarinEdits() {
             preTranslateMandarinText = '';
             // 刷新设备页面
             displayCurrentRecord();
-            showToast('普通话文本已保存', 'success');
         } else {
             showToast(data.error || '保存失败', 'error');
         }
@@ -1497,7 +1495,6 @@ async function savePendingTeochewEdits() {
             preTranslateTeochewText = '';
             // 刷新设备页面
             displayCurrentRecord();
-            showToast('潮汕话文本已保存', 'success');
         } else {
             showToast(data.error || '保存失败', 'error');
         }

@@ -263,10 +263,10 @@ async function approveCurrent() {
     }
 
     // 自动保存未保存的修改
-    if (typeof savePendingMandarinEdits === 'function' && hasPendingMandarinEdits) {
+    if (typeof savePendingMandarinEdits === 'function' && preTranslateMandarinText) {
         await savePendingMandarinEdits();
     }
-    if (typeof savePendingTeochewEdits === 'function' && hasPendingTeochewEdits) {
+    if (typeof savePendingTeochewEdits === 'function' && preTranslateTeochewText) {
         await savePendingTeochewEdits();
     }
 
@@ -426,10 +426,10 @@ async function approveCurrent() {
     }
 
     // 自动保存未保存的修改
-    if (typeof savePendingMandarinEdits === 'function' && hasPendingMandarinEdits) {
+    if (typeof savePendingMandarinEdits === 'function' && preTranslateMandarinText) {
         await savePendingMandarinEdits();
     }
-    if (typeof savePendingTeochewEdits === 'function' && hasPendingTeochewEdits) {
+    if (typeof savePendingTeochewEdits === 'function' && preTranslateTeochewText) {
         await savePendingTeochewEdits();
     }
 
