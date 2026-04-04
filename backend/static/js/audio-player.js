@@ -82,7 +82,12 @@ function toggleAudio() {
                         // 非 2xx 响应
                         let errorMessage = '音频文件无法访问';
                         if (response.status === 503 && uploadType === 1) {
-                            errorMessage = 'Emilia 服务未启动，请确认服务已开启';
+                            // 检查 emiliaHealthDot 是否真的 offline
+                            const healthDot = document.getElementById('emiliaHealthDot');
+                            const isEmiliaOffline = healthDot && healthDot.classList.contains('offline');
+                            errorMessage = isEmiliaOffline
+                                ? '「素材提取」音频需要启动Emilia服务后才能播放'
+                                : '音频无法访问';
                         } else if (response.status === 404) {
                             errorMessage = '音频文件不存在';
                         } else if (response.status >= 500) {
@@ -143,7 +148,12 @@ function toggleAudio() {
                             if (!response.ok) {
                                 let errorMessage = '音频文件无法访问';
                                 if (response.status === 503 && uploadType === 1) {
-                                    errorMessage = 'Emilia 服务未启动，请确认服务已开启';
+                                    // 检查 emiliaHealthDot 是否真的 offline
+                                    const healthDot = document.getElementById('emiliaHealthDot');
+                                    const isEmiliaOffline = healthDot && healthDot.classList.contains('offline');
+                                    errorMessage = isEmiliaOffline
+                                        ? '「素材提取」音频需要启动Emilia服务后才能播放'
+                                        : '音频无法访问';
                                 } else if (response.status === 404) {
                                     errorMessage = '音频文件不存在';
                                 }

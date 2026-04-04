@@ -833,8 +833,6 @@ async function handleVariantClick(button) {
             // 更新记录数据 - 使用新格式：翻译$[原词]
             updateRecordWithNewVariant(button.dataset.index, nextVariant[1] + '$[' + baseWord + ']', button);
 
-            // 显示提示
-            showToast(`切换到变体 ${nextVariant[0]}: ${nextVariant[1]}`, 'success');
         } else {
             showToast('该词没有其他变体', 'warning');
         }
@@ -1427,7 +1425,6 @@ async function savePendingTeochewEdits() {
             preTranslateTeochewText = '';
             // 刷新设备页面
             displayCurrentRecord();
-            showToast('潮汕话文本已保存', 'success');
         } else {
             showToast(data.error || '保存失败', 'error');
         }
@@ -1516,8 +1513,6 @@ async function translateTo(targetLang) {
     });
 
     try {
-        showToast('正在翻译...', 'info');
-
         const response = await fetch('/admin/api/translate', {
             method: 'POST',
             headers: {
