@@ -480,8 +480,8 @@ body {
 /* 左侧状态筛选按钮栏 */
 .status-filter-sidebar {
     position: fixed;
-    left: 30px;
-    top: 50%;
+    left: 0px;
+    top: 53%;
     transform: translateY(-50%);
     z-index: 100;
 }
@@ -726,13 +726,20 @@ body {
 }
 
 
+.console-container {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 /* 审核区域 - 拟物化设备设计 */
 .review-container {
     max-width: 1400px;
-    margin: auto;
     perspective: 1000px;
     position: relative;
-    padding-left: 160px; /* 为左侧圆形按钮栏留出空间 */
+    padding-left: 130px; /* 为左侧圆形按钮栏留出空间 */
+    padding-top: 60px; /* 整体下移，保持垂直居中基准 */
 }
 
 .review-device {
@@ -6221,6 +6228,274 @@ textarea::-webkit-scrollbar-thumb:hover {
         opacity: 0.7;
         transform: scale(1.05);
     }
+}
+
+/* ========================
+   快捷翻译设备 (Quick Translate Device)
+   ======================== */
+
+
+/* 设备整体 - 水平居中 */
+.quick-translate-device {
+    width: 520px;
+    background: linear-gradient(145deg, #2a2a3e, #1e1e32);
+    border-radius: 16px;
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.08),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+/* 主布局：两行 */
+.qt-body {
+    padding: 8px 12px;
+}
+
+/* 第一行：语言切换 + 搜索 + 计数器 */
+.qt-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.qt-lang-toggle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.qt-lang-toggle:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 255, 255, 0.2);
+}
+
+.qt-lang-toggle.teochew-mode {
+    border-color: rgba(255, 193, 7, 0.4);
+    color: #ffc107;
+}
+
+.qt-lang-toggle.teochew-mode:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 8px rgba(255, 193, 7, 0.2);
+}
+
+.qt-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(145deg, #1a1a2e, #0f0f22);
+    border-radius: 8px;
+    box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.qt-input-wrap:focus-within {
+    border-color: rgba(0, 255, 255, 0.3);
+}
+
+.qt-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    padding: 7px 10px;
+    outline: none;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.qt-search-input::placeholder {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.qt-search-btn {
+    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 30%;
+    transition: all 0.3s ease;
+    width: 28px;
+    height: 28px;
+    margin-right: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        2px 2px 6px rgba(0, 0, 0, 0.3),
+        -1px -1px 4px rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.qt-search-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow:
+        3px 3px 8px rgba(0, 0, 0, 0.4),
+        -2px -2px 6px rgba(74, 144, 226, 0.1);
+}
+
+.qt-search-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.5;
+}
+
+.qt-counter {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    min-width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* 第二行：导航 + 结果卡片 */
+.qt-result-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 导航按钮 - 立着的长方形 */
+.qt-nav-btn {
+    background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    width: 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.qt-nav-btn:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.qt-nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.qt-nav-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 结果卡片容器 - 并排 */
+.qt-cards {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+}
+
+.qt-result-card {
+    flex: 1;
+    min-width: 0;
+}
+
+.qt-result-item {
+    background: linear-gradient(145deg, rgba(0, 255, 255, 0.08), rgba(0, 255, 255, 0.03));
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.qt-result-item.teochew-item {
+    background: linear-gradient(145deg, rgba(0, 255, 136, 0.08), rgba(0, 255, 136, 0.03));
+    border-color: rgba(0, 255, 136, 0.2);
+}
+
+.qt-result-item.teochew-item:hover {
+    border-color: rgba(0, 255, 136, 0.4);
+}
+
+.qt-result-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.qt-result-item:not(.teochew-item) .qt-result-label {
+    color: rgba(0, 255, 255, 0.65);
+}
+
+.qt-result-item.teochew-item .qt-result-label {
+    color: rgba(0, 255, 136, 0.65);
+}
+
+.qt-result-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Noto Sans SC', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+/* 变体态：黄色覆盖绿色 */
+.qt-result-item.teochew-item.has-variants {
+    background: linear-gradient(145deg, rgba(255, 193, 7, 0.08), rgba(255, 193, 7, 0.03));
+    border-color: rgba(255, 193, 7, 0.2);
+}
+
+.qt-result-item.teochew-item.has-variants .qt-result-label {
+    color: rgba(255, 193, 7, 0.65);
+}
+
+.qt-result-item.teochew-item.has-variants:hover {
+    border-color: rgba(255, 193, 7, 0.4);
+}
+
+/* 加载动画 */
+.qt-loading-indicator {
+    display: none;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.qt-loading-indicator.active {
+    display: flex;
+}
+
+.qt-loading-dot {
+    width: 5px;
+    height: 5px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    animation: qtPulse 1.2s ease-in-out infinite;
+}
+
+.qt-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.qt-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes qtPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* 响应式调整 */

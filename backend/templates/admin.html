@@ -167,226 +167,286 @@
                 </div>
 
                 <!-- 详细视图 -->
-                <div class="review-container" id="deviceView" style="display: block;">
-                    <!-- 左侧状态筛选按钮 - 竖直布局 -->
-                    <div class="status-filter-sidebar">
-                        <div class="filter-panel">
-                            <button class="status-filter-btn" data-status="all" onclick="filterByStatus('all')">
-                                <i class="fas fa-list"></i>
-                                <span>所有状态</span>
-                            </button>
-                            <button class="status-filter-btn active" data-status="pending" onclick="filterByStatus('pending')">
-                                <i class="fas fa-clock"></i>
-                                <span>待审核</span>
-                            </button>
-                            <button class="status-filter-btn" data-status="approved" onclick="filterByStatus('approved')">
-                                <i class="fas fa-check-circle"></i>
-                                <span>已通过</span>
-                            </button>
-                            <button class="status-filter-btn" data-status="rejected" onclick="filterByStatus('rejected')">
-                                <i class="fas fa-times-circle"></i>
-                                <span>已拒绝</span>
-                            </button>
+                <div class="console-container">
+                    <div class="review-container" id="deviceView" style="display: block;">
+                        <!-- 左侧状态筛选按钮 - 竖直布局 -->
+                        <div class="status-filter-sidebar">
+                            <div class="filter-panel">
+                                <button class="status-filter-btn" data-status="all" onclick="filterByStatus('all')">
+                                    <i class="fas fa-list"></i>
+                                    <span>所有状态</span>
+                                </button>
+                                <button class="status-filter-btn active" data-status="pending" onclick="filterByStatus('pending')">
+                                    <i class="fas fa-clock"></i>
+                                    <span>待审核</span>
+                                </button>
+                                <button class="status-filter-btn" data-status="approved" onclick="filterByStatus('approved')">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>已通过</span>
+                                </button>
+                                <button class="status-filter-btn" data-status="rejected" onclick="filterByStatus('rejected')">
+                                    <i class="fas fa-times-circle"></i>
+                                    <span>已拒绝</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <svg fill="currentColor" viewBox="0 0 24 24" width="64" height="64">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            <h3>暂无待审核记录</h3>
+                            <p>当前没有需要审核的音频记录</p>
+                        </div>
+
+                        <!-- 主设备 -->
+                        <div class="review-device" id="reviewDevice" style="display: block;">
+                            <div class="device-screen">
+                                <!-- 数据加载覆盖层 -->
+                                <div class="data-loading-overlay" id="dataLoadingOverlay">
+                                    <div class="loading-icon">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </div>
+                                    <div class="loading-text">正在加载数据...</div>
+                                    <div class="loading-subtitle">请稍候</div>
+                                </div>
+                                <div class="review-content" id="reviewContent">
+                                    <button class="nav-btn" id="prevBtn" onclick="navigateRecord(-1)" disabled>
+                                        <svg fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+                                        </svg>
+                                    </button>
+
+                                    <div class="review-main">
+                                        <div class="review-header">
+                                            <h2 id="reviewTitle">音频记录 #</h2>
+                                            <span class="review-counter">
+                                                <span id="currentIndex">0</span> / <span id="totalRecords">0</span>
+                                            </span>
+                                        </div>
+
+                                        <div class="review-item">
+                                            <div class="content-row">
+                                                <!-- 左侧：文本内容 -->
+                                                <div class="text-column">
+                                                    <div class="text-display compact">
+                                                        <label>
+                                                            <span class="label-text">
+                                                                普通话文本
+                                                                <span class="edit-hint" onclick="enableMandarinTextEdit()">编辑</span>
+                                                            </span>
+                                                            <button class="text-save-btn" id="mandarinSaveBtn" onclick="savePendingMandarinEdits()" disabled title="保存修改">
+                                                                <svg fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
+                                                                </svg>
+                                                                保存
+                                                            </button>
+                                                        </label>
+                                                        <div class="mandarin-text">
+                                                            <div class="word-buttons-container" id="mandarinText">
+                                                            </div>
+                                                            <textarea id="mandarinTextEdit" style="display: none;"></textarea>
+                                                            <div class="edit-actions" id="mandarinEditActions" style="display: none;">
+                                                                <button class="cancel-btn action-btn" onclick="cancelMandarinTextEdit()">取消</button>
+                                                                <button class="save-btn action-btn" onclick="saveMandarinTextEdit()">保存</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- 翻译控制按钮 -->
+                                                    <div class="translation-controls">
+                                                        <button class="translate-arrow-btn left" id="translateToMandarinBtn" onclick="translateTo('mandarin')" disabled title="潮汕话 -> 普通话">
+                                                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        </button>
+                                                        <button class="translate-arrow-btn right" id="translateToTeochewBtn" onclick="translateTo('teochew')" disabled title="普通话 -> 潮汕话">
+                                                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="text-display compact">
+                                                        <label>
+                                                            <span class="label-text">
+                                                                潮汕话文本
+                                                                <span class="edit-hint" onclick="enableTeochewTextEdit()">编辑</span>
+                                                            </span>
+                                                            <button class="text-save-btn" id="teochewSaveBtn" onclick="savePendingTeochewEdits()" disabled title="保存修改">
+                                                                <svg fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
+                                                                </svg>
+                                                                保存
+                                                            </button>
+                                                        </label>
+                                                        <div class="teochew-text">
+                                                            <div class="word-buttons-container" id="teochewText">
+                                                            </div>
+                                                            <textarea id="teochewTextEdit" style="display: none;"></textarea>
+                                                            <div class="edit-actions" id="teochewEditActions" style="display: none;">
+                                                                <button class="cancel-btn action-btn" onclick="cancelTeochewTextEdit()">取消</button>
+                                                                <button class="save-btn action-btn" onclick="saveTeochewTextEdit()">保存</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 右侧：元信息 -->
+                                                <div class="media-column">
+                                                    <div class="meta-info compact">
+                                                        <div class="meta-item">
+                                                            <span class="meta-label">IP:</span>
+                                                            <span class="meta-value" id="ipAddress">-</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <span class="meta-label">时间:</span>
+                                                            <span class="meta-value" id="uploadTime">-</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <span class="meta-label">大小:</span>
+                                                            <span class="meta-value" id="fileSize">-</span>
+                                                        </div>
+                                                        <div class="meta-item">
+                                                            <span class="meta-label">来源:</span>
+                                                            <span class="meta-value" id="uploadType">-</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- 备注文本框 -->
+                                                    <div class="notes-container">
+                                                        <div class="notes-label">
+                                                            <span>备注</span>
+                                                        </div>
+                                                        <textarea
+                                                            class="notes-textarea"
+                                                            id="notesTextarea"
+                                                            placeholder="添加备注信息...（最多100字）"
+                                                            rows="10"
+                                                            maxlength="100"
+                                                        ></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button class="nav-btn" id="nextBtn" onclick="navigateRecord(1)" disabled>
+                                        <svg fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- 屏幕底部整行进度条 -->
+                                <div class="screen-bottom-progress" id="screenProgress">
+                                    <div class="thin-progress-track">
+                                        <div class="thin-progress-fill" id="progressFillScreen"></div>
+                                        <!-- 审核动画层 -->
+                                        <div class="review-animation-overlay" id="reviewAnimationOverlay"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <!-- 集成控制台区域 - 设备下半部分 -->
+                            <div class="device-console">
+                                <!-- 控制按钮 -->
+                                <div class="console-controls">
+                                    <div class="control-left">
+                                        <button class="control-btn download-btn icon-only" onclick="downloadCurrentRecording()" disabled title="下载">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="control-btn discard-btn icon-only" onclick="deleteCurrentRecording()" disabled title="删除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="control-center">
+                                        <button class="control-btn reject-btn" onclick="rejectCurrent()" disabled>
+                                            <i class="fas fa-times"></i>
+                                            <span>拒绝</span>
+                                        </button>
+                                        <button class="control-btn approve-btn" onclick="approveCurrent()" disabled>
+                                            <i class="fas fa-check"></i>
+                                            <span>通过</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="control-right">
+                                        <div class="audio-controls-right">
+                                            <button class="control-btn play-pause-btn-small" id="playPauseBtn" onclick="toggleAudio()" disabled>
+                                                <i class="fas fa-play" id="playIcon"></i>
+                                            </button>
+                                            <div class="volume-control-small">
+                                                <i class="fas fa-volume-up"></i>
+                                                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <audio id="audioPlayer" style="display: none;"></audio>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="empty-state" id="emptyState" style="display: none;">
-                        <svg fill="currentColor" viewBox="0 0 24 24" width="64" height="64">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                        </svg>
-                        <h3>暂无待审核记录</h3>
-                        <p>当前没有需要审核的音频记录</p>
-                    </div>
-
-                    <!-- 主设备 -->
-                    <div class="review-device" id="reviewDevice" style="display: block;">
-                        <div class="device-screen">
-                            <!-- 数据加载覆盖层 -->
-                            <div class="data-loading-overlay" id="dataLoadingOverlay">
-                                <div class="loading-icon">
-                                    <i class="fas fa-sync-alt"></i>
+                    
+                    <!-- 快捷翻译设备 -->
+                    <div class="quick-translate-device" id="quickTranslateDevice">
+                        <div class="qt-body">
+                            <div class="qt-search-row">
+                                <button class="qt-lang-toggle" id="qtLangToggle" onclick="qtToggleLang()" title="切换搜索语言">
+                                    <span id="qtLangLabel">普</span>
+                                </button>
+                                <div class="qt-input-wrap">
+                                    <input type="text" id="qtSearchInput" class="qt-search-input"
+                                        placeholder="输入普通话..." maxlength="10">
+                                    <button class="qt-search-btn" onclick="qtSearch()">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                        </svg>
+                                    </button>
                                 </div>
-                                <div class="loading-text">正在加载数据...</div>
-                                <div class="loading-subtitle">请稍候</div>
+                                <div class="qt-loading-indicator" id="qtLoadingIndicator">
+                                    <div class="qt-loading-dot"></div>
+                                    <div class="qt-loading-dot"></div>
+                                    <div class="qt-loading-dot"></div>
+                                </div>
+                                <span class="qt-counter" id="qtCounter">0/0</span>
                             </div>
-                            <div class="review-content" id="reviewContent">
-                                <button class="nav-btn" id="prevBtn" onclick="navigateRecord(-1)" disabled>
+
+                            <div class="qt-result-row">
+                                <button class="qt-nav-btn" id="qtPrevBtn" onclick="qtNavigate(-1)" disabled>
                                     <svg fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
                                     </svg>
                                 </button>
 
-                                <div class="review-main">
-                                    <div class="review-header">
-                                        <h2 id="reviewTitle">音频记录 #</h2>
-                                        <span class="review-counter">
-                                            <span id="currentIndex">0</span> / <span id="totalRecords">0</span>
-                                        </span>
+                                <div class="qt-cards" id="qtCards">
+                                    <div class="qt-result-card" id="qtCard1">
+                                        <div class="qt-result-item" id="qtCard1Content">
+                                            <span class="qt-result-label" id="qtLabel1">普通话</span>
+                                            <span class="qt-result-text" id="qtText1">—</span>
+                                        </div>
                                     </div>
-
-                                    <div class="review-item">
-                                        <div class="content-row">
-                                            <!-- 左侧：文本内容 -->
-                                            <div class="text-column">
-                                                <div class="text-display compact">
-                                                    <label>
-                                                        <span class="label-text">
-                                                            普通话文本
-                                                            <span class="edit-hint" onclick="enableMandarinTextEdit()">编辑</span>
-                                                        </span>
-                                                        <button class="text-save-btn" id="mandarinSaveBtn" onclick="savePendingMandarinEdits()" disabled title="保存修改">
-                                                            <svg fill="currentColor" viewBox="0 0 20 20">
-                                                                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
-                                                            </svg>
-                                                            保存
-                                                        </button>
-                                                    </label>
-                                                    <div class="mandarin-text">
-                                                        <div class="word-buttons-container" id="mandarinText">
-                                                        </div>
-                                                        <textarea id="mandarinTextEdit" style="display: none;"></textarea>
-                                                        <div class="edit-actions" id="mandarinEditActions" style="display: none;">
-                                                            <button class="cancel-btn action-btn" onclick="cancelMandarinTextEdit()">取消</button>
-                                                            <button class="save-btn action-btn" onclick="saveMandarinTextEdit()">保存</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- 翻译控制按钮 -->
-                                                <div class="translation-controls">
-                                                    <button class="translate-arrow-btn left" id="translateToMandarinBtn" onclick="translateTo('mandarin')" disabled title="潮汕话 -> 普通话">
-                                                        <svg fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    </button>
-                                                    <button class="translate-arrow-btn right" id="translateToTeochewBtn" onclick="translateTo('teochew')" disabled title="普通话 -> 潮汕话">
-                                                        <svg fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-
-                                                <div class="text-display compact">
-                                                    <label>
-                                                        <span class="label-text">
-                                                            潮汕话文本
-                                                            <span class="edit-hint" onclick="enableTeochewTextEdit()">编辑</span>
-                                                        </span>
-                                                        <button class="text-save-btn" id="teochewSaveBtn" onclick="savePendingTeochewEdits()" disabled title="保存修改">
-                                                            <svg fill="currentColor" viewBox="0 0 20 20">
-                                                                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
-                                                            </svg>
-                                                            保存
-                                                        </button>
-                                                    </label>
-                                                    <div class="teochew-text">
-                                                        <div class="word-buttons-container" id="teochewText">
-                                                        </div>
-                                                        <textarea id="teochewTextEdit" style="display: none;"></textarea>
-                                                        <div class="edit-actions" id="teochewEditActions" style="display: none;">
-                                                            <button class="cancel-btn action-btn" onclick="cancelTeochewTextEdit()">取消</button>
-                                                            <button class="save-btn action-btn" onclick="saveTeochewTextEdit()">保存</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- 右侧：元信息 -->
-                                            <div class="media-column">
-                                                <div class="meta-info compact">
-                                                    <div class="meta-item">
-                                                        <span class="meta-label">IP:</span>
-                                                        <span class="meta-value" id="ipAddress">-</span>
-                                                    </div>
-                                                    <div class="meta-item">
-                                                        <span class="meta-label">时间:</span>
-                                                        <span class="meta-value" id="uploadTime">-</span>
-                                                    </div>
-                                                    <div class="meta-item">
-                                                        <span class="meta-label">大小:</span>
-                                                        <span class="meta-value" id="fileSize">-</span>
-                                                    </div>
-                                                      <div class="meta-item">
-                                                        <span class="meta-label">来源:</span>
-                                                        <span class="meta-value" id="uploadType">-</span>
-                                                    </div>
-                                                </div>
-
-                                                <!-- 备注文本框 -->
-                                                <div class="notes-container">
-                                                    <div class="notes-label">
-                                                        <span>备注</span>
-                                                    </div>
-                                                    <textarea
-                                                        class="notes-textarea"
-                                                        id="notesTextarea"
-                                                        placeholder="添加备注信息...（最多100字）"
-                                                        rows="10"
-                                                        maxlength="100"
-                                                    ></textarea>
-                                                </div>
-                                            </div>
+                                    <div class="qt-result-card" id="qtCard2">
+                                        <div class="qt-result-item teochew-item" id="qtCard2Content" onclick="qtCopyResult()" style="cursor:pointer" title="点击复制">
+                                            <span class="qt-result-label" id="qtLabel2">潮汕话</span>
+                                            <span class="qt-result-text" id="qtText2">—</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <button class="nav-btn" id="nextBtn" onclick="navigateRecord(1)" disabled>
+                                <button class="qt-nav-btn" id="qtNextBtn" onclick="qtNavigate(1)" disabled>
                                     <svg fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
                                     </svg>
                                 </button>
                             </div>
-
-                            <!-- 屏幕底部整行进度条 -->
-                            <div class="screen-bottom-progress" id="screenProgress">
-                                <div class="thin-progress-track">
-                                    <div class="thin-progress-fill" id="progressFillScreen"></div>
-                                    <!-- 审核动画层 -->
-                                    <div class="review-animation-overlay" id="reviewAnimationOverlay"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 集成控制台区域 - 设备下半部分 -->
-                        <div class="device-console">
-                            <!-- 控制按钮 -->
-                            <div class="console-controls">
-                                <div class="control-left">
-                                    <button class="control-btn download-btn icon-only" onclick="downloadCurrentRecording()" disabled title="下载">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                    <button class="control-btn discard-btn icon-only" onclick="deleteCurrentRecording()" disabled title="删除">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-
-                                <div class="control-center">
-                                    <button class="control-btn reject-btn" onclick="rejectCurrent()" disabled>
-                                        <i class="fas fa-times"></i>
-                                        <span>拒绝</span>
-                                    </button>
-                                    <button class="control-btn approve-btn" onclick="approveCurrent()" disabled>
-                                        <i class="fas fa-check"></i>
-                                        <span>通过</span>
-                                    </button>
-                                </div>
-
-                                <div class="control-right">
-                                    <div class="audio-controls-right">
-                                        <button class="control-btn play-pause-btn-small" id="playPauseBtn" onclick="toggleAudio()" disabled>
-                                            <i class="fas fa-play" id="playIcon"></i>
-                                        </button>
-                                        <div class="volume-control-small">
-                                            <i class="fas fa-volume-up"></i>
-                                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <audio id="audioPlayer" style="display: none;"></audio>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- 列表视图 -->
                 <div class="list-view-container" id="listView" style="display: none;">
@@ -1097,6 +1157,7 @@
     <script src="{{ url_for('static', filename='js/api-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/review-operations.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dictionary-management.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/quick-translate.js') }}"></script>
     <script src="{{ url_for('static', filename='js/export-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/import-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui-navigation.js') }}"></script>
