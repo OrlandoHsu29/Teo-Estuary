@@ -76,17 +76,16 @@ async function loadApiKeys(forceRefresh = false) {
                             <div class="key-actions">
                                 <div class="key-actions-grid">
                                     <button class="reset-btn action-btn" onclick="resetKeyUsage(${key.id})" title="重置">
-                                        <i class="fas fa-redo"></i><span>重置</span>
+                                        <i class="fas fa-redo"></i>
                                     </button>
                                     <button class="edit-btn action-btn" onclick="editKey(${key.id})" title="编辑">
-                                        <i class="fas fa-edit"></i><span>编辑</span>
+                                        <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="toggle-btn action-btn ${key.is_active ? 'active' : 'inactive'}" onclick="toggleKey(${key.id})" title="${key.is_active ? '禁用' : '启用'}">
                                         ${key.is_active ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>'}
-                                        <span>${key.is_active ? '禁用' : '启用'}</span>
                                     </button>
                                     <button class="delete-btn action-btn" onclick="deleteKey(${key.id})" title="删除">
-                                        <i class="fas fa-trash"></i><span>删除</span>
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </div>
