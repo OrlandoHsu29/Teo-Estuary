@@ -2624,14 +2624,12 @@ s
 
 /* 第一个text-display（原始文本） */
 .text-display.compact:first-child {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 添加分隔线 */
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
 
 /* 第二个text-display（转换文本） */
 .text-display.compact:last-child {
-    border-top: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }
@@ -2771,6 +2769,17 @@ s
     padding-bottom: 2.8px;
 }
 
+.text-display.compact label .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 未保存更改时的样式 */
+.text-display.compact.has-unsaved-changes {
+    background: rgba(255, 193, 7, 0.05);
+}
+
 /* 文本保存按钮样式 */
 .text-save-btn {
     display: flex;
@@ -2809,6 +2818,47 @@ s
 }
 
 .text-save-btn:disabled {
+    opacity: 0.5;
+}
+
+/* 文本取消按钮样式 */
+.text-cancel-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+    transition: all 0.2s ease;
+}
+
+.text-cancel-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.text-cancel-btn:not(:disabled) {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+    cursor: pointer;
+}
+
+.text-cancel-btn:not(:disabled):hover {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.5);
+    transform: translateY(-1px);
+}
+
+.text-cancel-btn:not(:disabled):active {
+    transform: translateY(0);
+}
+
+.text-cancel-btn:disabled {
     opacity: 0.5;
 }
 
@@ -2884,28 +2934,6 @@ s
     to {
         transform: rotate(360deg);
     }
-}
-
-/* 撤回模式 */
-.translate-arrow-btn.revert-mode {
-    background: rgba(255, 193, 7, 0.1);
-    border-color: rgba(255, 193, 7, 0.3);
-    color: #ffc107;
-}
-
-.translate-arrow-btn.revert-mode:hover:not(:disabled):not(.loading) {
-    background: rgba(255, 193, 7, 0.2);
-    border-color: rgba(255, 193, 7, 0.5);
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
-}
-
-/* 撤回模式下旋转箭头 */
-.translate-arrow-btn.left.revert-mode svg {
-    transform: rotate(270deg);
-}
-
-.translate-arrow-btn.right.revert-mode svg {
-    transform: rotate(90deg);
 }
 
 

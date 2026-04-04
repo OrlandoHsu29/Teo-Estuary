@@ -1,6 +1,6 @@
 // 录音数据管理
 
-// 存储翻译前的原始文本（用于撤回翻译）
+// 存储翻译或词块编辑后的文本（用于撤回和保存）
 let preTranslateMandarinText = '';
 let preTranslateTeochewText = '';
 
@@ -270,10 +270,6 @@ function displayCurrentRecord() {
 
     const record = recordingsData[currentRecordIndex];
 
-    // 切换页面时重置所有翻译按钮状态
-    resetTranslateButton('mandarin');
-    resetTranslateButton('teochew');
-
     // 如果有未保存的翻译，清空并重新渲染（recordingsData里是原始数据）
     if (preTranslateMandarinText) {
         preTranslateMandarinText = '';
@@ -292,10 +288,6 @@ function displayCurrentRecord() {
         }
     }
     updateSaveButtonState();
-
-    // 重置未保存修改状态（词块编辑）
-    hasPendingMandarinEdits = false;
-    hasPendingTeochewEdits = false;
 
     // 停止当前播放并重置进度条
     const audioPlayer = document.getElementById('audioPlayer');
@@ -979,21 +971,21 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
     let originalWord = ''; // 保存原始词的完整信息
 
     if (isMandarinText) {
-        // 更新普通话文本
-        const words = record.mandarin_text.split(' ');
+        // 更新普通话文本，优先从临时变量读取（如果存在翻译或编辑结果）
+        const sourceText = preTranslateMandarinText || record.mandarin_text;
+        const words = sourceText.split(' ');
         originalWord = words[wordIndex];
 
         // 如果新内容为空，移除这个词
         if (!newWord || newWord.trim() === '') {
             words.splice(wordIndex, 1);
             newContent = words.join(' ');
-            record.mandarin_text = newContent;
+            // 不更新本地数据，只存到临时变量
+            preTranslateMandarinText = newContent;
 
             // 移除按钮元素
-            buttonElement.remove();
 
             // 标记有未保存的修改
-            hasPendingMandarinEdits = true;
             updateSaveButtonState();
 
             // 重新渲染所有按钮以更新索引
@@ -1019,32 +1011,32 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             }
 
             newContent = words.join(' ');
-            record.mandarin_text = newContent;
+            // 不更新本地数据，只存到临时变量
+            preTranslateMandarinText = newContent;
 
             // 更新按钮数据
             buttonElement.dataset.originalWord = words[wordIndex];
             buttonElement.textContent = newWord;
 
             // 标记有未保存的修改
-            hasPendingMandarinEdits = true;
             updateSaveButtonState();
         }
     } else {
-        // 更新潮汕话文本
-        const words = record.teochew_text.split(' ');
+        // 更新潮汕话文本，优先从临时变量读取（如果存在翻译或编辑结果）
+        const sourceText = preTranslateTeochewText || record.teochew_text;
+        const words = sourceText.split(' ');
         originalWord = words[wordIndex];
 
         // 如果新内容为空，移除这个词
         if (!newWord || newWord.trim() === '') {
             words.splice(wordIndex, 1);
             newContent = words.join(' ');
-            record.teochew_text = newContent;
+            // 不更新本地数据，只存到临时变量
+            preTranslateTeochewText = newContent;
 
             // 移除按钮元素
-            buttonElement.remove();
 
             // 标记有未保存的修改
-            hasPendingTeochewEdits = true;
             updateSaveButtonState();
 
             // 重新渲染所有按钮以更新索引
@@ -1070,14 +1062,14 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             }
 
             newContent = words.join(' ');
-            record.teochew_text = newContent;
+            // 不更新本地数据，只存到临时变量
+            preTranslateTeochewText = newContent;
 
             // 更新按钮数据
             buttonElement.dataset.originalWord = words[wordIndex];
             buttonElement.textContent = newWord;
 
             // 标记有未保存的修改
-            hasPendingTeochewEdits = true;
             updateSaveButtonState();
         }
     }
@@ -1106,34 +1098,34 @@ function updateRecordWithNewVariant(wordIndex, newWord, buttonElement) {
     let newContent;
 
     if (isMandarinText) {
-        // 更新普通话文本
-        const words = record.mandarin_text.split(' ');
+        // 更新普通话文本，优先从临时变量读取（如果存在翻译或编辑结果）
+        const sourceText = preTranslateMandarinText || record.mandarin_text;
+        const words = sourceText.split(' ');
         words[wordIndex] = newWord;
         newContent = words.join(' ');
-        record.mandarin_text = newContent;
+        // 不更新本地数据，只存到临时变量
+        preTranslateMandarinText = newContent;
 
         // 更新按钮数据
         buttonElement.dataset.originalWord = newWord;
 
-        // 标记有未保存的修改
-        hasPendingMandarinEdits = true;
         updateSaveButtonState();
     } else {
-        // 更新潮汕话文本
-        const words = record.teochew_text.split(' ');
+        // 更新潮汕话文本，优先从临时变量读取（如果存在翻译或编辑结果）
+        const sourceText = preTranslateTeochewText || record.teochew_text;
+        const words = sourceText.split(' ');
         words[wordIndex] = newWord;
         newContent = words.join(' ');
-        record.teochew_text = newContent;
+        // 不更新本地数据，只存到临时变量
+        preTranslateTeochewText = newContent;
 
         // 更新按钮数据
         buttonElement.dataset.originalWord = newWord;
 
-        // 标记有未保存的修改
-        hasPendingTeochewEdits = true;
         updateSaveButtonState();
     }
 
-    // 更新翻译按钮状态（虽然变体切换不改变词块数量，但保持一致性）
+    // 更新翻译按钮状态
     updateTranslateButtonState();
 }
 
@@ -1357,6 +1349,86 @@ function updateSaveButtonState() {
     if (teochewSaveBtn) {
         teochewSaveBtn.disabled = !preTranslateTeochewText;
     }
+
+    // 更新取消按钮状态
+    const mandarinCancelBtn = document.getElementById('mandarinCancelBtn');
+    const teochewCancelBtn = document.getElementById('teochewCancelBtn');
+    if (mandarinCancelBtn) {
+        mandarinCancelBtn.disabled = !preTranslateMandarinText;
+    }
+    if (teochewCancelBtn) {
+        teochewCancelBtn.disabled = !preTranslateTeochewText;
+    }
+
+    // 更新 text-display compact 的未保存样式
+    const mandarinTextDisplay = document.querySelector('#mandarinText')?.closest('.text-display.compact');
+    const teochewTextDisplay = document.querySelector('#teochewText')?.closest('.text-display.compact');
+
+    if (mandarinTextDisplay) {
+        if (preTranslateMandarinText) {
+            mandarinTextDisplay.classList.add('has-unsaved-changes');
+        } else {
+            mandarinTextDisplay.classList.remove('has-unsaved-changes');
+        }
+    }
+    if (teochewTextDisplay) {
+        if (preTranslateTeochewText) {
+            teochewTextDisplay.classList.add('has-unsaved-changes');
+        } else {
+            teochewTextDisplay.classList.remove('has-unsaved-changes');
+        }
+    }
+}
+
+// 取消普通话修改
+function cancelMandarinChanges() {
+    if (!preTranslateMandarinText || recordingsData.length === 0) return;
+
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return;
+
+    // 清空临时变量
+    preTranslateMandarinText = '';
+
+    // 重新渲染（显示原始数据）
+    const mandarinTextElement = document.getElementById('mandarinText');
+    if (mandarinTextElement) {
+        renderWordButtons(mandarinTextElement, record.mandarin_text || '-');
+    }
+
+    // 启用所有翻译按钮
+    const mandarinTranslateBtn = document.getElementById('translateToMandarinBtn');
+    const teochewTranslateBtn = document.getElementById('translateToTeochewBtn');
+    if (mandarinTranslateBtn) mandarinTranslateBtn.disabled = false;
+    if (teochewTranslateBtn) teochewTranslateBtn.disabled = false;
+
+    updateSaveButtonState();
+}
+
+// 取消潮汕话修改
+function cancelTeochewChanges() {
+    if (!preTranslateTeochewText || recordingsData.length === 0) return;
+
+    const record = recordingsData[currentRecordIndex];
+    if (!record) return;
+
+    // 清空临时变量
+    preTranslateTeochewText = '';
+
+    // 重新渲染（显示原始数据）
+    const teochewTextElement = document.getElementById('teochewText');
+    if (teochewTextElement) {
+        renderWordButtons(teochewTextElement, record.teochew_text || '-');
+    }
+
+    // 启用所有翻译按钮
+    const mandarinTranslateBtn = document.getElementById('translateToMandarinBtn');
+    const teochewTranslateBtn = document.getElementById('translateToTeochewBtn');
+    if (mandarinTranslateBtn) mandarinTranslateBtn.disabled = false;
+    if (teochewTranslateBtn) teochewTranslateBtn.disabled = false;
+    if (translateBtn) translateBtn.disabled = false;
+
+    updateSaveButtonState();
 }
 
 // 保存普通话文本的修改到后端
@@ -1369,7 +1441,7 @@ async function savePendingMandarinEdits() {
     if (!record) return;
 
     try {
-        // 用翻译后的文本更新本地数据
+        // 用临时变量更新本地数据
         record.mandarin_text = preTranslateMandarinText;
 
         const response = await fetch(`/api/recording/${record.id}`, {
@@ -1383,7 +1455,7 @@ async function savePendingMandarinEdits() {
         const data = await response.json();
 
         if (data.success) {
-            // 清空撤回存储
+            // 清空临时变量
             preTranslateMandarinText = '';
             // 刷新设备页面
             displayCurrentRecord();
@@ -1407,7 +1479,7 @@ async function savePendingTeochewEdits() {
     if (!record) return;
 
     try {
-        // 用翻译后的文本更新本地数据
+        // 用临时变量更新本地数据
         record.teochew_text = preTranslateTeochewText;
 
         const response = await fetch(`/api/recording/${record.id}`, {
@@ -1421,10 +1493,11 @@ async function savePendingTeochewEdits() {
         const data = await response.json();
 
         if (data.success) {
-            // 清空撤回存储
+            // 清空临时变量
             preTranslateTeochewText = '';
             // 刷新设备页面
             displayCurrentRecord();
+            showToast('潮汕话文本已保存', 'success');
         } else {
             showToast(data.error || '保存失败', 'error');
         }
@@ -1547,31 +1620,6 @@ async function translateTo(targetLang) {
                 renderWordButtons(targetElement, translatedText);
             }
 
-            // 将翻译按钮改为撤回按钮，并禁用另一个翻译按钮
-            if (targetLang === 'mandarin') {
-                const btn = document.getElementById('translateToMandarinBtn');
-                if (btn) {
-                    btn.classList.add('revert-mode');
-                    btn.onclick = () => revertTranslation('mandarin');
-                    btn.title = '撤回翻译';
-                    btn.disabled = false;
-                }
-                // 禁用潮汕话翻译按钮
-                const otherBtn = document.getElementById('translateToTeochewBtn');
-                if (otherBtn) otherBtn.disabled = true;
-            } else {
-                const btn = document.getElementById('translateToTeochewBtn');
-                if (btn) {
-                    btn.classList.add('revert-mode');
-                    btn.onclick = () => revertTranslation('teochew');
-                    btn.title = '撤回翻译';
-                    btn.disabled = false;
-                }
-                // 禁用普通话翻译按钮
-                const otherBtn = document.getElementById('translateToMandarinBtn');
-                if (otherBtn) otherBtn.disabled = true;
-            }
-
         } else {
             showToast(data.error || '翻译失败', 'error');
             // 恢复按钮状态
@@ -1588,60 +1636,6 @@ async function translateTo(targetLang) {
             clickedBtn.classList.remove('loading');
         }
     }
-}
-
-// 重置翻译按钮为正常状态
-function resetTranslateButton(targetLang) {
-    const btnId = targetLang === 'mandarin' ? 'translateToMandarinBtn' : 'translateToTeochewBtn';
-    const btn = document.getElementById(btnId);
-    if (btn) {
-        btn.classList.remove('revert-mode');
-        btn.onclick = () => translateTo(targetLang);
-        btn.title = targetLang === 'mandarin' ? '潮汕话 -> 普通话' : '普通话 -> 潮汕话';
-        btn.disabled = false;
-    }
-}
-
-// 撤回翻译函数
-function revertTranslation(targetLang) {
-    if (recordingsData.length === 0 || currentRecordIndex >= recordingsData.length) {
-        return;
-    }
-
-    const record = recordingsData[currentRecordIndex];
-    let targetElementId;
-
-    if (targetLang === 'mandarin') {
-        // 撤回普通话翻译
-        if (!preTranslateMandarinText) {
-            showToast('没有可撤回的翻译', 'warning');
-            return;
-        }
-        preTranslateMandarinText = '';
-        targetElementId = 'mandarinText';
-    } else {
-        // 撤回潮汕话翻译
-        if (!preTranslateTeochewText) {
-            showToast('没有可撤回的翻译', 'warning');
-            return;
-        }
-        preTranslateTeochewText = '';
-        targetElementId = 'teochewText';
-    }
-
-    // 重新渲染目标文本（recordingsData里是原始数据）
-    const targetElement = document.getElementById(targetElementId);
-    if (targetElement) {
-        const text = targetLang === 'mandarin' ? record.mandarin_text : record.teochew_text;
-        renderWordButtons(targetElement, text || '-');
-    }
-
-    // 恢复翻译按钮为正常状态
-    resetTranslateButton(targetLang);
-
-    // 更新保存按钮状态
-    updateSaveButtonState();
-
 }
 
 // 备注功能
