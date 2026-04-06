@@ -101,7 +101,7 @@ async function qtSearch() {
 function qtClearDisplay() {
     document.getElementById('qtText1').textContent = '—';
     document.getElementById('qtText2').textContent = '—';
-    document.getElementById('qtCounter').textContent = '0/0';
+    document.getElementById('qtCounter').textContent = '0 / 0';
     document.getElementById('qtPrevBtn').disabled = true;
     document.getElementById('qtNextBtn').disabled = true;
     document.getElementById('qtCard1Content').classList.remove('has-variants');
@@ -116,7 +116,7 @@ function qtUpdateDisplay() {
         // 不调用 qtClearDisplay，避免覆盖标签（标签由 qtToggleLang 管理）
         document.getElementById('qtText1').textContent = '无结果';
         document.getElementById('qtText2').textContent = '无结果';
-        document.getElementById('qtCounter').textContent = '0/0';
+        document.getElementById('qtCounter').textContent = '0 / 0';
         document.getElementById('qtPrevBtn').disabled = true;
         document.getElementById('qtNextBtn').disabled = true;
         document.getElementById('qtCard1Content').classList.remove('has-variants');
@@ -143,7 +143,7 @@ function qtUpdateDisplay() {
     card2.classList.toggle('has-variants', hasVariants);
 
     // 更新计数器
-    document.getElementById('qtCounter').textContent = `${qtIndex + 1}/${qtResults.length}`;
+    document.getElementById('qtCounter').textContent = `${qtIndex + 1} / ${qtResults.length}`;
     document.getElementById('qtPrevBtn').disabled = qtIndex <= 0;
     document.getElementById('qtNextBtn').disabled = qtIndex >= qtResults.length - 1;
 }

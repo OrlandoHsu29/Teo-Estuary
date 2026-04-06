@@ -6399,10 +6399,13 @@ textarea::-webkit-scrollbar-thumb:hover {
 
 .qt-counter {
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: var(--text-disabled);
     min-width: 36px;
     text-align: center;
     flex-shrink: 0;
+    padding: 8px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
 }
 
 /* 第二行：导航 + 结果卡片 */
@@ -6417,7 +6420,7 @@ textarea::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 6px;
-    width: 24px;
+    width: 40px;
     height: 52px;
     display: flex;
     align-items: center;
