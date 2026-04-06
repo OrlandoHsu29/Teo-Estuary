@@ -187,12 +187,21 @@ function filterByStatus(status) {
 
 // 退出所有编辑模式的函数
 function exitAllEditModes() {
-    // 直接调用现有的取消编辑函数，它们已经包含完整的清理逻辑
-    if (typeof cancelTeochewTextEdit === 'function') {
-        cancelTeochewTextEdit();
+    // 调用统一函数退出全文编辑模式
+    if (typeof cancelFullTextEdit === 'function') {
+        if (isEditingTeochew) {
+            cancelFullTextEdit('teochew');
+        }
+        if (isEditingMandarin) {
+            cancelFullTextEdit('mandarin');
+        }
     }
-    if (typeof cancelMandarinTextEdit === 'function') {
-        cancelMandarinTextEdit();
+    // 退出词块编辑模式
+    if (typeof cancelMandarinChanges === 'function' && tmpMandarinText) {
+        cancelMandarinChanges();
+    }
+    if (typeof cancelTeochewChanges === 'function' && tmpTeochewText) {
+        cancelTeochewChanges();
     }
 }
 

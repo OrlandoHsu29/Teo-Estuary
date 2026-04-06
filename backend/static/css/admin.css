@@ -2622,6 +2622,15 @@ s
     flex-direction: column;
 }
 
+/* label 和 action-buttons 的水平布局容器 */
+.text-display.compact .text-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
 /* 第一个text-display（原始文本） */
 .text-display.compact:first-child {
     border-bottom-left-radius: 0;
@@ -2668,7 +2677,7 @@ s
 
 #mandarinTextEdit,
 #teochewTextEdit {
-    height: 95px;
+    height: 75px;
     flex: 1;
     width: 100%;
     margin: 5px 0 5px 0;
@@ -2687,32 +2696,6 @@ s
     outline: none;
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
 }
-
-.edit-actions {
-    margin-top: 14px;
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.save-btn, .cancel-btn {
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
-    border: 1px solid;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: transparent;
-}
-
-.save-btn {
-    border-color: var(--success-color);
-    color: var(--success-color);
-}
-
-.save-btn:hover {
-    background: var(--success-color);
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
@@ -2742,7 +2725,34 @@ s
 }
 
 
-.text-display.compact label {
+.text-display.compact .text-header label {
+    font-size: 14px;
+    color: var(--primary-color);
+    margin-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    pointer-events: none;
+    width: auto;
+}
+
+.text-display.compact .text-header label > * {
+    pointer-events: auto;
+}
+
+.text-display.compact .text-header label .label-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.text-display.compact .text-header label .label-text p{
+    font-size: 16px;
+    padding-bottom: 2.8px;
+}
+
+/* 兼容旧版本：不在 .text-header 中的 label 保持原有样式 */
+.text-display.compact > label {
     font-size: 14px;
     color: var(--primary-color);
     margin-bottom: 10px;
@@ -2754,22 +2764,22 @@ s
     pointer-events: none;
 }
 
-.text-display.compact label > * {
+.text-display.compact > label > * {
     pointer-events: auto;
 }
 
-.text-display.compact label .label-text {
+.text-display.compact > label .label-text {
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
-.text-display.compact label .label-text p{
+.text-display.compact > label .label-text p{
     font-size: 16px;
     padding-bottom: 2.8px;
 }
 
-.text-display.compact label .action-buttons {
+.text-display.compact > label .action-buttons {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2778,6 +2788,14 @@ s
 /* 未保存更改时的样式 */
 .text-display.compact.has-unsaved-changes {
     background: rgba(255, 193, 7, 0.05);
+}
+
+/* action-buttons 在 text-header 中的样式 */
+.text-display.compact .text-header .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto; /* 推到右边 */
 }
 
 /* 文本保存按钮样式 */
@@ -4833,10 +4851,6 @@ mark {
     display: none; /* Chrome, Safari, Opera */
 }
 
-/* 字典开关样式 */
-.dict-toggle-group {
-    /* 移除特殊样式，使用默认的dict-form-group样式 */
-}
 
 .dict-toggle-label {
     display: flex;
