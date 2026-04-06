@@ -9,6 +9,7 @@ function toggleView() {
 
     if (currentView === 'device') {
         deviceView.style.display = 'none';
+        document.getElementById('quickTranslateDevice').style.display = 'none';
         listView.style.display = 'block';
         toggleBtn.innerHTML = `
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
@@ -46,6 +47,7 @@ function toggleView() {
         loadListView();
     } else {
         deviceView.style.display = 'block';
+        document.getElementById('quickTranslateDevice').style.display = 'block';
         listView.style.display = 'none';
         toggleBtn.innerHTML = `
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
