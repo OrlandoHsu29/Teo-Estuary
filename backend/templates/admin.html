@@ -77,7 +77,7 @@
         <!-- 主内容区域 -->
         <main class="main-content">
             <!-- 快捷键提示 -->
-            <div class="shortcut-hints">
+            <div class="shortcut-hints" id="shortcutHints">
                 <div class="hint-row">
                     <div class="key-box" style="min-width: 80px;">
                         <span class="key-text">Space</span>
@@ -258,7 +258,9 @@
                             <p>当前没有需要审核的音频记录</p>
                         </div>
 
-                        <!-- 主设备 -->
+                        <!-- 主设备和常用词列表的容器 -->
+                        <div class="review-devices-wrapper">
+                            <!-- 主设备 -->
                         <div class="review-device" id="reviewDevice" style="display: block;">
                             <div class="device-screen">
                                 <!-- 数据加载覆盖层 -->
@@ -466,59 +468,132 @@
                                 <audio id="audioPlayer" style="display: none;"></audio>
                             </div>
                         </div>
-                    </div>
-                    
+
+                        <!-- 常用词列表设备 -->
+                        <div class="common-words-device" id="commonWordsDevice">
+                            <div class="cw-header">
+                                <span class="cw-title">常用词</span>
+                            </div>
+                            <div class="cw-list" id="cwList">
+                                <div class="cw-item" draggable="true" data-teochew="介" data-mandarin="的">
+                                    <span class="cw-text">介</span>
+                                    <div class="cw-tooltip">的</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="吤" data-mandarin="是">
+                                    <span class="cw-text">吤</span>
+                                    <div class="cw-tooltip">是</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="伊" data-mandarin="他">
+                                    <span class="cw-text">伊</span>
+                                    <div class="cw-tooltip">他</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="唔" data-mandarin="不">
+                                    <span class="cw-text">唔</span>
+                                    <div class="cw-tooltip">不</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="呾" data-mandarin="说">
+                                    <span class="cw-text">呾</span>
+                                    <div class="cw-tooltip">说</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="嫑" data-mandarin="不要">
+                                    <span class="cw-text">嫑</span>
+                                    <div class="cw-tooltip">不要</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="许" data-mandarin="那">
+                                    <span class="cw-text">许</span>
+                                    <div class="cw-tooltip">那</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="孬" data-mandarin="不好">
+                                    <span class="cw-text">孬</span>
+                                    <div class="cw-tooltip">不好</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="㩼" data-mandarin="多">
+                                    <span class="cw-text">㩼</span>
+                                    <div class="cw-tooltip">多</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="𱍤" data-mandarin="不是">
+                                    <span class="cw-text">𱍤</span>
+                                    <div class="cw-tooltip">不是</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="衹" data-mandarin="这">
+                                    <span class="cw-text">衹</span>
+                                    <div class="cw-tooltip">这</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="拢" data-mandarin="都">
+                                    <span class="cw-text">拢</span>
+                                    <div class="cw-tooltip">都</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="乞" data-mandarin="被">
+                                    <span class="cw-text">乞</span>
+                                    <div class="cw-tooltip">被</div>
+                                </div>
+                                <div class="cw-item" draggable="true" data-teochew="乜个" data-mandarin="什么">
+                                    <span class="cw-text">乜个</span>
+                                    <div class="cw-tooltip">什么</div>
+                                </div>
+                                <div class="cw-buttons">
+                                    <div class="cw-divider"></div>
+                                    <button class="cw-btn cw-add-btn" id="cwAddBtn" title="新增词">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button class="cw-btn cw-delete-btn" id="cwDeleteBtn" title="删除词">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
                     <!-- 快捷翻译设备 -->
-                    <div class="quick-translate-device" id="quickTranslateDevice">
-                        <div class="qt-body">
-                            <div class="qt-search-row">
-                                <button class="qt-lang-toggle" id="qtLangToggle" onclick="qtToggleLang()" title="切换搜索语言">
-                                    <span id="qtLangLabel">普</span>
-                                </button>
-                                <div class="qt-input-wrap">
-                                    <input type="text" id="qtSearchInput" class="qt-search-input"
-                                        placeholder="输入普通话..." maxlength="10">
-                                    <button class="qt-search-btn" onclick="qtSearch()">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                            <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    <div class="quick-translate-wrapper">
+                        <div class="quick-translate-device" id="quickTranslateDevice">
+                            <div class="qt-body">
+                                <div class="qt-search-row">
+                                    <button class="qt-lang-toggle" id="qtLangToggle" onclick="qtToggleLang()" title="切换搜索语言">
+                                        <span id="qtLangLabel">普</span>
+                                    </button>
+                                    <div class="qt-input-wrap">
+                                        <input type="text" id="qtSearchInput" class="qt-search-input"
+                                            placeholder="输入普通话..." maxlength="10">
+                                        <button class="qt-search-btn" onclick="qtSearch()">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                                <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="qt-loading-indicator" id="qtLoadingIndicator">
+                                        <div class="qt-loading-dot"></div>
+                                        <div class="qt-loading-dot"></div>
+                                        <div class="qt-loading-dot"></div>
+                                    </div>
+                                    <span class="qt-counter" id="qtCounter">0&nbsp;/&nbsp;0</span>
+                                </div>
+                                <div class="qt-result-row">
+                                    <button class="qt-nav-btn" id="qtPrevBtn" onclick="qtNavigate(-1)" disabled>
+                                        <svg fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+                                        </svg>
+                                    </button>
+                                    <div class="qt-cards" id="qtCards">
+                                        <div class="qt-result-card" id="qtCard1">
+                                            <div class="qt-result-item" id="qtCard1Content">
+                                                <span class="qt-result-label" id="qtLabel1">普通话</span>
+                                                <span class="qt-result-text" id="qtText1">—</span>
+                                            </div>
+                                        </div>
+                                        <div class="qt-result-card" id="qtCard2">
+                                            <div class="qt-result-item teochew-item" id="qtCard2Content" onclick="qtCopyResult()" style="cursor:pointer" title="点击复制">
+                                                <span class="qt-result-label" id="qtLabel2">潮汕话</span>
+                                                <span class="qt-result-text" id="qtText2">—</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="qt-nav-btn" id="qtNextBtn" onclick="qtNavigate(1)" disabled>
+                                        <svg fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="qt-loading-indicator" id="qtLoadingIndicator">
-                                    <div class="qt-loading-dot"></div>
-                                    <div class="qt-loading-dot"></div>
-                                    <div class="qt-loading-dot"></div>
-                                </div>
-                                <span class="qt-counter" id="qtCounter">0&nbsp;/&nbsp;0</span>
-                            </div>
-
-                            <div class="qt-result-row">
-                                <button class="qt-nav-btn" id="qtPrevBtn" onclick="qtNavigate(-1)" disabled>
-                                    <svg fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
-                                    </svg>
-                                </button>
-
-                                <div class="qt-cards" id="qtCards">
-                                    <div class="qt-result-card" id="qtCard1">
-                                        <div class="qt-result-item" id="qtCard1Content">
-                                            <span class="qt-result-label" id="qtLabel1">普通话</span>
-                                            <span class="qt-result-text" id="qtText1">—</span>
-                                        </div>
-                                    </div>
-                                    <div class="qt-result-card" id="qtCard2">
-                                        <div class="qt-result-item teochew-item" id="qtCard2Content" onclick="qtCopyResult()" style="cursor:pointer" title="点击复制">
-                                            <span class="qt-result-label" id="qtLabel2">潮汕话</span>
-                                            <span class="qt-result-text" id="qtText2">—</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button class="qt-nav-btn" id="qtNextBtn" onclick="qtNavigate(1)" disabled>
-                                    <svg fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -527,25 +602,27 @@
 
                 <!-- 列表视图 -->
                 <div class="list-view-container" id="listView" style="display: none;">
-                    <div class="filter-controls">
-                        <select id="statusFilter">
-                            <option value="">所有状态</option>
-                            <option value="pending">待审核</option>
-                            <option value="approved">已通过</option>
-                            <option value="rejected">已拒绝</option>
-                        </select>
-                        <div class="search-container">
-                            <input type="text" id="searchInput" placeholder="搜索ID或原始文本..." class="search-input">
-                            <button id="clearSearchBtn" class="clear-search-btn" title="清空搜索">×</button>
+                    <div class="list-view-body">
+                        <div class="recordings-list" id="recordingsList">
+                            <div class="loading">正在加载...</div>
                         </div>
                     </div>
-
-                    <div class="recordings-list" id="recordingsList">
-                        <div class="loading">正在加载...</div>
-                    </div>
-
                     <div class="pagination" id="listPagination">
                         <!-- 分页控件将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 筛选控件 - 固定在content-section底部 -->
+                <div class="filter-controls" id="filterControls" style="display: none;">
+                    <select id="statusFilter">
+                        <option value="">所有状态</option>
+                        <option value="pending">待审核</option>
+                        <option value="approved">已通过</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="搜索ID或原始文本..." class="search-input">
+                        <button id="clearSearchBtn" class="clear-search-btn" title="清空搜索">×</button>
                     </div>
                 </div>
             </section>
@@ -1235,6 +1312,7 @@
     <script src="{{ url_for('static', filename='js/review-operations.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dictionary-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/quick-translate.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/common-words.js') }}"></script>
     <script src="{{ url_for('static', filename='js/export-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/import-management.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui-navigation.js') }}"></script>

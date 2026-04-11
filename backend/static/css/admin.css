@@ -192,6 +192,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    position: relative;
 }
 
 .section-header {
@@ -481,7 +482,7 @@ body {
 .status-filter-sidebar {
     position: fixed;
     left: 0px;
-    top: 53%;
+    top: 44%;
     transform: translateY(-50%);
     z-index: 100;
 }
@@ -490,6 +491,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    align-items: center;
+    justify-content: center;
 }
 
 .status-filter-btn {
@@ -759,7 +762,6 @@ body {
     flex-direction: column;
     gap: 0; /* 确保屏幕和控制台紧密连接 */
     margin-bottom: 15px;
-    margin-right: 40px;
 }
 
 .review-device:hover {
@@ -1271,6 +1273,7 @@ body {
 }
 
 .text-display {
+    gap:8px;
     background: var(--bg-primary);
     padding: 1.5rem;
     border-radius: var(--border-radius);
@@ -2140,31 +2143,51 @@ body {
 .list-view-container {
     background: rgba(42, 42, 62, 0.8);
     border-radius: 20px;
-    padding: 25px;
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(10px);
-}
-
-.filter-controls {
+    width: 1000px;
+    min-height: 80vh;
     display: flex;
-    gap: 15px;
-    align-items: center;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 20px;
+    padding-bottom:0;
+    margin-top: 40px;
     margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.filter-controls select {
-    padding: 10px 15px;
-    background: rgba(26, 26, 46, 0.8);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
+.list-view-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .recordings-list {
     margin-bottom: 20px;
+}
+
+/* 筛选控件 - 固定在页面底部 */
+#filterControls {
+    position: fixed;
+    bottom: 20px;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background: rgba(26, 26, 46, 0.737);
+    border-radius: 30px;
+    z-index: 100;
+}
+
+#filterControls select {
+    padding: 10px 15px;
+    background: rgba(42, 42, 62, 0.9);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-size: 14px;
 }
 
 .list-item {
@@ -3103,6 +3126,9 @@ s
     user-select: none;
     flex-shrink: 0;
     align-self: flex-start;
+    max-width: 99%;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .word-button.disabled {
@@ -6662,4 +6688,226 @@ textarea::-webkit-scrollbar-thumb:hover {
     .reference-generate-action {
         padding: 12px;
     }
+}
+
+/* ==================== 主设备和常用词列表的容器 ==================== */
+.review-devices-wrapper {
+    display: flex;
+    gap: 35px;
+    align-items: center;
+}
+
+/* ==================== 常用词列表设备 ==================== */
+.common-words-device {
+    width: 90px;
+    background: linear-gradient(145deg, #2a2a3e, #1e1e32);
+    border-radius: 16px;
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    overflow: visible;
+    flex-shrink: 0;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cw-header {
+    padding: 10px 8px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+}
+
+.cw-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.cw-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.cw-list::-webkit-scrollbar {
+    display: none;
+}
+
+.cw-item {
+    position: relative;
+    padding: 10px 8px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.cw-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-color: rgba(76, 175, 80, 0.4);
+    background: rgba(76, 175, 80, 0.15);
+    z-index: 10;
+}
+
+.cw-item:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cw-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.cw-item.drag-over-top::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(76, 175, 80, 0.7);
+    border-radius: 1px;
+}
+
+.cw-item.drag-over-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(76, 175, 80, 0.7);
+    border-radius: 1px;
+}
+
+.cw-text {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'Noto Sans SC', sans-serif;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.cw-tooltip {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: linear-gradient(145deg, #1a1a2e, #0f0f22);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: rgba(76, 175, 80, 0.9);
+    font-family: 'Noto Sans SC', sans-serif;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.cw-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-bottom-color: rgba(76, 175, 80, 0.3);
+}
+
+.cw-item:hover .cw-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.cw-buttons {
+    padding: 6px 4px;
+    flex-shrink: 0;
+}
+
+.cw-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 6px;
+}
+
+.cw-btn {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    border: 1px solid;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cw-btn:last-child {
+    margin-bottom: 0;
+}
+
+.cw-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.cw-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.cw-add-btn {
+    background: linear-gradient(145deg, rgba(76, 175, 80, 0.25), rgba(76, 175, 80, 0.1));
+    border-color: rgba(76, 175, 80, 0.4);
+    color: rgba(76, 175, 80, 1);
+}
+
+.cw-add-btn:hover {
+    background: linear-gradient(145deg, rgba(76, 175, 80, 0.35), rgba(76, 175, 80, 0.2));
+    border-color: rgba(76, 175, 80, 0.6);
+}
+
+.cw-delete-btn {
+    background: linear-gradient(145deg, rgba(255, 77, 77, 0.25), rgba(255, 77, 77, 0.1));
+    border-color: rgba(255, 77, 77, 0.4);
+    color: rgba(255, 77, 77, 1);
+}
+
+.cw-delete-btn:hover {
+    background: linear-gradient(145deg, rgba(255, 77, 77, 0.35), rgba(255, 77, 77, 0.2));
+    border-color: rgba(255, 77, 77, 0.6);
+}
+
+/* ==================== 快捷翻译设备容器（居中） ==================== */
+.quick-translate-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    margin-right: 170px;
 }

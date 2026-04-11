@@ -11,6 +11,10 @@ function toggleView() {
         deviceView.style.display = 'none';
         document.getElementById('quickTranslateDevice').style.display = 'none';
         listView.style.display = 'block';
+        document.getElementById('filterControls').style.display = 'flex';
+        if (typeof updateFilterControlsPosition === 'function') {
+            updateFilterControlsPosition();
+        }
         toggleBtn.innerHTML = `
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
@@ -45,10 +49,14 @@ function toggleView() {
 
         currentView = 'list';
         loadListView();
+        if (typeof updateShortcutHintsVisibility === 'function') {
+            updateShortcutHintsVisibility();
+        }
     } else {
         deviceView.style.display = 'block';
         document.getElementById('quickTranslateDevice').style.display = 'block';
         listView.style.display = 'none';
+        document.getElementById('filterControls').style.display = 'none';
         toggleBtn.innerHTML = `
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
@@ -110,6 +118,9 @@ function toggleView() {
         }
 
         currentView = 'device';
+        if (typeof updateShortcutHintsVisibility === 'function') {
+            updateShortcutHintsVisibility();
+        }
     }
 }
 
@@ -411,11 +422,15 @@ async function jumpToDetailView(recordId, listIndex, listPage) {
             const deviceView = document.getElementById('deviceView');
             const listView = document.getElementById('listView');
             const toggleBtn = document.querySelector('.toggle-view-btn');
+            const quickTranslateDevice = document.getElementById('quickTranslateDevice');
+            const filterControls = document.getElementById('filterControls');
 
             if (currentView === 'list') {
                 // 手动触发视图切换
                 deviceView.style.display = 'block';
                 listView.style.display = 'none';
+                if (quickTranslateDevice) quickTranslateDevice.style.display = 'block';
+                if (filterControls) filterControls.style.display = 'none';
                 toggleBtn.innerHTML = `
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>

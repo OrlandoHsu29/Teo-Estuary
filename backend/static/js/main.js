@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initializeKeyboardShortcuts();
+    updateShortcutHintsVisibility();
 
     // 初始化搜索功能
     initializeSearch();

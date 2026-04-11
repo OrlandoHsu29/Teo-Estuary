@@ -41,6 +41,11 @@ function switchSection(sectionName) {
 
     currentSection = sectionName;
 
+    // 更新快捷键提示可见性
+    if (typeof updateShortcutHintsVisibility === 'function') {
+        updateShortcutHintsVisibility();
+    }
+
     // 如果切换到审核界面，确保视图状态正确
     if (sectionName === 'review') {
         const deviceView = document.getElementById('deviceView');
@@ -51,6 +56,10 @@ function switchSection(sectionName) {
             // 如果当前是列表视图，但切换到了审核界面，需要重置为详细视图
             deviceView.style.display = 'block';
             listView.style.display = 'none';
+            const quickTranslateDevice = document.getElementById('quickTranslateDevice');
+            if (quickTranslateDevice) {
+                quickTranslateDevice.style.display = 'block';
+            }
             if (toggleBtn) {
                 toggleBtn.innerHTML = `
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
@@ -61,6 +70,13 @@ function switchSection(sectionName) {
                 `;
             }
             currentView = 'device';
+            const filterControls = document.getElementById('filterControls');
+            if (filterControls) {
+                filterControls.style.display = 'none';
+            }
+            if (typeof updateShortcutHintsVisibility === 'function') {
+                updateShortcutHintsVisibility();
+            }
         }
     }
 

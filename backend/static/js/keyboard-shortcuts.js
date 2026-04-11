@@ -102,3 +102,31 @@ function seekAudio(seconds) {
     const newTime = Math.max(0, Math.min(audioPlayer.currentTime + seconds, duration));
     audioPlayer.currentTime = newTime;
 }
+
+// 更新快捷键提示可见性
+function updateShortcutHintsVisibility() {
+    const hints = document.getElementById('shortcutHints');
+    if (!hints) return;
+
+    if (currentSection === 'review' && currentView === 'device') {
+        hints.style.display = 'flex';
+    } else {
+        hints.style.display = 'none';
+    }
+}
+
+// 更新筛选控件位置（相对于content-section居中）
+function updateFilterControlsPosition() {
+    const filterControls = document.getElementById('filterControls');
+    const contentSection = document.getElementById('review-section');
+    if (!filterControls || !contentSection) return;
+
+    if (filterControls.style.display === 'none') return;
+
+    const contentRect = contentSection.getBoundingClientRect();
+    const left = contentRect.left + contentRect.width / 2;
+    filterControls.style.left = left + 'px';
+}
+
+// 监听窗口大小变化
+window.addEventListener('resize', updateFilterControlsPosition);
