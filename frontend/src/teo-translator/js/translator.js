@@ -518,7 +518,7 @@ class TeoTranslator {
     // 重置音量条到默认状态
     resetVolumeBars() {
         this.elements.volumeBars.forEach((bar) => {
-            bar.style.height = '2px';
+            bar.style.transform = 'scaleY(0.33)';
         });
     }
 
@@ -527,20 +527,20 @@ class TeoTranslator {
         const maxValue = 20;
         const normalizedValue = Math.min(value / maxValue, 1);
 
-        // 每个bar的最大高度（像素）
-        const maxHeights = [6, 12, 18];
+        // 每个bar的最大高度对应的 scale
+        const maxScales = [1, 2, 3];
 
         this.elements.volumeBars.forEach((bar, index) => {
-            const maxHeight = maxHeights[index];
+            const maxScale = maxScales[index];
             // 当音量超过该bar的阈值时才显示
             // 阈值：第1个bar=0.2, 第2个bar=0.4, 第3个bar=0.6
             const threshold = (index + 1) * 0.2;
 
             if (normalizedValue > threshold) {
-                bar.style.height = `${maxHeight}px`;
+                bar.style.transform = `scaleY(${maxScale})`;
             } else {
                 // 没声音时显示最小高度
-                bar.style.height = '2px';
+                bar.style.transform = 'scaleY(0.33)';
             }
         });
     }

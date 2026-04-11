@@ -230,12 +230,15 @@ body {
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(0, 0, 0, 0.15);
     min-height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .mode-text {
     position: absolute;
     left: 0;
-    top: 0;
+    top: -1.5px;
     font-weight: bold;
     font-size: 12px;
     color: #000000;
@@ -244,20 +247,20 @@ body {
 }
 
 .signal-bars {
-    position: absolute;
-    right: 0;
-    top: 0;
     display: flex;
     gap: 3px;
-    align-items: flex-end;
+    align-items: center;
+    margin-left: auto;
 }
 
 .bar {
     width: 5px;
     background: #333333;
-    border-radius: 3px;
-    transition: height 0.1s ease;
+    border-radius: 2px;
+    transition: transform 0.1s ease;
     height: 6px;
+    transform-origin: center;
+    transform: scaleY(0.33);
 }
 
 /* 模型信息 — 绝对居中于状态栏 */
@@ -979,6 +982,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .model-version {
+        display: none;
+    }
+
     .footer-info {
         margin-top: 10px;
         padding: 5px;
