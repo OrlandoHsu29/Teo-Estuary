@@ -9,6 +9,12 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// 格式化音频时长
+function formatDuration(seconds) {
+    if (!seconds) return '-';
+    return `${seconds}s`;
+}
+
 // 格式化时间为中国北京时间（UTC+8）
 function formatDateTime(isoString) {
     if (!isoString) return '-';

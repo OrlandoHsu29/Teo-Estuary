@@ -788,7 +788,7 @@ body {
         0 0 0 1px rgba(255, 255, 255, 0.05);
     position: relative;
     overflow: hidden;
-    height: 320px; 
+    height: 355px; 
     display: flex;
     flex-direction: column;
 }
@@ -2722,7 +2722,8 @@ s
     background: rgba(26, 26, 46, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    padding: 12px;
+    padding: 12px; 
+    padding-bottom: 20px; 
     margin-bottom: 0; /* 移除margin-bottom */
     flex: 1; /* 让每个text-display自动填满可用空间 */
     display: flex;
@@ -2738,13 +2739,13 @@ s
     width: 100%;
 }
 
-/* 第一个text-display（原始文本） */
+/* 第一个text-display（普通话文本） */
 .text-display.compact:first-child {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
 
-/* 第二个text-display（转换文本） */
+/* 第二个text-display（潮汕话文本） */
 .text-display.compact:last-child {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -3361,25 +3362,24 @@ s
     flex: 0 0 140px;
     display: flex;
     flex-direction: column;
-    padding: 0 0 5px 0;
-    min-height: 218px;
-    max-height: 218px;
+    padding: 0;
+    min-height: 255px;
+    max-height: 255px;
 }
 
 .meta-item {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 添加分隔线 */
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    flex:1;
+    height: 51px;
     display: flex;
-    /* justify-content: space-between; */
     gap:2px;
     align-items: center;
-    /* margin-bottom: 4px; */
-}   
+    box-sizing: border-box;
+}
 .meta-item:last-child {
     border-bottom: 0; /* 移除最后一项的分隔线 */
-}   
+}
 
 
 .meta-value {
@@ -3403,8 +3403,8 @@ s
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 218px;
-    max-height: 218px;
+    min-height: 255px;
+    max-height: 255px;
 }
 
 .notes-label {

@@ -349,6 +349,12 @@ function displayCurrentRecord() {
         uploadTypeElement.className = 'meta-value ' + (uploadType === 1 ? 'upload-type-extracted' : 'upload-type-recorded');
     }
 
+    // 更新音频时长
+    const audioDurationElement = document.getElementById('audioDuration');
+    if (audioDurationElement) {
+        audioDurationElement.textContent = record.duration ? formatDuration(record.duration) : '-';
+    }
+
     // 更新备注（处理undefined、null、空字符串）
     const notesTextarea = document.getElementById('notesTextarea');
     if (notesTextarea) {
