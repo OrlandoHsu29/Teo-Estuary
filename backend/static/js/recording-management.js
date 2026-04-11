@@ -1364,6 +1364,9 @@ function updateSaveButtonState() {
         teochewCancelBtn.disabled = !teochewHasChanges;
     }
 
+    // 更新翻译按钮状态
+    updateTranslateButtonState();
+
     // 更新 text-display compact 的未保存样式
     const mandarinTextDisplay = document.querySelector('#mandarinText')?.closest('.text-display.compact');
     const teochewTextDisplay = document.querySelector('#teochewText')?.closest('.text-display.compact');
@@ -1760,8 +1763,10 @@ function updateTranslateButtonState() {
         return;
     }
 
-    translateToMandarinBtn.disabled = false;
-    translateToTeochewBtn.disabled = false;
+    // 有待保存内容或正在编辑时禁用翻译
+    const hasPendingChanges = tmpMandarinText || tmpTeochewText || isEditingMandarin || isEditingTeochew;
+    translateToMandarinBtn.disabled = hasPendingChanges;
+    translateToTeochewBtn.disabled = hasPendingChanges;
 }
 
 // 翻译函数
