@@ -71,6 +71,10 @@ function toggleAudio() {
             }
 
             // 显示加载状态
+            if (playPauseBtn) {
+                playPauseBtn.classList.add('loading');
+                playPauseBtn.disabled = true;
+            }
             if (playIcon) {
                 playIcon.className = 'fas fa-spinner fa-spin';
             }
@@ -94,6 +98,10 @@ function toggleAudio() {
                             errorMessage = `服务器错误 (${response.status})`;
                         }
                         showToast(errorMessage, 'error');
+                        if (playPauseBtn) {
+                            playPauseBtn.classList.remove('loading');
+                            playPauseBtn.disabled = false;
+                        }
                         if (playIcon) {
                             playIcon.className = 'fas fa-play';
                         }
@@ -108,8 +116,16 @@ function toggleAudio() {
                     const handleCanPlay = () => {
                         audioPlayer.removeEventListener('canplay', handleCanPlay);
                         audioPlayer.removeEventListener('error', handleError);
+                        if (playPauseBtn) {
+                            playPauseBtn.classList.remove('loading');
+                            playPauseBtn.disabled = false;
+                        }
                         audioPlayer.play().catch(() => {
                             showToast('播放失败', 'error');
+                            if (playPauseBtn) {
+                                playPauseBtn.classList.remove('loading');
+                                playPauseBtn.disabled = false;
+                            }
                             if (playIcon) playIcon.className = 'fas fa-play';
                         });
                     };
@@ -117,6 +133,10 @@ function toggleAudio() {
                     const handleError = () => {
                         audioPlayer.removeEventListener('canplay', handleCanPlay);
                         audioPlayer.removeEventListener('error', handleError);
+                        if (playPauseBtn) {
+                            playPauseBtn.classList.remove('loading');
+                            playPauseBtn.disabled = false;
+                        }
                         showToast('音频加载失败', 'error');
                         if (playIcon) playIcon.className = 'fas fa-play';
                     };
@@ -158,6 +178,10 @@ function toggleAudio() {
                                     errorMessage = '音频文件不存在';
                                 }
                                 showToast(errorMessage, 'error');
+                                if (playPauseBtn) {
+                                    playPauseBtn.classList.remove('loading');
+                                    playPauseBtn.disabled = false;
+                                }
                                 if (playIcon) playIcon.className = 'fas fa-play';
                                 return;
                             }
@@ -165,8 +189,16 @@ function toggleAudio() {
                             audioPlayer.src = testUrl;
                             audioPlayer.load();
                             audioPlayer.addEventListener('canplay', () => {
+                                if (playPauseBtn) {
+                                    playPauseBtn.classList.remove('loading');
+                                    playPauseBtn.disabled = false;
+                                }
                                 audioPlayer.play().catch(() => {
                                     showToast('播放失败', 'error');
+                                    if (playPauseBtn) {
+                                        playPauseBtn.classList.remove('loading');
+                                        playPauseBtn.disabled = false;
+                                    }
                                     if (playIcon) playIcon.className = 'fas fa-play';
                                 });
                             }, { once: true });

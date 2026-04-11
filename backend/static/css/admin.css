@@ -1053,6 +1053,30 @@ body {
     transform: none;
 }
 
+/* 加载环动画 */
+.play-pause-btn-small .loading-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes loadingRing {
+    0% { transform: rotate(0deg); border-top-color: rgba(255, 255, 255, 0.8); }
+    50% { transform: rotate(180deg); border-top-color: rgba(255, 255, 255, 0.8); }
+    100% { transform: rotate(360deg); border-top-color: rgba(255, 255, 255, 0.8); }
+}
+
+.play-pause-btn-small.loading .loading-ring {
+    opacity: 1;
+    animation: loadingRing 0.8s linear infinite;
+}
+
 .volume-control-small {
     display: flex;
     align-items: center;
@@ -2695,7 +2719,6 @@ s
 #teochewTextEdit:focus {
     outline: none;
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
     color: white;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
@@ -2731,6 +2754,7 @@ s
     margin-bottom: 0;
     display: inline-flex;
     align-items: center;
+    vertical-align: middle;
     font-weight: 600;
     pointer-events: none;
     width: auto;
@@ -2743,6 +2767,7 @@ s
 .text-display.compact .text-header label .label-text {
     display: inline-flex;
     align-items: center;
+    vertical-align: middle;
     gap: 8px;
 }
 
