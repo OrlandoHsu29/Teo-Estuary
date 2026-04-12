@@ -52,20 +52,20 @@ function initializeKeyboardShortcuts() {
 
             if (mandarinEdit && mandarinEdit.style.display !== 'none') {
                 e.preventDefault();
-                handleMandarinSave();
+                handleSave('mandarin');
             } else if (teochewEdit && teochewEdit.style.display !== 'none') {
                 e.preventDefault();
-                handleTeochewSave();
+                handleSave('teochew');
             } else if (tmpMandarinText || tmpTeochewText) {
                 // 词块编辑完成后有待保存内容，保存整个文本
                 e.preventDefault();
-                if (tmpMandarinText) handleMandarinSave();
-                else handleTeochewSave();
+                if (tmpMandarinText) handleSave('mandarin');
+                else handleSave('teochew');
             } else if (isEditingMandarin || isEditingTeochew) {
                 // 全文编辑模式
                 e.preventDefault();
-                if (isEditingMandarin) handleMandarinSave();
-                else handleTeochewSave();
+                if (isEditingMandarin) handleSave('mandarin');
+                else handleSave('teochew');
             }
         }
 
@@ -77,15 +77,15 @@ function initializeKeyboardShortcuts() {
             // 全文编辑模式取消
             if (isEditingMandarin) {
                 e.preventDefault();
-                handleMandarinCancel();
+                handleCancel('mandarin');
             } else if (isEditingTeochew) {
                 e.preventDefault();
-                handleTeochewCancel();
+                handleCancel('teochew');
             } else if (tmpMandarinText || tmpTeochewText) {
                 // 词块编辑完成后有待保存内容，取消
                 e.preventDefault();
-                if (tmpMandarinText) handleMandarinCancel();
-                else handleTeochewCancel();
+                if (tmpMandarinText) handleCancel('mandarin');
+                else handleCancel('teochew');
             }
         }
     }, { capture: true });  // 使用捕获阶段，优先于编辑器

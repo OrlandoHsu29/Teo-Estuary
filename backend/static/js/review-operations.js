@@ -13,11 +13,9 @@ async function approveCurrent() {
     }
 
     // 自动保存未保存的修改
-    if (typeof savePendingMandarinEdits === 'function' && tmpMandarinText) {
-        await savePendingMandarinEdits();
-    }
-    if (typeof savePendingTeochewEdits === 'function' && tmpTeochewText) {
-        await savePendingTeochewEdits();
+    if (typeof savePendingEdits === 'function') {
+        if (tmpMandarinText) await savePendingEdits('mandarin');
+        if (tmpTeochewText) await savePendingEdits('teochew');
     }
 
     // 自动合并分词按钮为完整句子（同步进行）
@@ -176,11 +174,9 @@ async function approveCurrent() {
     }
 
     // 自动保存未保存的修改
-    if (typeof savePendingMandarinEdits === 'function' && tmpMandarinText) {
-        await savePendingMandarinEdits();
-    }
-    if (typeof savePendingTeochewEdits === 'function' && tmpTeochewText) {
-        await savePendingTeochewEdits();
+    if (typeof savePendingEdits === 'function') {
+        if (tmpMandarinText) await savePendingEdits('mandarin');
+        if (tmpTeochewText) await savePendingEdits('teochew');
     }
 
     // 自动合并分词按钮为完整句子（同步进行）

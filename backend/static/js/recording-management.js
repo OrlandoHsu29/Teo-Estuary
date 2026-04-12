@@ -1178,14 +1178,14 @@ function autoMergeText(elementId) {
     if (!record) return null;
 
     let currentText;
-    let updateFunction;
+    let field;
 
     if (elementId === 'originalText') {
         currentText = record.mandarin_text;
-        updateFunction = updateRecordingOriginalText;
+        field = 'mandarin_text';
     } else {
         currentText = record.teochew_text;
-        updateFunction = updateRecordingContent;
+        field = 'teochew_text';
     }
 
     // 检查是否需要合并
@@ -1207,7 +1207,7 @@ function autoMergeText(elementId) {
     renderWordButtons(element, mergedText);
 
     // 更新数据库
-    updateFunction(record.id, mergedText);
+    updateRecordingField(record.id, field, mergedText);
 
     return mergedText;
 }
@@ -1243,7 +1243,7 @@ function autoMergeAllTextsOnApprove() {
             record.mandarin_text = mergedText;
 
             // 异步更新数据库（不影响动画）
-            updateRecordingOriginalText(record.id, mergedText);
+            updateRecordingField(record.id, 'mandarin_text', mergedText);
         }
     }
 
@@ -1270,7 +1270,7 @@ function autoMergeAllTextsOnApprove() {
             record.teochew_text = mergedText;
 
             // 异步更新数据库（不影响动画）
-            updateRecordingContent(record.id, mergedText);
+            updateRecordingField(record.id, 'teochew_text', mergedText);
         }
     }
 
@@ -1393,20 +1393,28 @@ function updateSaveButtonState() {
     }
 }
 
-// 取消普通话修改
-function cancelMandarinChanges() {
-    if (!tmpMandarinText || recordingsData.length === 0) return;
+// 取消文本修改
+// type: 'mandarin' 或 'teochew'
+function cancelChanges(type) {
+    const isTeochew = type === 'teochew';
+    const tmpText = isTeochew ? tmpTeochewText : tmpMandarinText;
+
+    if (!tmpText || recordingsData.length === 0) return;
 
     const record = recordingsData[currentRecordIndex];
     if (!record) return;
 
     // 清空临时变量
-    tmpMandarinText = '';
+    if (isTeochew) {
+        tmpTeochewText = '';
+    } else {
+        tmpMandarinText = '';
+    }
 
     // 重新渲染（显示原始数据）
-    const mandarinTextElement = document.getElementById('mandarinText');
-    if (mandarinTextElement) {
-        renderWordButtons(mandarinTextElement, record.mandarin_text || '-');
+    const textElement = document.getElementById(isTeochew ? 'teochewText' : 'mandarinText');
+    if (textElement) {
+        renderWordButtons(textElement, record[isTeochew ? 'teochew_text' : 'mandarin_text'] || '-');
     }
 
     // 启用所有翻译按钮
@@ -1418,94 +1426,42 @@ function cancelMandarinChanges() {
     updateSaveButtonState();
 }
 
-// 取消潮汕话修改
-function cancelTeochewChanges() {
-    if (!tmpTeochewText || recordingsData.length === 0) return;
+// 保存文本修改到后端
+// type: 'mandarin' 或 'teochew'
+async function savePendingEdits(type) {
+    const isTeochew = type === 'teochew';
+    const tmpText = isTeochew ? tmpTeochewText : tmpMandarinText;
 
-    const record = recordingsData[currentRecordIndex];
-    if (!record) return;
-
-    // 清空临时变量
-    tmpTeochewText = '';
-
-    // 重新渲染（显示原始数据）
-    const teochewTextElement = document.getElementById('teochewText');
-    if (teochewTextElement) {
-        renderWordButtons(teochewTextElement, record.teochew_text || '-');
-    }
-
-    // 启用所有翻译按钮
-    const mandarinTranslateBtn = document.getElementById('translateToMandarinBtn');
-    const teochewTranslateBtn = document.getElementById('translateToTeochewBtn');
-    if (mandarinTranslateBtn) mandarinTranslateBtn.disabled = false;
-    if (teochewTranslateBtn) teochewTranslateBtn.disabled = false;
-
-    updateSaveButtonState();
-}
-
-// 保存普通话文本的修改到后端
-async function savePendingMandarinEdits() {
-    if (!tmpMandarinText || recordingsData.length === 0) {
+    if (!tmpText || recordingsData.length === 0) {
         return;
     }
 
     const record = recordingsData[currentRecordIndex];
     if (!record) return;
 
+    const field = isTeochew ? 'teochew_text' : 'mandarin_text';
+
     try {
         // 用临时变量更新本地数据
-        record.mandarin_text = tmpMandarinText;
+        record[field] = tmpText;
 
         const response = await fetch(`/api/recording/${record.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ mandarin_text: record.mandarin_text })
+            body: JSON.stringify({ [field]: record[field] })
         });
 
         const data = await response.json();
 
         if (data.success) {
             // 清空临时变量
-            tmpMandarinText = '';
-            // 刷新设备页面
-            displayCurrentRecord();
-        } else {
-            showToast(data.error || '保存失败', 'error');
-        }
-    } catch (error) {
-        console.error('保存失败:', error);
-        showToast('保存失败', 'error');
-    }
-}
-
-// 保存潮汕话文本的修改到后端
-async function savePendingTeochewEdits() {
-    if (!tmpTeochewText || recordingsData.length === 0) {
-        return;
-    }
-
-    const record = recordingsData[currentRecordIndex];
-    if (!record) return;
-
-    try {
-        // 用临时变量更新本地数据
-        record.teochew_text = tmpTeochewText;
-
-        const response = await fetch(`/api/recording/${record.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ teochew_text: record.teochew_text })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // 清空临时变量
-            tmpTeochewText = '';
+            if (isTeochew) {
+                tmpTeochewText = '';
+            } else {
+                tmpMandarinText = '';
+            }
             // 刷新设备页面
             displayCurrentRecord();
         } else {
@@ -1532,43 +1488,29 @@ let originalMandarinContent = '';
 
 // 统一的保存/取消处理函数（根据当前模式调用相应函数）
 
-function handleMandarinSave() {
-    if (isEditingMandarin) {
+// 统一保存处理
+// type: 'mandarin' 或 'teochew'
+function handleSave(type) {
+    const isTeochew = type === 'teochew';
+    if (isTeochew ? isEditingTeochew : isEditingMandarin) {
         // 全文编辑模式
-        saveFullTextEdit('mandarin');
+        saveFullTextEdit(type);
     } else {
         // 词块编辑模式
-        savePendingMandarinEdits();
+        savePendingEdits(type);
     }
 }
 
-function handleMandarinCancel() {
-    if (isEditingMandarin) {
+// 统一取消处理
+// type: 'mandarin' 或 'teochew'
+function handleCancel(type) {
+    const isTeochew = type === 'teochew';
+    if (isTeochew ? isEditingTeochew : isEditingMandarin) {
         // 全文编辑模式
-        cancelFullTextEdit('mandarin');
+        cancelFullTextEdit(type);
     } else {
         // 词块编辑模式
-        cancelMandarinChanges();
-    }
-}
-
-function handleTeochewSave() {
-    if (isEditingTeochew) {
-        // 全文编辑模式
-        saveFullTextEdit('teochew');
-    } else {
-        // 词块编辑模式
-        savePendingTeochewEdits();
-    }
-}
-
-function handleTeochewCancel() {
-    if (isEditingTeochew) {
-        // 全文编辑模式
-        cancelFullTextEdit('teochew');
-    } else {
-        // 词块编辑模式
-        cancelTeochewChanges();
+        cancelChanges(type);
     }
 }
 
@@ -1623,6 +1565,12 @@ function enableFullTextEdit(type) {
     textElement.style.display = 'none';
     editElement.style.display = 'block';
 
+    // 添加未保存样式（与词块编辑保持一致）
+    const textDisplayCompact = textElement.closest('.text-display.compact');
+    if (textDisplayCompact) {
+        textDisplayCompact.classList.add('has-unsaved-changes');
+    }
+
     // 隐藏翻译控制按钮
     if (translationControls) {
         translationControls.style.display = 'none';
@@ -1653,11 +1601,8 @@ function saveFullTextEdit(type) {
         }
 
         // 保存到后端
-        if (isTeochew) {
-            updateRecordingContent(recordingsData[currentRecordIndex].id, newContent);
-        } else {
-            updateRecordingOriginalText(recordingsData[currentRecordIndex].id, newContent);
-        }
+        const field = isTeochew ? 'teochew_text' : 'mandarin_text';
+        updateRecordingField(recordingsData[currentRecordIndex].id, field, newContent);
 
         // 清空词块编辑的临时变量，保持状态同步
         if (isTeochew) {
@@ -1694,6 +1639,12 @@ function cancelFullTextEdit(type) {
     textElement.style.display = 'block';
     editElement.style.display = 'none';
 
+    // 移除未保存样式
+    const textDisplayCompact = textElement.closest('.text-display.compact');
+    if (textDisplayCompact) {
+        textDisplayCompact.classList.remove('has-unsaved-changes');
+    }
+
     // 清空词块编辑的临时变量，保持状态同步
     if (isTeochew) {
         tmpTeochewText = '';
@@ -1716,37 +1667,16 @@ function cancelFullTextEdit(type) {
     }
 }
 
-// 更新记录内容
-async function updateRecordingContent(id, teochewText) {
+// 更新记录字段
+// field: 'teochew_text' 或 'mandarin_text'
+async function updateRecordingField(id, field, value) {
     try {
         const response = await fetch(`/api/recording/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ teochew_text: teochewText })
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-            showToast(data.error || '保存失败', 'error');
-        }
-    } catch (error) {
-        console.error('保存失败:', error);
-        showToast('保存失败', 'error');
-    }
-}
-
-// 更新记录原始文本
-async function updateRecordingOriginalText(id, mandarinText) {
-    try {
-        const response = await fetch(`/api/recording/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ mandarin_text: mandarinText })
+            body: JSON.stringify({ [field]: value })
         });
 
         const data = await response.json();

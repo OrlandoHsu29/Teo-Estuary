@@ -213,11 +213,9 @@ function exitAllEditModes() {
         }
     }
     // 退出词块编辑模式
-    if (typeof cancelMandarinChanges === 'function' && tmpMandarinText) {
-        cancelMandarinChanges();
-    }
-    if (typeof cancelTeochewChanges === 'function' && tmpTeochewText) {
-        cancelTeochewChanges();
+    if (typeof cancelChanges === 'function') {
+        if (tmpMandarinText) cancelChanges('mandarin');
+        if (tmpTeochewText) cancelChanges('teochew');
     }
 }
 
