@@ -692,11 +692,6 @@ function createWordButton(word, index) {
         displayText = variantMatch[1]; // 显示的翻译文本
         baseWord = variantMatch[2]; // 用于查询变体的原词
         isVariant = true;
-    } else if (word.endsWith('$')) {
-        // 兼容旧格式：翻译$
-        displayText = word.slice(0, -1);
-        baseWord = word.slice(0, -1);
-        isVariant = true;
     } else if (word.endsWith('#')) {
         button.classList.add('completed');
         displayText = word.slice(0, -1);
@@ -828,7 +823,7 @@ async function handleVariantClick(button) {
             button.textContent = nextVariant[1];
             button.dataset.currentVariant = nextVariant[0];
 
-            // 更新记录数据 - 使用新格式：翻译$[原词]
+            // 更新记录数据 - 使用变体词：翻译$[原词]
             updateRecordWithNewVariant(button.dataset.index, nextVariant[1] + '$[' + baseWord + ']', button);
 
         } else {
@@ -1003,11 +998,8 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             // 判断原始词的格式并保持相应的格式
             const variantMatch = originalWord.match(/^(.+)\$\[(.+)\]$/);
             if (variantMatch) {
-                // 新格式：翻译$[原词] -> 翻译$[原词]
+                // 变体词：翻译$[原词] -> 翻译$[原词]
                 words[wordIndex] = newWord + '$[' + variantMatch[2] + ']';
-            } else if (originalWord.endsWith('$')) {
-                // 旧格式：翻译$ -> 翻译$
-                words[wordIndex] = newWord + '$';
             } else if (originalWord.endsWith('#')) {
                 // 完成词：翻译# -> 翻译#
                 words[wordIndex] = newWord + '#';
@@ -1054,11 +1046,8 @@ function updateWordInText(wordIndex, newWord, buttonElement) {
             // 判断原始词的格式并保持相应的格式
             const variantMatch = originalWord.match(/^(.+)\$\[(.+)\]$/);
             if (variantMatch) {
-                // 新格式：翻译$[原词] -> 翻译$[原词]
+                // 变体词：翻译$[原词] -> 翻译$[原词]
                 words[wordIndex] = newWord + '$[' + variantMatch[2] + ']';
-            } else if (originalWord.endsWith('$')) {
-                // 旧格式：翻译$ -> 翻译$
-                words[wordIndex] = newWord + '$';
             } else if (originalWord.endsWith('#')) {
                 // 完成词：翻译# -> 翻译#
                 words[wordIndex] = newWord + '#';
@@ -1156,13 +1145,13 @@ function mergeWordsToSentence(text) {
     // 移除所有分词标记，合并成完整句子
     const words = text.split(' ');
     const cleanWords = words.map(word => {
-        // 处理新格式：翻译$[原词] 和旧格式：翻译$ 以及完成词：翻译#
+        // 处理变体词：翻译$[原词] 和完成词：翻译#
         const variantMatch = word.match(/^(.+)\$\[(.+)\]$/);
         if (variantMatch) {
             return variantMatch[1]; // 返回翻译文本
         } else {
-            // 移除 $ 和 # 标记，保留纯文本
-            return word.replace(/[\$#]$/, '');
+            // 移除 # 标记，保留纯文本
+            return word.replace(/#$/, '');
         }
     });
 

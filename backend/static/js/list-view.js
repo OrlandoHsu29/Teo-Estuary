@@ -174,13 +174,11 @@ function renderListView(recordings, total, current, pages) {
     // 清理分词标记（用于列表显示）
     const cleanWordMarkers = (text) => {
         if (!text) return '-';
-        // 移除分词相关的标记符：空格分隔符、$[原词]、$、#
-        // 处理新格式：翻译$[原词] -> 翻译
-        // 处理旧格式：翻译$ -> 翻译
+        // 移除分词相关的标记符：空格分隔符、$[原词]、#
+        // 处理变体词：翻译$[原词] -> 翻译
         // 处理完成词：翻译# -> 翻译
         return text
             .replace(/\$\[([^\]]+)\]/g, '')  // 移除 $[原词]
-            .replace(/\$/g, '')               // 移除单独的 $
             .replace(/#/g, '')                // 移除 #
             .replace(/\s+/g, '');              // 移除所有空格
     };
