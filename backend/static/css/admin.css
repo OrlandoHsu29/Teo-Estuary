@@ -814,7 +814,7 @@ body {
 /* 设备控制台 - 拟物化底部控制区域 */
 .device-console {
     background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
-    border-radius: 0 0 10px 10px; /* 只在下部小圆角，与外层设备容器匹配 */
+    border-radius: 0 0 20px 20px; /* 只在下部小圆角，与外层设备容器匹配 */
     padding: 20px;
     box-shadow:
         inset 0 -2px 8px rgba(0, 0, 0, 0.3),
@@ -884,6 +884,17 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.hint-row .hint-action {
+    flex-shrink: 0;
+}
+
+.hint-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 8px;
 }
 
 .key-box {
@@ -2746,7 +2757,7 @@ s
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 12px; 
-    padding-bottom: 20px; 
+    padding-bottom: 15px; 
     margin-bottom: 0; /* 移除margin-bottom */
     flex: 1; /* 让每个text-display自动填满可用空间 */
     display: flex;
@@ -2758,21 +2769,20 @@ s
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     width: 100%;
 }
 
 /* 第一个text-display（普通话文本） */
-.text-display.compact:first-child {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
+/* .text-display.compact:first-child {
+    margin-bottom: 20px;
+} */
 
 /* 第二个text-display（潮汕话文本） */
-.text-display.compact:last-child {
+/* .text-display.compact:last-child {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-}
+} */
 
 
 /* 编辑功能样式 */
@@ -3017,7 +3027,7 @@ s
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: -17px 0 -17px 0;
+    margin: -9px 0 -9px 0;
     gap: 10px;
     z-index: 10;
 }
@@ -3284,11 +3294,6 @@ s
     display: block !important;
 }
 
-/* 编辑模式下隐藏翻译控制按钮 */
-.content-row:has(.text-column.editing) .translation-controls,
-.content-row:has(.text-column.editing-mandarin) .translation-controls {
-    display: none;
-}
 
 /* 上传途径样式 */
 .upload-type-recorded {
@@ -3388,19 +3393,20 @@ s
     display: flex;
     flex-direction: column;
     padding: 0;
-    min-height: 255px;
-    max-height: 255px;
+    height: 250px;
 }
 
 .meta-item {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 添加分隔线 */
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    height: 51px;
+    height: 50px;
     display: flex;
-    gap:2px;
-    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2px;
     box-sizing: border-box;
+    padding-top: 4px;
 }
 .meta-item:last-child {
     border-bottom: 0; /* 移除最后一项的分隔线 */
@@ -3409,6 +3415,7 @@ s
 
 .meta-value {
     display: flex;
+    justify-content: center;
     flex:1;
     font-size: 11px;
     color: var(--text-primary);
@@ -3416,10 +3423,11 @@ s
 
 .meta-label {
     display: flex;
-    flex:1;
+    justify-content: center;
     font-size: 10px;
     color: var(--text-disabled);
     font-weight: 600;
+    padding-top: 3px;
     align-items: end;
 }
 
@@ -3428,8 +3436,8 @@ s
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 255px;
-    max-height: 255px;
+    min-height: 250px;
+    max-height: 250px;
 }
 
 .notes-label {
@@ -6501,11 +6509,11 @@ textarea::-webkit-scrollbar-thumb:hover {
     color: var(--text-secondary);
     cursor: pointer;
     padding: 0.4rem;
-    border-radius: 30%;
+    border-radius: 20%;
     transition: all 0.3s ease;
     width: 28px;
     height: 28px;
-    margin-right: 3px;
+    margin-right: 4px;
     display: flex;
     align-items: center;
     justify-content: center;

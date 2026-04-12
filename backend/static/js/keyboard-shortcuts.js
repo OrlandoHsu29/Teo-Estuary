@@ -41,29 +41,24 @@ function initializeKeyboardShortcuts() {
             }
         }
 
-        // Enter：保存
-        if (e.key === 'Enter') {
-            // 词块编辑的输入框自己处理Enter，不要干扰
-            if (e.target.classList.contains('word-edit-input')) return;
+        // Ctrl + S：保存
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
 
             // 全文编辑框处理
             const mandarinEdit = document.getElementById('mandarinTextEdit');
             const teochewEdit = document.getElementById('teochewTextEdit');
 
             if (mandarinEdit && mandarinEdit.style.display !== 'none') {
-                e.preventDefault();
                 handleSave('mandarin');
             } else if (teochewEdit && teochewEdit.style.display !== 'none') {
-                e.preventDefault();
                 handleSave('teochew');
             } else if (tmpMandarinText || tmpTeochewText) {
                 // 词块编辑完成后有待保存内容，保存整个文本
-                e.preventDefault();
                 if (tmpMandarinText) handleSave('mandarin');
                 else handleSave('teochew');
             } else if (isEditingMandarin || isEditingTeochew) {
                 // 全文编辑模式
-                e.preventDefault();
                 if (isEditingMandarin) handleSave('mandarin');
                 else handleSave('teochew');
             }

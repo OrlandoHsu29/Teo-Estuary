@@ -1533,7 +1533,6 @@ function enableFullTextEdit(type) {
 
     const textElement = document.getElementById(isTeochew ? 'teochewText' : 'mandarinText');
     const editElement = document.getElementById(isTeochew ? 'teochewTextEdit' : 'mandarinTextEdit');
-    const translationControls = textElement.closest('.content-row')?.querySelector('.translation-controls');
 
     // 设置编辑状态
     if (isTeochew) {
@@ -1560,10 +1559,8 @@ function enableFullTextEdit(type) {
         textDisplayCompact.classList.add('has-unsaved-changes');
     }
 
-    // 隐藏翻译控制按钮
-    if (translationControls) {
-        translationControls.style.display = 'none';
-    }
+    // 禁用翻译控制按钮
+    updateTranslateButtonState();
 
     editElement.focus();
 }
@@ -1610,7 +1607,6 @@ function cancelFullTextEdit(type) {
 
     const textElement = document.getElementById(isTeochew ? 'teochewText' : 'mandarinText');
     const editElement = document.getElementById(isTeochew ? 'teochewTextEdit' : 'mandarinTextEdit');
-    const translationControls = textElement.closest('.content-row')?.querySelector('.translation-controls');
 
     // 禁用保存和取消按钮
     const saveBtn = document.getElementById(isTeochew ? 'teochewSaveBtn' : 'mandarinSaveBtn');
@@ -1641,11 +1637,7 @@ function cancelFullTextEdit(type) {
         tmpMandarinText = '';
     }
     updateSaveButtonState();
-
-    // 恢复翻译控制按钮
-    if (translationControls) {
-        translationControls.style.display = 'flex';
-    }
+    updateTranslateButtonState();
 
     // 重新渲染字词按钮以恢复原始内容
     if (recordingsData.length > 0 && currentRecordIndex < recordingsData.length) {
