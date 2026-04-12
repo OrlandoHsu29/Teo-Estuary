@@ -784,7 +784,6 @@ body {
 .device-screen {
     background: linear-gradient(135deg, #1a1a2e, #16213e);
     border-radius: 20px 20px 0 0; /* 只在上部圆角 */
-    padding: 10px 0 0 0; 
     box-shadow:
         inset 0 4px 12px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(255, 255, 255, 0.05);
@@ -1250,6 +1249,7 @@ body {
     padding: 14px 0 10px 0;
     margin-bottom: 5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
 }
 
 
@@ -3098,7 +3098,6 @@ s
 .word-buttons-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
     align-items: center;
     margin: 0 0 5px 0;
     min-height: 32px;
@@ -6804,17 +6803,18 @@ textarea::-webkit-scrollbar-thumb:hover {
     line-height: 1.3;
 }
 
-.cw-tooltip {
+/* 通用气泡提示样式 */
+.tooltip {
     position: absolute;
     left: 50%;
     top: calc(100% + 8px);
     transform: translateX(-50%);
     padding: 5px 10px;
     background: linear-gradient(145deg, #1a1a2e, #0f0f22);
-    border: 1px solid rgba(76, 175, 80, 0.3);
+    border: 1px solid rgba(0, 200, 200, 0.3);
     border-radius: 6px;
     font-size: 0.75rem;
-    color: rgba(76, 175, 80, 0.9);
+    color: rgba(0, 200, 200, 0.9);
     font-family: 'Noto Sans SC', sans-serif;
     white-space: nowrap;
     opacity: 0;
@@ -6825,17 +6825,32 @@ textarea::-webkit-scrollbar-thumb:hover {
     pointer-events: none;
 }
 
-.cw-tooltip::after {
+.tooltip::after {
     content: '';
     position: absolute;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
     border: 5px solid transparent;
+    border-bottom-color: rgba(0, 200, 200, 0.3);
+}
+
+/* 绿色变体 - 用于常用词 */
+.tooltip-green {
+    border-color: rgba(76, 175, 80, 0.3);
+    color: rgba(76, 175, 80, 0.9);
+}
+
+.tooltip-green::after {
     border-bottom-color: rgba(76, 175, 80, 0.3);
 }
 
-.cw-item:hover .cw-tooltip {
+.cw-item:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.stat-item:hover .tooltip {
     opacity: 1;
     visibility: visible;
 }
@@ -6848,7 +6863,7 @@ textarea::-webkit-scrollbar-thumb:hover {
 .cw-divider {
     height: 1px;
     background: rgba(255, 255, 255, 0.1);
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 
 .cw-btn {

@@ -269,6 +269,7 @@ function updateReviewCounter() {
 // 更新有效时长显示
 function updateDurationDisplay(totalSeconds) {
     const element = document.getElementById('stat-duration');
+    const tooltip = document.getElementById('durationTooltip');
     if (!element) return;
 
     // 转换为小时（整数）
@@ -277,7 +278,9 @@ function updateDurationDisplay(totalSeconds) {
     // 更新显示
     element.textContent = totalHours + "h";
 
-    // 设置title属性，鼠标悬停时显示三位小数
+    // 更新tooltip显示三位小数
     const totalHoursPrecise = (totalSeconds / 3600).toFixed(3);
-    element.parentElement.title = `总有效时长: ${totalHoursPrecise} 小时`;
+    if (tooltip) {
+        tooltip.textContent = totalHoursPrecise + " 小时";
+    }
 }

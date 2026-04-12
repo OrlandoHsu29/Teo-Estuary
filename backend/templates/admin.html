@@ -176,9 +176,10 @@
                                 <span class="stat-number" id="stat-rejected">0</span>
                                 <div class="stat-label">已拒绝</div>
                             </div>
-                            <div class="stat-item" title="总有效时长">
+                            <div class="stat-item" id="durationStatItem">
                                 <span class="stat-number" id="stat-duration">0</span>
                                 <div class="stat-label">有效时长</div>
+                                <div class="tooltip" id="durationTooltip">总有效时长</div>
                             </div>
 
                             <!-- 参考文本组 -->
@@ -299,13 +300,13 @@
                                                                 </span>
                                                             </label>
                                                             <span class="action-buttons">
-                                                                <button class="text-cancel-btn" id="mandarinCancelBtn" onclick="handleMandarinCancel()" disabled title="取消修改">
+                                                                <button class="text-cancel-btn" id="mandarinCancelBtn" onclick="handleCancel('mandarin')" disabled title="取消修改">
                                                                     <svg fill="currentColor" viewBox="0 0 20 20">
                                                                         <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
                                                                     </svg>
                                                                     取消
                                                                 </button>
-                                                                <button class="text-save-btn" id="mandarinSaveBtn" onclick="handleMandarinSave()" disabled title="保存修改">
+                                                                <button class="text-save-btn" id="mandarinSaveBtn" onclick="handleSave('mandarin')" disabled title="保存修改">
                                                                     <svg fill="currentColor" viewBox="0 0 20 20">
                                                                         <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
                                                                     </svg>
@@ -343,13 +344,13 @@
                                                                 </span>
                                                             </label>
                                                             <span class="action-buttons">
-                                                                <button class="text-cancel-btn" id="teochewCancelBtn" onclick="handleTeochewCancel()" disabled title="取消修改">
+                                                                <button class="text-cancel-btn" id="teochewCancelBtn" onclick="handleCancel('teochew')" disabled title="取消修改">
                                                                     <svg fill="currentColor" viewBox="0 0 20 20">
                                                                         <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
                                                                     </svg>
                                                                     取消
                                                                 </button>
-                                                                <button class="text-save-btn" id="teochewSaveBtn" onclick="handleTeochewSave()" disabled title="保存修改">
+                                                                <button class="text-save-btn" id="teochewSaveBtn" onclick="handleSave('teochew')" disabled title="保存修改">
                                                                     <svg fill="currentColor" viewBox="0 0 20 20">
                                                                         <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 10-2 0v5.586l-1.293-1.293z"/>
                                                                     </svg>
@@ -477,59 +478,59 @@
                             <div class="cw-list" id="cwList">
                                 <div class="cw-item" draggable="true" data-teochew="介" data-mandarin="的">
                                     <span class="cw-text">介</span>
-                                    <div class="cw-tooltip">的</div>
+                                    <div class="tooltip tooltip-green">的</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="吤" data-mandarin="是">
                                     <span class="cw-text">吤</span>
-                                    <div class="cw-tooltip">是</div>
+                                    <div class="tooltip tooltip-green">是</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="伊" data-mandarin="他">
                                     <span class="cw-text">伊</span>
-                                    <div class="cw-tooltip">他</div>
+                                    <div class="tooltip tooltip-green">他</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="唔" data-mandarin="不">
                                     <span class="cw-text">唔</span>
-                                    <div class="cw-tooltip">不</div>
+                                    <div class="tooltip tooltip-green">不</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="呾" data-mandarin="说">
                                     <span class="cw-text">呾</span>
-                                    <div class="cw-tooltip">说</div>
+                                    <div class="tooltip tooltip-green">说</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="嫑" data-mandarin="不要">
                                     <span class="cw-text">嫑</span>
-                                    <div class="cw-tooltip">不要</div>
+                                    <div class="tooltip tooltip-green">不要</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="许" data-mandarin="那">
                                     <span class="cw-text">许</span>
-                                    <div class="cw-tooltip">那</div>
+                                    <div class="tooltip tooltip-green">那</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="孬" data-mandarin="不好">
                                     <span class="cw-text">孬</span>
-                                    <div class="cw-tooltip">不好</div>
+                                    <div class="tooltip tooltip-green">不好</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="㩼" data-mandarin="多">
                                     <span class="cw-text">㩼</span>
-                                    <div class="cw-tooltip">多</div>
+                                    <div class="tooltip tooltip-green">多</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="𱍤" data-mandarin="不是">
                                     <span class="cw-text">𱍤</span>
-                                    <div class="cw-tooltip">不是</div>
+                                    <div class="tooltip tooltip-green">不是</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="衹" data-mandarin="这">
                                     <span class="cw-text">衹</span>
-                                    <div class="cw-tooltip">这</div>
+                                    <div class="tooltip tooltip-green">这</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="拢" data-mandarin="都">
                                     <span class="cw-text">拢</span>
-                                    <div class="cw-tooltip">都</div>
+                                    <div class="tooltip tooltip-green">都</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="乞" data-mandarin="被">
                                     <span class="cw-text">乞</span>
-                                    <div class="cw-tooltip">被</div>
+                                    <div class="tooltip tooltip-green">被</div>
                                 </div>
                                 <div class="cw-item" draggable="true" data-teochew="乜个" data-mandarin="什么">
                                     <span class="cw-text">乜个</span>
-                                    <div class="cw-tooltip">什么</div>
+                                    <div class="tooltip tooltip-green">什么</div>
                                 </div>
                                 <div class="cw-buttons">
                                     <div class="cw-divider"></div>
